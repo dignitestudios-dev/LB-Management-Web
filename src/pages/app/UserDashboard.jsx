@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useLogin } from "../../hooks/api/Post"; // your POST hook
-import { useUsers } from "../../hooks/api/Get";  // your GET hook
+import { useLogin } from "../../hooks/api/Post";
+import { useUsers } from "../../hooks/api/Get";
+import { baseUrl } from "../../axios"; // assuming this is where baseUrl is defined
+
 
 const UserDashboard = () => {
   const [currentTime, setCurrentTime] = useState(
@@ -12,7 +14,7 @@ const UserDashboard = () => {
     })
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [todayAttendance, setTodayAttendance] = useState(null);
 
   const { postData, loading } = useLogin();
 
@@ -30,6 +32,27 @@ const UserDashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
+  console.log(todayAttendance,"todayAttendance")
+
+  useEffect(() => {
+    const fetchToday = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/attendance/today`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+          setTodayAttendance(result.data); // ✅ includes both checkInTime & checkoutTime
+        }
+      } catch (error) {
+        console.error("Error fetching today's attendance", error);
+      }
+    };
+    fetchToday();
+  }, []);
+
   const handleCheckIn = async () => {
     const checkInTime = new Date().toISOString();
     await postData(
@@ -39,53 +62,104 @@ const UserDashboard = () => {
       { checkInTime },
       (res) => {
         alert("Check-In successful!");
-        console.log("Check-In Data:", res);
+        setTodayAttendance({ ...todayAttendance, checkInTime }); // update immediately
       }
     );
   };
 
   const handleCheckOut = () => {
-    setIsModalOpen(true); // show modal to select project
+    setIsModalOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] p-6 flex flex-col items-center">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-9xl">
-        <h1 className="text-3xl font-bold text-center text-blue-700 mb-4">Attendance UserDashboard</h1>
+        <h1 className="text-3xl font-bold text-center text-black mb-4">Attendance UserDashboard</h1>
 
-        <div className="flex flex-col md:flex-row justify-between items-center bg-[#eaf1ff] p-6 rounded-xl shadow-md">
-          <div className="text-center md:text-left mb-4 md:mb-0">
-            <p className="text-sm text-gray-500 uppercase tracking-wider">Current Time</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-blue-800">{currentTime}</h2>
+        <div className="flex flex-col md:flex-row justify-between items-center bg-[#eaf1ff] p-6 rounded-xl shadow-md w-full">
+          <div className="w-64 h-64 mx-auto flex flex-col items-center justify-center  rounded-full shadow-inner border border-gray-200 bg-cover" style={{ backgroundImage: 'url("/clock.png");' }}>
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-1">Monday</p>
+              <h2 className="text-3xl font-bold text-gray-800 tracking-widest">
+                {new Date().toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: true,
+                })}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">June 30, 2025</p>
+              <p className="text-sm text-gray-500">Asia/Karachi</p>
+            </div>
           </div>
 
-          <div className="flex gap-4">
-            <button
-              onClick={handleCheckIn}
-              className="px-6 py-2 rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold shadow transition-all duration-200"
-              disabled={loading}
-            >
-              {loading ? "Checking In..." : "Check In"}
-            </button>
-            <button
-              onClick={handleCheckOut}
-              className="px-6 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
-              disabled={loading}
-            >
-              Check Out
-            </button>
-          </div>
+
         </div>
 
-      </div>
+        <div className='flex justify-center items-center gap-6 mt-3 mb-3'>
+       {/* ✅ Check-In Time */}
+{todayAttendance?.checkInTime && (
+  <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
+    <p className="font-semibold uppercase tracking-wide text-xs text-blue-600 mb-1">Checked In At</p>
+    <p className="text-lg font-bold">
+      {new Date(todayAttendance.checkInTime).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })}
+    </p>
+  </div>
+)}
 
+{/* ✅ Check-Out Time */}
+{todayAttendance?.checkOutTime && (
+  <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
+    <p className="font-semibold uppercase tracking-wide text-xs text-green-600 mb-1">Checked Out At</p>
+    <p className="text-lg font-bold">
+      {new Date(todayAttendance.checkOutTime).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })}
+    </p>
+  </div>
+)}
+
+        </div>
+
+
+        <div className="flex gap-4 justify-center mt-10">
+          <button
+            onClick={handleCheckIn}
+            className="px-6 py-2 rounded-full bg-black text-white font-semibold shadow transition-all duration-200"
+            disabled={loading}
+          >
+            {loading ? "Checking In..." : "Check In"}
+          </button>
+          <button
+            onClick={handleCheckOut}
+            className="px-6 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
+            disabled={loading}
+          >
+            Check Out
+          </button>
+        </div>
+      </div>
 
       {/* Project Selection Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">Select Project for Check Out</h2>
-            <ProjectList onClose={() => setIsModalOpen(false)} postData={postData} />
+            <div className='flex justify-between'>
+              <h2 className="text-xl font-semibold mb-4 text-blue-700">Select Project for Check Out</h2>
+            </div>
+
+            <ProjectList
+              onClose={() => setIsModalOpen(false)}
+              postData={postData}
+              checkInTime={todayAttendance?.checkInTime}
+            />
+
           </div>
         </div>
       )}
@@ -95,42 +169,71 @@ const UserDashboard = () => {
 
 export default UserDashboard;
 
+
 // ===========================
 // ProjectList Component Inline
 // ===========================
-const ProjectList = ({ onClose, postData }) => {
+const ProjectList = ({ onClose, postData, checkInTime }) => {
   const { loading, data: projects } = useUsers("/projects");
-  const [projectData, setProjectData] = useState({});
+  const [entries, setEntries] = useState([
+    { project: "", minutesWorked: "", description: "" },
+  ]);
 
-  const handleChange = (projectId, field, value) => {
-    setProjectData((prev) => ({
-      ...prev,
-      [projectId]: {
-        ...prev[projectId],
-        [field]: value,
-      },
-    }));
+  // 🕒 Get total available minutes since check-in
+  const availableMinutes = () => {
+    if (!checkInTime) return 0;
+    const now = new Date();
+    return Math.floor((now - new Date(checkInTime)) / 60000);
+  };
+
+  const totalAvailableMinutes = availableMinutes();
+
+  const totalEnteredMinutes = entries.reduce(
+    (sum, entry) => sum + (parseInt(entry.minutesWorked) || 0),
+    0
+  );
+
+  const remainingMinutes = totalAvailableMinutes - totalEnteredMinutes;
+
+  const handleChange = (index, field, value) => {
+    const updatedEntries = [...entries];
+    updatedEntries[index][field] = value;
+    setEntries(updatedEntries);
+  };
+
+  const addNewEntry = () => {
+    setEntries([...entries, { project: "", minutesWorked: "", description: "" }]);
   };
 
   const handleSubmit = async () => {
     const checkoutTime = new Date().toISOString();
 
-    const selectedProjects = Object.entries(projectData)
-      .filter(([_, val]) => val.minutesWorked && val.description)
-      .map(([projectId, val]) => ({
-        project: projectId,
-        minutesWorked: parseInt(val.minutesWorked),
-        description: val.description,
-      }));
+    const validProjects = entries.filter(
+      (entry) => entry.project && entry.minutesWorked && entry.description
+    );
 
-    if (selectedProjects.length === 0) {
-      alert("Please fill at least one project's minutes and description.");
+    const totalEntered = validProjects.reduce(
+      (sum, entry) => sum + parseInt(entry.minutesWorked),
+      0
+    );
+
+    if (validProjects.length === 0) {
+      alert("Please fill at least one valid project entry.");
+      return;
+    }
+
+    if (totalEntered > totalAvailableMinutes) {
+      alert(`Total entered minutes (${totalEntered}) cannot exceed available time (${totalAvailableMinutes}).`);
       return;
     }
 
     const payload = {
       checkoutTime,
-      projects: selectedProjects,
+      projects: validProjects.map((entry) => ({
+        project: entry.project,
+        minutesWorked: parseInt(entry.minutesWorked),
+        description: entry.description,
+      })),
     };
 
     await postData("/attendance/check-out", false, null, payload, (res) => {
@@ -140,51 +243,110 @@ const ProjectList = ({ onClose, postData }) => {
     });
   };
 
+  // Format readable time
+  const getDuration = () => {
+    const mins = totalAvailableMinutes;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h} hour(s) ${m} minute(s)`;
+  };
+
   return (
-    <div className="space-y-4 max-h-[400px] overflow-y-auto">
+    <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
+      {/* 🕐 Session Time Info */}
+      <div className="text-sm text-gray-700 space-y-1">
+        <p>
+          <strong>Total Time Since Check-In:</strong>{" "}
+          <span className="text-blue-700 font-medium">{getDuration()}</span>
+        </p>
+        <p>
+          <strong>Time Remaining:</strong>{" "}
+          <span className="text-red-600 font-medium">{remainingMinutes} minutes</span>
+        </p>
+      </div>
+
       {loading ? (
-        <p>Loading projects...</p>
+        <p className="text-gray-500">Loading projects...</p>
       ) : (
-        projects.map((project) => (
-          <div key={project._id} className="border-b pb-4 mb-4">
-            <h3 className="font-semibold text-blue-600">{project.name}</h3>
-            <div className="mt-2 space-y-2">
+        entries.map((entry, index) => {
+          const otherMinutes = entries.reduce((sum, ent, i) => {
+            if (i !== index) return sum + (parseInt(ent.minutesWorked) || 0);
+            return sum;
+          }, 0);
+
+          const maxForThis = totalAvailableMinutes - otherMinutes;
+
+          return (
+            <div
+              key={index}
+              className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
+            >
+              <select
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={entry.project}
+                onChange={(e) => handleChange(index, "project", e.target.value)}
+              >
+                <option value="">Select a project</option>
+                {projects.map((proj) => (
+                  <option key={proj._id} value={proj._id}>
+                    {proj.name}
+                  </option>
+                ))}
+              </select>
+
               <input
                 type="number"
-                placeholder="Minutes Worked"
-                className="w-full border rounded-md p-2"
-                value={projectData[project._id]?.minutesWorked || ""}
-                onChange={(e) =>
-                  handleChange(project._id, "minutesWorked", e.target.value)
-                }
+                placeholder={`Minutes Worked (max: ${maxForThis})`}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={entry.minutesWorked}
+                min="0"
+                max={maxForThis}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (isNaN(val) || val < 0) return;
+                  if (val <= maxForThis) {
+                    handleChange(index, "minutesWorked", val);
+                  } else {
+                    alert(`You can't enter more than ${maxForThis} minutes for this entry.`);
+                  }
+                }}
               />
+
               <textarea
                 placeholder="Description"
-                className="w-full border rounded-md p-2"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={2}
-                value={projectData[project._id]?.description || ""}
-                onChange={(e) =>
-                  handleChange(project._id, "description", e.target.value)
-                }
+                value={entry.description}
+                onChange={(e) => handleChange(index, "description", e.target.value)}
               />
             </div>
-          </div>
-        ))
+          );
+        })
       )}
 
-      <div className="flex justify-end gap-3 mt-4">
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center pt-2">
         <button
-          onClick={onClose}
-          className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+          onClick={addNewEntry}
+          className="text-sm font-medium text-blue-600 hover:underline"
         >
-          Cancel
+          + Add Another Project
         </button>
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-        >
-          Submit
-        </button>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm"
+          >
+            Submit
+          </button>
+        </div>
       </div>
     </div>
   );
