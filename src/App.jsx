@@ -1,34 +1,30 @@
 import { Route, Routes } from "react-router";
 import "./App.css";
-import DashboardLayout from "./layouts/DashboardLayout";
 import DummyHome from "./pages/app/DummyHome";
 import DummyLogin from "./pages/authentication/DummyLogin";
 import AuthLayout from "./layouts/AuthLayout";
+import Login from "./pages/authentication/Login";
+import { AppRoutes } from "./routes/app/AppRoutes";
 
 function App() {
   return (
     <Routes>
       <Route
-        path="/"
-        element={
-          <div className="text-7xl">
-            Project Template || Please read readme file
-          </div>
-        }
+        path="*"
+        element={<Login/>}
       />
 
-      <Route path="app" element={<DashboardLayout />}>
-        <Route path="dashboard" element={<DummyHome />} />
+      <Route path="app">
+        {AppRoutes?.map((Link , i) => (
+          <Route path={Link.url} key={i} element={Link.page} />
+        ))}
       </Route>
-
+    
       <Route path="auth" element={<AuthLayout />}>
         <Route path="login" element={<DummyLogin />} />
       </Route>
 
-      <Route
-        path="*"
-        element={<div className="text-7xl">Page Not Found</div>}
-      />
+    
     </Routes>
   );
 }
