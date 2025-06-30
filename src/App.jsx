@@ -19,10 +19,7 @@ function App() {
           <Route path={Link.url} key={i} element={Link.page} />
         ))}
       </Route>
-    
-      <Route path="auth" element={<AuthLayout />}>
-        <Route path="login" element={<DummyLogin />} />
-      </Route>
+  
 
     
     </Routes>

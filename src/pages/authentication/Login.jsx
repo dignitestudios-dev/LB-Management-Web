@@ -4,14 +4,12 @@ import { useLogin } from "../../hooks/api/Post"; // ✅ Adjust path if needed
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router";
 
-
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { postData, loading } = useLogin();
   const navigate = useNavigate();
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,7 +40,7 @@ export default function LoginPage() {
           navigate("/app/dashboard");
         } else {
           navigate("/app/userdashboard");
-        } 
+        }
       }
     );
   };
@@ -55,7 +53,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md bg-white rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
           {/* Logo / Heading */}
           <div className="text-center mb-8">
-            <h2 className="text-4xl font-extrabold text-blue-700">Welcome Back</h2>
+            <h2 className="text-4xl font-bold text-black">Welcome Back</h2>
             <p className="text-gray-500 mt-2">Login to your account</p>
           </div>
 
@@ -79,12 +77,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-gray-800 font-semibold">Password</label>
-                <button type="button" className="text-sm text-blue-500 hover:underline">
-                  Forgot Password?
-                </button>
-              </div>
+
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -108,7 +101,7 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
+              className="w-full py-3 bg-[#f40e00] text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
               disabled={loading}
             >
               {loading ? "Logging in..." : "Log In"}
@@ -116,19 +109,14 @@ export default function LoginPage() {
 
 
             {/* Switch to Register */}
-            <p className="text-center text-gray-600 text-sm">
-              Don’t have an account?{" "}
-              <button type="button" className="text-blue-600 font-semibold hover:underline">
-                Create One
-              </button>
-            </p>
+
           </form>
         </div>
       </div>
 
       {/* Right Section - Image/Gradient */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url("/loginpicture.jpg")' }}>
-
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]" >
+        <img src="/demo.png" alt="" />
       </div>
 
 
