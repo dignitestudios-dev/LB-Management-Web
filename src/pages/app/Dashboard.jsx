@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import Users from '../../components/app/Users';
 import Departments from '../../components/app/Departments';
 import Summary from '../../components/app/Summary';
 import Roles from '../../components/app/Roles';
-import { FaUsers, FaBuilding, FaChartBar, FaUserShield } from 'react-icons/fa';
 import Projects from '../../components/app/Projects';
+import {
+  FaUsers,
+  FaBuilding,
+  FaChartBar,
+  FaUserShield,
+  FaSignOutAlt,
+} from 'react-icons/fa';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('users');
+  const navigate = useNavigate();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -29,7 +37,7 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen bg-[#f4f8ff]">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-2xl border-r border-gray-200 p-6 flex flex-col justify-between">
+      <aside className="w-64 bg-white shadow-2xl border-r border-gray-200 p-6 flex flex-col">
         <div>
           <h1 className="text-xl font-bold text-blue-600 uppercase mb-1">LB Management</h1>
           <h2 className="text-md text-gray-600 mb-6">Admin Panel</h2>
@@ -59,7 +67,7 @@ const Dashboard = () => {
               active={activeTab === 'roles'}
               onClick={() => setActiveTab('roles')}
             />
-             <SidebarItem
+            <SidebarItem
               icon={<FaUserShield />}
               label="All Projects"
               active={activeTab === 'projects'}
@@ -68,8 +76,18 @@ const Dashboard = () => {
           </ul>
         </div>
 
-        <div className="text-xs text-gray-400 mt-8 text-center">
-          © {new Date().getFullYear()} LaunchBox Pvt Ltd
+        {/* Logout Button */}
+        <div className="space-y-4 mt-60">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-100 rounded-lg transition"
+          >
+            <FaSignOutAlt className="text-base" />
+            Logout
+          </button>
+          <div className="text-xs text-gray-400 text-center">
+            © {new Date().getFullYear()} LaunchBox Pvt Ltd
+          </div>
         </div>
       </aside>
 
