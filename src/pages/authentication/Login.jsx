@@ -37,7 +37,6 @@ export default function LoginPage() {
         // ✅ Redirect based on role
         const role = user?.role?.name?.toLowerCase();
         if (role == "admin") {
-          alert("test")
           navigate("/app/dashboard");
         } else {
           navigate("/app/userdashboard");
