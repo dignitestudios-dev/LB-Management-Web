@@ -74,7 +74,7 @@ const UserDashboard = () => {
 
     setTimerInterval(timer); // Save the timer interval
 
-    return () => clearInterval(timer);
+    // return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -308,9 +308,10 @@ const UserDashboard = () => {
               checkInTime={todayAttendance?.checkInTime}
               setTodayAttendance={setTodayAttendance}
               todayAttendance={todayAttendance}
-              // Pass stopped time and flag to ProjectList
               isTimeStoppedForCheckout={isTimeStoppedForCheckout}
               stoppedTime={stoppedTime}
+              setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
+              setStoppedTime={setStoppedTime}
             />
           </div>
         </div>
@@ -332,8 +333,10 @@ const ProjectList = ({
   checkInTime,
   setTodayAttendance,
   todayAttendance,
-  isTimeStoppedForCheckout, // receive from parent
-  stoppedTime, // receive from parent
+  isTimeStoppedForCheckout,
+  stoppedTime,
+  setIsTimeStoppedForCheckout,
+  setStoppedTime,
 }) => {
   const { loading, data: projects } = useUsers("/projects");
 
@@ -444,7 +447,7 @@ const ProjectList = ({
     const m = mins % 60;
 
     if (isTimeStoppedForCheckout) {
-      return `${h} hour(s) ${m} minute(s) (Time Stopped)`;
+      return `${h} hour(s) ${m} minute(s)`;
     }
 
     const s =
