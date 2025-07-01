@@ -17,6 +17,7 @@ function App() {
     <Routes>
       <Route
         path="/"
+        path="/"
         element={
           <Navigate
             to={Cookies.get("token") ? "app/dashboard" : "/auth/login"}
