@@ -10,16 +10,4 @@ export const AuthRoute=[
         name: "Login",
         isPublic: true,
       },
-      {
-        url: "loginpage",
-        page: <DummyLogin />,
-        name: "Login Page",
-        isPublic: true,
-      },
-       {
-        url: "dashboard",
-        page: <Dashboard />,
-        name: "Dashboard",
-        isPublic: true,
-      },
 ]
