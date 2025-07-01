@@ -62,10 +62,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside className="w-64 bg-[rgb(237 237 237)] shadow-2xl border-r border-gray-200 p-6 flex flex-col">
         <div>
-          <h1 className="text-xl font-bold text-[#f40e00] uppercase mb-1">
-            LB Management
-          </h1>
-          <h2 className="text-md text-gray-600 mb-6">Admin Panel</h2>
+          <img src="/logo.webp" alt="" className="pb-10 pt-3" />
 
           <ul className="space-y-2">
             <SidebarItem
@@ -112,7 +109,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto bg-gray-50">
         <div className="w-full flex justify-between items-center mb-6 px-2 max-w-7xl">
-          <div className="text-2xl font-bold text-black">LB Management</div>
+          <div className="text-2xl font-bold text-black"></div>
 
           {userLoading ? (
             <p className="text-sm font-medium text-gray-500">Loading...</p>
@@ -164,7 +161,6 @@ const Dashboard = () => {
           )}
         </div>
         <div className="text-2xl font-semibold text-gray-800 mb-4 capitalize">
-          {activeTab.replace("-", " ")}
         </div>
         {renderContent()}
       </main>
