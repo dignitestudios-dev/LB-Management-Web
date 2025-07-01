@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { useLogin } from "../../hooks/api/Post";
+import { useCheckin, useLogin } from "../../hooks/api/Post";
 
 import { useUsers } from "../../hooks/api/Get";
 
@@ -31,19 +31,21 @@ const UserDashboard = () => {
   );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCheckInLoading, setCheckInLoading] = useState(false);
 
   const [todayAttendance, setTodayAttendance] = useState(null);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const { postData, loading } = useLogin();
+  const { checkInData, checkInloading} = useCheckin();
 
   const { data: user, loading: userLoading } = useUsers("/users/me");
 
   const handleLogout = async () => {
     await postData("/auth/logout", false, null, null, (res) => {
       Cookies.remove("token");
-
+      
       localStorage.removeItem("token");
 
       localStorage.removeItem("user");
@@ -97,15 +99,11 @@ const UserDashboard = () => {
   const handleCheckIn = async () => {
     const checkInTime = new Date().toISOString();
 
-    await postData(
+    await checkInData(
       "/attendance/check-in",
-
       false,
-
       null,
-
       { checkInTime },
-
       (res) => {
         SuccessToast("Check-In successful!");
 
@@ -263,15 +261,14 @@ const UserDashboard = () => {
           <button
             onClick={handleCheckIn}
             className="px-6 py-2 rounded-full bg-black text-white font-semibold shadow transition-all duration-200"
-            disabled={loading}
+            disabled={checkInloading}
           >
-            {loading ? "Checking In..." : "Check In"}
+            {checkInloading ? "Checking In..." : "Check In"}
           </button>
-
           <button
             onClick={handleCheckOut}
             className="px-6 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
-            disabled={loading}
+            disabled={checkInloading}
           >
             Check Out
           </button>

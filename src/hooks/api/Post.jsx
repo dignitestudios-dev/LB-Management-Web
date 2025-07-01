@@ -31,5 +31,32 @@ const useLogin = () => {
 
   return { loading, postData };
 };
+const useCheckin = () => {
+  const [checkInloading, setCheckLoading] = useState(false);
+  const navigate = useNavigate();
 
-export { useLogin };
+  const checkInData = async (
+    url,
+    isFormData = false,
+    formdata = null,
+    data = null,
+    callback
+  ) => {
+    try {
+      setCheckLoading(true);
+      const response = await axios.post(url, isFormData ? formdata : data);
+      if (typeof callback === "function") {
+        callback(response?.data, navigate);
+      }
+      return response?.data;
+    } catch (error) {
+      processError(error);
+    } finally {
+      setCheckLoading(false);
+    }
+  };
+
+  return { checkInData, checkInloading };
+};
+
+export { useLogin, useCheckin };
