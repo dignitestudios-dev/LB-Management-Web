@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 
+import React, { useEffect, useState } from "react";
+
 import { useLogin } from "../../hooks/api/Post";
 
 import { useUsers } from "../../hooks/api/Get";
@@ -13,6 +15,7 @@ import { IoLogOut } from "react-icons/io5";
 import { useNavigate } from "react-router";
 
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
+import { ImCross } from "react-icons/im";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -286,6 +289,10 @@ const UserDashboard = () => {
               <h2 className="text-xl font-semibold mb-4 text-black">
                 Select Project for Check Out
               </h2>
+              <ImCross className="cursor-pointer" onClick={() => {
+                setIsModalOpen(false);
+              }} />
+
             </div>
 
             <ProjectList
@@ -319,9 +326,8 @@ const ProjectList = ({
 }) => {
   const { loading, data: projects } = useUsers("/projects");
 
-  const [entries, setEntries] = useState([
-    { project: "", minutesWorked: "", description: "" },
-  ]);
+  const [projectCount, setProjectCount] = useState(null);
+  const [entries, setEntries] = useState([]);
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
@@ -349,13 +355,6 @@ const ProjectList = ({
     setEntries(updatedEntries);
   };
 
-  const addNewEntry = () => {
-    setEntries([
-      ...entries,
-      { project: "", minutesWorked: "", description: "" },
-    ]);
-  };
-
   const handleSubmit = async () => {
     const checkoutTime = new Date().toISOString();
 
@@ -379,7 +378,6 @@ const ProjectList = ({
       ErrorToast(
         `Total entered minutes (${totalEntered}) cannot exceed available time (${totalAvailableMinutes}).`
       );
-
       return;
     }
 
@@ -397,136 +395,173 @@ const ProjectList = ({
 
     await postData("/attendance/check-out", false, null, payload, (res) => {
       SuccessToast("Checked out successfully!");
-
-      console.log("Checkout Payload:", payload);
-
       setTodayAttendance({
         ...todayAttendance,
-
-        checkOutTime: checkoutTime, // ✅ update frontend instantly
+        checkOutTime: checkoutTime,
       });
 
       onClose();
     });
   };
 
+  // const getDuration = () => {
+  //   const mins = totalAvailableMinutes;
+  //   const h = Math.floor(mins / 60);
+  //   const m = mins % 60;
+  //   return `${h} hour(s) ${m} minute(s)`;
+  // };
+
   const getDuration = () => {
-    const mins = totalAvailableMinutes;
+  const mins = totalAvailableMinutes;
+  const h = Math.floor(mins / 60);  // Calculate hours
+  const m = mins % 60;             // Get the remaining minutes
+  const s = Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) % 60; // Calculate seconds
 
-    const h = Math.floor(mins / 60);
+  return `${h} hour(s) ${m} minute(s) ${s} second(s)`;  // Include seconds in the return
+};
 
-    const m = mins % 60;
-
-    return `${h} hour(s) ${m} minute(s)`;
-  };
 
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
-      <div className="text-sm text-gray-700 space-y-1">
-        <p>
-          <strong>Total Time Since Check-In:</strong>{" "}
-          <span className="text-blue-700 font-medium">{getDuration()}</span>
-        </p>
+      {projectCount === null ? (
+        <div className="space-y-4">
+          <p className="text-gray-700 font-medium">
+            How many projects did you work on today?
+          </p>
+          <input
+            type="number"
+            min="1"
+            max="10"
+            placeholder="Enter number of projects"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => {
+              const count = parseInt(e.target.value);
+              if (isNaN(count) || count < 1 || count > 10) return;
 
-        <p>
-          <strong>Time Remaining:</strong>{" "}
-          <span className="text-red-600 font-medium">
-            {remainingMinutes} minutes
-          </span>
-        </p>
-      </div>
+              setProjectCount(count);
 
-      {loading ? (
-        <p className="text-gray-500">Loading projects...</p>
-      ) : (
-        entries.map((entry, index) => {
-          const otherMinutes = entries.reduce((sum, ent, i) => {
-            if (i !== index) return sum + (parseInt(ent.minutesWorked) || 0);
+              const totalMinutes = availableMinutes();
+              const evenMinutes = Math.floor(totalMinutes / count);
+              const remaining = totalMinutes % count;
 
-            return sum;
-          }, 0);
+              // Distribute evenMinutes to all, and +1 to the first few if there's a remainder
+              const initialEntries = Array.from({ length: count }, (_, i) => ({
+                project: "",
+                minutesWorked: i < remaining ? evenMinutes + 1 : evenMinutes,
+                description: "",
+              }));
 
-          const maxForThis = totalAvailableMinutes - otherMinutes;
-
-          return (
-            <div
-              key={index}
-              className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
-            >
-              <select
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={entry.project}
-                onChange={(e) => handleChange(index, "project", e.target.value)}
-              >
-                <option value="">Select a project</option>
-
-                {projects.map((proj) => (
-                  <option key={proj._id} value={proj._id}>
-                    {proj.name}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                type="number"
-                placeholder={`Minutes Worked (max: ${maxForThis})`}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={entry.minutesWorked}
-                min="0"
-                max={maxForThis}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-
-                  if (isNaN(val) || val < 0) return;
-
-                  if (val <= maxForThis) {
-                    handleChange(index, "minutesWorked", val);
-                  } else {
-                    ErrorToast(
-                      `You can't enter more than ${maxForThis} minutes for this entry.`
-                    );
-                  }
-                }}
-              />
-
-              <textarea
-                placeholder="Description"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={2}
-                value={entry.description}
-                onChange={(e) =>
-                  handleChange(index, "description", e.target.value)
-                }
-              />
-            </div>
-          );
-        })
-      )}
-
-      <div className="flex justify-between items-center pt-2">
-        <button
-          onClick={addNewEntry}
-          className="text-sm font-medium text-blue-600 hover:underline"
-        >
-          + Add Another Project
-        </button>
-
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm"
-          >
-            Submit
-          </button>
+              setEntries(initialEntries);
+            }}
+          />
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="text-sm text-gray-700 space-y-1">
+            <p>
+              <strong>Total Time Since Check-In:</strong>{" "}
+              <span className="text-blue-700 font-medium">{getDuration()}</span>
+            </p>
+            <p>
+              <strong>Time Remaining:</strong>{" "}
+              <span className="text-red-600 font-medium">
+                {remainingMinutes} minutes
+              </span>
+            </p>
+          </div>
+
+          {loading ? (
+            <p className="text-gray-500">Loading projects...</p>
+          ) : (
+            entries.map((entry, index) => {
+              const otherMinutes = entries.reduce((sum, ent, i) => {
+                if (i !== index) return sum + (parseInt(ent.minutesWorked) || 0);
+                return sum;
+              }, 0);
+
+              const maxForThis = totalAvailableMinutes - otherMinutes;
+
+              return (
+                <div
+                  key={index}
+                  className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
+                >
+                  <select
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={entry.project}
+                    onChange={(e) => handleChange(index, "project", e.target.value)}
+                  >
+                    <option value="">Select a project</option>
+                    {projects.map((proj) => (
+                      <option key={proj._id} value={proj._id}>
+                        {proj.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    placeholder={`Minutes Worked (max: ${maxForThis})`}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={entry.minutesWorked}
+                    min="0"
+                    max={maxForThis}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (isNaN(val) || val < 0) return;
+                      if (val <= maxForThis) {
+                        handleChange(index, "minutesWorked", val);
+                      } else {
+                        ErrorToast(
+                          `You can't enter more than ${maxForThis} minutes for this entry.`
+                        );
+                      }
+                    }}
+                  />
+
+                  <textarea
+                    placeholder="Description"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                    value={entry.description}
+                    onChange={(e) =>
+                      handleChange(index, "description", e.target.value)
+                    }
+                  />
+                </div>
+              );
+            })
+          )}
+
+          <div className="flex justify-between items-center pt-2">
+            <button
+              onClick={() => {
+                setProjectCount(null);
+                setEntries([]);
+              }}
+              className="text-sm font-medium text-red-600 hover:underline"
+            >
+              ← Back
+            </button>
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 rounded-md bg-red-600 text-white text-sm"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
