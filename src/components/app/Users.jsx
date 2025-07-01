@@ -198,6 +198,7 @@ const Users = () => {
           <table className="min-w-full border bg-[rgb(237 237 237)] rounded-xl shadow">
             <thead className="bg-red-100 text-gray-800">
               <tr>
+                <th className="px-4 py-3 border">#</th>
                 <th className="px-4 py-3 border">Name</th>
                 <th className="px-4 py-3 border">Email</th>
                 <th className="px-4 py-3 border">Employee Code</th>
@@ -206,15 +207,20 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {users.map((user,i) => (
                 <tr key={user._id} className="hover:bg-blue-50">
-                  <td className="border px-4 py-2">{user.name}</td>
-                  <td className="border px-4 py-2">{user.email}</td>
-                  <td className="border px-4 py-2">{user.employeeCode}</td>
-                  <td className="border px-4 py-2">
+                  <td className="border text-center px-4 py-2">{i+1}</td>
+                  <td className="border text-center px-4 py-2">{user.name}</td>
+                  <td className="border text-center px-4 py-2">{user.email}</td>
+                  <td className="border text-center px-4 py-2">
+                    {user.employeeCode}
+                  </td>
+                  <td className="border text-center px-4 py-2">
                     {user.department?.name || "—"}
                   </td>
-                  <td className="border px-4 py-2">{user.role?.name || "—"}</td>
+                  <td className="border text-center px-4 py-2">
+                    {user.role?.name || "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>

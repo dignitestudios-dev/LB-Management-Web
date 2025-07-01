@@ -6,7 +6,9 @@ const Roles = () => {
   const [roles, setRoles] = useState([]);
   const [newRole, setNewRole] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  const [editedName, setEditedName] = useState("");
   // Fetch roles
   const fetchRoles = async () => {
     try {
@@ -40,6 +42,36 @@ const Roles = () => {
   useEffect(() => {
     fetchRoles();
   }, []);
+
+  const openEditModal = (role) => {
+    setEditingRole(role);
+    setEditedName(role.name);
+    setEditModalOpen(true);
+  };
+
+  const updateRole = async () => {
+    try {
+      await axios.put(`/roles/${editingRole._id}`, { name: editedName });
+      SuccessToast("Role updated successfully");
+      setEditModalOpen(false);
+      setEditingRole(null);
+      fetchRoles();
+    } catch (err) {
+      ErrorToast("Failed to update role");
+    }
+  };
+
+  const deleteRole = async (roleId) => {
+    if (!window.confirm("Are you sure you want to delete this role?")) return;
+
+    try {
+      await axios.delete(`/roles/${roleId}`);
+      SuccessToast("Role deleted successfully");
+      fetchRoles();
+    } catch (err) {
+      ErrorToast("Failed to delete role");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -77,6 +109,7 @@ const Roles = () => {
                 <th className="px-4 py-2 border">#</th>
                 <th className="px-4 py-2 border">Role Name</th>
                 <th className="px-4 py-2 border">Created At</th>
+                <th className="px-4 py-2 border">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -89,12 +122,54 @@ const Roles = () => {
                   <td className="px-4 py-2 text-center text-sm border">
                     {new Date(role.createdAt).toLocaleDateString()}
                   </td>
+                  <td className="px-4 py-2 text-center border space-x-2">
+                    <button
+                      onClick={() => openEditModal(role)}
+                      className=" bg-blue-500 px-3 rounded-md text-white hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteRole(role._id)}
+                      className="text-white bg-red-500 px-3 rounded-md hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-md w-96">
+            <h2 className="text-lg font-semibold mb-4">Edit Role</h2>
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateRole}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

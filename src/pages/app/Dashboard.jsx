@@ -5,6 +5,7 @@ import Departments from "../../components/app/Departments";
 import Summary from "../../components/app/Summary";
 import Roles from "../../components/app/Roles";
 import Projects from "../../components/app/Projects";
+import Cookies from "js-cookie";
 import {
   FaUsers,
   FaBuilding,
@@ -14,10 +15,15 @@ import {
   FaBusinessTime,
 } from "react-icons/fa";
 import Shift from "../../components/app/Shifts";
+import { useLogin } from "../../hooks/api/Post";
+import { useUsers } from "../../hooks/api/Get";
+import { SuccessToast } from "../../components/global/Toaster";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("users");
   const navigate = useNavigate();
+  const { postData, loading } = useLogin();
+  const { data: user, loading: userLoading } = useUsers("/users/me");
 
   const renderContent = () => {
     switch (activeTab) {
@@ -36,6 +42,16 @@ const Dashboard = () => {
       default:
         return <Summary />;
     }
+  };
+
+  const handleLogout = async () => {
+    await postData("/auth/logout", false, null, null, (res) => {
+      Cookies.remove("token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      SuccessToast("Logged out successfully.");
+      navigate("/auth/login");
+    });
   };
 
   return (
@@ -92,7 +108,7 @@ const Dashboard = () => {
         {/* Logout Button */}
         <div className="space-y-4 mt-60">
           <button
-            onClick={() => navigate("/auth/login")}
+            onClick={() => handleLogout()}
             className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-100 rounded-lg transition"
           >
             <FaSignOutAlt className="text-base" />

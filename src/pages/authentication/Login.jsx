@@ -79,6 +79,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
+
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -109,13 +110,14 @@ export default function LoginPage() {
             </button>
 
             {/* Switch to Register */}
+
           </form>
         </div>
       </div>
 
       {/* Right Section - Image/Gradient */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]">
-        <h1 className="text-white">Hello</h1>
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]" >
+        <img src="/demo.png" alt="" />
       </div>
     </div>
   );
