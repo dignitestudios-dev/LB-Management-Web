@@ -10,7 +10,11 @@ function App() {
   useEffect(() => {
     const token = Cookies.get("token");
     setIsAuthenticated(!!token); // shorthand for setting true/false
+  console.log(token,"this is token")
+
   }, []);
+  
+
 
   // Protected route wrapper
   const ProtectedRoute = () => {
@@ -22,7 +26,7 @@ function App() {
     <Routes>
       {/* Redirect /app/ to dashboard or login */}
       <Route
-        path="app"
+        path="/"
         element={
           isAuthenticated === null ? null : (
             <Navigate to={isAuthenticated ? "app/dashboard" : "/auth/login"} />
