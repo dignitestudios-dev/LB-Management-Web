@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 
-import React, { useEffect, useState } from "react";
-
 import { useLogin } from "../../hooks/api/Post";
 
 import { useUsers } from "../../hooks/api/Get";
@@ -289,10 +287,12 @@ const UserDashboard = () => {
               <h2 className="text-xl font-semibold mb-4 text-black">
                 Select Project for Check Out
               </h2>
-              <ImCross className="cursor-pointer" onClick={() => {
-                setIsModalOpen(false);
-              }} />
-
+              <ImCross
+                className="cursor-pointer"
+                onClick={() => {
+                  setIsModalOpen(false);
+                }}
+              />
             </div>
 
             <ProjectList
@@ -412,14 +412,15 @@ const ProjectList = ({
   // };
 
   const getDuration = () => {
-  const mins = totalAvailableMinutes;
-  const h = Math.floor(mins / 60);  // Calculate hours
-  const m = mins % 60;             // Get the remaining minutes
-  const s = Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) % 60; // Calculate seconds
+    const mins = totalAvailableMinutes;
+    const h = Math.floor(mins / 60); // Calculate hours
+    const m = mins % 60; // Get the remaining minutes
+    const s =
+      Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) %
+      60; // Calculate seconds
 
-  return `${h} hour(s) ${m} minute(s) ${s} second(s)`;  // Include seconds in the return
-};
-
+    return `${h} hour(s) ${m} minute(s) ${s} second(s)`; // Include seconds in the return
+  };
 
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
@@ -475,7 +476,8 @@ const ProjectList = ({
           ) : (
             entries.map((entry, index) => {
               const otherMinutes = entries.reduce((sum, ent, i) => {
-                if (i !== index) return sum + (parseInt(ent.minutesWorked) || 0);
+                if (i !== index)
+                  return sum + (parseInt(ent.minutesWorked) || 0);
                 return sum;
               }, 0);
 
@@ -489,7 +491,9 @@ const ProjectList = ({
                   <select
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={entry.project}
-                    onChange={(e) => handleChange(index, "project", e.target.value)}
+                    onChange={(e) =>
+                      handleChange(index, "project", e.target.value)
+                    }
                   >
                     <option value="">Select a project</option>
                     {projects.map((proj) => (
