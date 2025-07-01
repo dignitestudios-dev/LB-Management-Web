@@ -76,6 +76,7 @@ const UserDashboard = () => {
 
     // return () => clearInterval(timer);
   }, []);
+  
 
   useEffect(() => {
     const fetchToday = async () => {
