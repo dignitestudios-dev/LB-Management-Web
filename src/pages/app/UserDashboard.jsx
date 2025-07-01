@@ -6,8 +6,16 @@ import Cookies from "js-cookie";
 import { IoLogOut } from 'react-icons/io5';
 import { useNavigate } from 'react-router';
 import { ErrorToast, SuccessToast } from '../../components/global/Toaster';
+import { useLogin } from "../../hooks/api/Post";
+import { useUsers } from "../../hooks/api/Get";
+import { baseUrl } from "../../axios";
+import Cookies from "js-cookie";
+import { IoLogOut } from 'react-icons/io5';
+import { useNavigate } from 'react-router';
+import { ErrorToast, SuccessToast } from '../../components/global/Toaster';
 
 const UserDashboard = () => {
+  const navigate = useNavigate();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString("en-US", {
@@ -18,6 +26,8 @@ const UserDashboard = () => {
     })
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [todayAttendance, setTodayAttendance] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [todayAttendance, setTodayAttendance] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -68,6 +78,25 @@ const UserDashboard = () => {
     fetchToday();
   }, []);
 
+  useEffect(() => {
+    const fetchToday = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/attendance/today`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+          setTodayAttendance(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching today's attendance", error);
+      }
+    };
+    fetchToday();
+  }, []);
+
   const handleCheckIn = async () => {
     const checkInTime = new Date().toISOString();
     await postData(
@@ -78,16 +107,115 @@ const UserDashboard = () => {
       (res) => {
         SuccessToast("Check-In successful!");
         setTodayAttendance({ ...todayAttendance, checkInTime });
+        SuccessToast("Check-In successful!");
+        setTodayAttendance({ ...todayAttendance, checkInTime });
       }
     );
   };
 
   const handleCheckOut = () => {
+    if(todayAttendance?.checkOutTime){
+       SuccessToast("You are already checked out today.");
+      return;
+    }
     setIsModalOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] p-6 flex flex-col items-center">
+      {/* ✅ HEADER */}
+      <div className="w-full flex justify-between items-center mb-6 px-2 max-w-7xl">
+        <div className="text-2xl font-bold text-black">
+          LB Management
+        </div>
+
+        {userLoading ? (
+          <p className="text-sm font-medium text-gray-500">Loading...</p>
+        ) : (
+          <div className="relative">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
+              <p className="text-sm font-medium text-gray-700">
+                Welcome, {user?.name || "Guest"}
+              </p>
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm">
+                <img
+                  src="/user.png"
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* 🔽 Dropdown */}
+            {isProfileOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700">
+                <div className="space-y-1">
+                  <p><strong>Name:</strong> {user.name}</p>
+                  <p><strong>Code:</strong> {user.employeeCode}</p>
+                  <p><strong>Department:</strong> {user.department.name}</p>
+                  <p><strong>Role:</strong> {user.role.name}</p>
+                </div>
+                <hr className="my-2" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
+                >
+                  <IoLogOut className="text-lg" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+
+      {/* ✅ MAIN DASHBOARD CARD */}
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-7xl">
+        <h1 className="text-3xl font-bold text-center text-black mb-4">Daily Reporting</h1>
+        <div className="flex flex-col md:flex-row justify-between items-center bg-[#eaf1ff] p-6 rounded-xl shadow-md w-full">
+          <div className="w-64 h-64 mx-auto flex flex-col items-center justify-center rounded-full shadow-inner border border-gray-200 bg-cover" style={{ backgroundImage: 'url("/clock.png")' }}>
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-1">Monday</p>
+              <h2 className="text-3xl font-bold text-gray-800 tracking-widest">
+                {currentTime}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">June 30, 2025</p>
+              <p className="text-sm text-gray-500">Asia/Karachi</p>
+            </div>
+          </div>
+        </div>
+
+        <div className='flex justify-center items-center gap-6 mt-3 mb-3'>
+          {todayAttendance?.checkInTime && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
+              <p className="font-semibold uppercase tracking-wide text-xs text-blue-600 mb-1">Checked In At</p>
+              <p className="text-lg font-bold">
+                {new Date(todayAttendance.checkInTime).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </p>
+            </div>
+          )}
+
+          {todayAttendance?.checkOutTime && (
+            <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
+              <p className="font-semibold uppercase tracking-wide text-xs text-green-600 mb-1">Checked Out At</p>
+              <p className="text-lg font-bold">
+                {new Date(todayAttendance.checkOutTime).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </p>
+            </div>
+          )}
+        </div>
       {/* ✅ HEADER */}
       <div className="w-full flex justify-between items-center mb-6 px-2 max-w-7xl">
         <div className="text-2xl font-bold text-black">
