@@ -7,7 +7,7 @@ const useUsers = (url, currentPage = 1) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [pagination, setPagination] = useState({});
-
+ const [refech,setRefetch]=useState(false);
   const getUsers = async () => {
     try {
       setLoading(true);
@@ -23,9 +23,9 @@ const useUsers = (url, currentPage = 1) => {
 
   useEffect(() => {
     getUsers();
-  }, [currentPage]);
+  }, [currentPage,refech]);
 
-  return { loading, data, pagination };
+  return { loading, data, pagination,setRefetch,refech };
 };
 
 export { useUsers };

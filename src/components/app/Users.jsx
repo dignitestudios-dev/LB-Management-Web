@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useUsers } from "../../hooks/api/Get";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
+import { ImSpinner3 } from "react-icons/im";
 
 const Users = () => {
-  const { data: users, loading } = useUsers("/users");
+  const { data: users, loading, setRefetch, refech } = useUsers("/users");
   const [roles, setRoles] = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [form, setForm] = useState({
     name: "",
@@ -13,22 +16,27 @@ const Users = () => {
     password: "",
     role: "",
     department: "",
+    shift: "",
     employeeCode: "",
   });
 
   // Fetch roles and departments
   const fetchFormOptions = async () => {
     try {
-      const [roleRes, deptRes] = await Promise.all([
+      const [roleRes, deptRes, shiftRes] = await Promise.all([
         axios.get("/roles/"),
         axios.get("/departments/"),
+        axios.get("/shifts/"),
       ]);
       setRoles(roleRes.data.data);
       setDepartments(deptRes.data.data);
+      setShifts(shiftRes.data.data);
     } catch (err) {
       ErrorToast("Failed to load roles or departments");
     }
   };
+
+  console.log(shifts, "shift-->");
 
   useEffect(() => {
     fetchFormOptions();
@@ -40,7 +48,17 @@ const Users = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.role || !form.department || !form.employeeCode) {
+    setSubmitLoading(true);
+    if (
+      !form.name ||
+      !form.email ||
+      !form.password ||
+      !form.role ||
+      !form.department ||
+      !form.employeeCode ||
+      !form.shift
+    ) {
+      setSubmitLoading(false);
       ErrorToast("Please fill all fields");
       return;
     }
@@ -48,22 +66,33 @@ const Users = () => {
     try {
       await axios.post("/users/", form);
       SuccessToast("User created successfully!");
-      setForm({ name: "", email: "", password: "", role: "", department: "", employeeCode: "" });
+      setSubmitLoading(false);
+      setRefetch(!refech);
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        role: "",
+        department: "",
+        employeeCode: "",
+        shift: "",
+      });
     } catch (err) {
+      setSubmitLoading(false);
       ErrorToast("User creation failed");
     }
   };
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">Users</h2>
-
       {/* User Creation Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-4 rounded-lg shadow mb-6 space-y-3"
+        className="bg-[rgb(237 237 237)] p-4 rounded-lg shadow mb-6 space-y-3"
       >
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">Create New User</h3>
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+          Create New User
+        </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
@@ -124,13 +153,40 @@ const Users = () => {
               </option>
             ))}
           </select>
+          <select
+            name="shift"
+            value={form.shift}
+            onChange={handleChange}
+            className="p-2 border rounded w-full"
+          >
+            <option value="">Select Shifts</option>
+            {shifts.map((shft) => {
+              const formatHour = (hour) => {
+                const period = hour >= 12 ? "PM" : "AM";
+                const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+                return `${hour12}:00 ${period}`;
+              };
+
+              const shiftTime = `${formatHour(shft.startHour)} - ${formatHour(
+                shft.endHour
+              )}`;
+
+              return (
+                <option key={shft?._id} value={shft?._id}>
+                  {shft?.name} ({shiftTime})
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         <button
           type="submit"
-          className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          className="mt-4 bg-[#f40e00] text-white px-6 py-2 rounded hover:bg-red-700 flex items-center justify-center gap-2"
+          disabled={submitLoading}
         >
           Create User
+          {submitLoading && <ImSpinner3 className="animate-spin" size={22} />}
         </button>
       </form>
 
@@ -139,8 +195,8 @@ const Users = () => {
         <p>Loading users...</p>
       ) : users?.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="min-w-full border bg-white rounded-xl shadow">
-            <thead className="bg-blue-100 text-gray-800">
+          <table className="min-w-full border bg-[rgb(237 237 237)] rounded-xl shadow">
+            <thead className="bg-red-100 text-gray-800">
               <tr>
                 <th className="px-4 py-3 border">Name</th>
                 <th className="px-4 py-3 border">Email</th>
@@ -158,9 +214,7 @@ const Users = () => {
                   <td className="border px-4 py-2">
                     {user.department?.name || "—"}
                   </td>
-                  <td className="border px-4 py-2">
-                    {user.role?.name || "—"}
-                  </td>
+                  <td className="border px-4 py-2">{user.role?.name || "—"}</td>
                 </tr>
               ))}
             </tbody>

@@ -73,7 +73,7 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] p-6 flex flex-col items-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-9xl">
+      <div className="bg-[rgb(237 237 237)] p-8 rounded-2xl shadow-lg w-full max-w-9xl">
         <h1 className="text-3xl font-bold text-center text-black mb-4">Attendance UserDashboard</h1>
 
         <div className="flex flex-col md:flex-row justify-between items-center bg-[#eaf1ff] p-6 rounded-xl shadow-md w-full">
@@ -100,7 +100,7 @@ const UserDashboard = () => {
        {/* ✅ Check-In Time */}
 {todayAttendance?.checkInTime && (
   <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
-    <p className="font-semibold uppercase tracking-wide text-xs text-blue-600 mb-1">Checked In At</p>
+    <p className="font-semibold uppercase tracking-wide text-xs text-[#f40e00] mb-1">Checked In At</p>
     <p className="text-lg font-bold">
       {new Date(todayAttendance.checkInTime).toLocaleTimeString("en-US", {
         hour: "numeric",
@@ -138,7 +138,7 @@ const UserDashboard = () => {
           </button>
           <button
             onClick={handleCheckOut}
-            className="px-6 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
+            className="px-6 py-2 rounded-full bg-red-600 hover:hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
             disabled={loading}
           >
             Check Out
@@ -149,9 +149,9 @@ const UserDashboard = () => {
       {/* Project Selection Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
+          <div className="bg-[rgb(237 237 237)] w-full max-w-xl rounded-xl p-6 shadow-lg relative">
             <div className='flex justify-between'>
-              <h2 className="text-xl font-semibold mb-4 text-blue-700">Select Project for Check Out</h2>
+              <h2 className="text-xl font-semibold mb-4 text-[#f40e00]">Select Project for Check Out</h2>
             </div>
 
             <ProjectList
@@ -252,12 +252,12 @@ const ProjectList = ({ onClose, postData, checkInTime }) => {
   };
 
   return (
-    <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
+    <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-[rgb(237 237 237)] rounded-lg shadow-lg">
       {/* 🕐 Session Time Info */}
       <div className="text-sm text-gray-700 space-y-1">
         <p>
           <strong>Total Time Since Check-In:</strong>{" "}
-          <span className="text-blue-700 font-medium">{getDuration()}</span>
+          <span className="text-[#f40e00] font-medium">{getDuration()}</span>
         </p>
         <p>
           <strong>Time Remaining:</strong>{" "}
@@ -328,7 +328,7 @@ const ProjectList = ({ onClose, postData, checkInTime }) => {
       <div className="flex justify-between items-center pt-2">
         <button
           onClick={addNewEntry}
-          className="text-sm font-medium text-blue-600 hover:underline"
+          className="text-sm font-medium text-[#f40e00] hover:underline"
         >
           + Add Another Project
         </button>
@@ -342,7 +342,7 @@ const ProjectList = ({ onClose, postData, checkInTime }) => {
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm"
+            className="px-4 py-2 rounded-md bg-[#f40e00] text-white hover:bg-red-700 text-sm"
           >
             Submit
           </button>

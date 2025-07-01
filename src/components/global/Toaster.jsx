@@ -69,7 +69,7 @@ export const NotificationToast = ({ title, message, route }) => {
         to={route}
         className={`${
           t.visible ? "animate-enter" : "animate-leave"
-        } max-w-md w-full bg-white shadow-lg rounded-lg flex ring-1 ring-black ring-opacity-5 p-4`}
+        } max-w-md w-full bg-[rgb(237 237 237)] shadow-lg rounded-lg flex ring-1 ring-black ring-opacity-5 p-4`}
       >
         <div className="flex-shrink-0 pt-0.5">
           <img

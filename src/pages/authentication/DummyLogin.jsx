@@ -34,7 +34,7 @@ const DummyLogin = () => {
     });
 
   return (
-    <div className="w-full h-auto flex flex-col items-center p-6 justify-center md:w-[499px] md:h-[548px]  rounded-[19px] bg-white">
+    <div className="w-full h-auto flex flex-col items-center p-6 justify-center md:w-[499px] md:h-[548px]  rounded-[19px] bg-[rgb(237 237 237)]">
       <img src={Logo} alt="orange_logo" className="w-[148.4px]" />
       <div className="w-auto flex flex-col mt-4 justify-center items-center">
         <h2 className="text-[32px] font-bold leading-[48px]">Welcome Back</h2>

@@ -5,14 +5,14 @@ const Departments = () => {
   const { data: departments, loading } = useUsers("/departments");
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow">
-      <h2 className="text-xl font-bold text-blue-600 mb-4">All Departments</h2>
+    <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow">
+      <h2 className="text-xl font-bold text-[#f40e00] mb-4">All Departments</h2>
 
       {loading ? (
         <p className="text-gray-600">Loading...</p>
       ) : (
         <table className="w-full table-auto border border-gray-200 rounded-lg">
-          <thead className="bg-blue-100 text-gray-700">
+          <thead className="bg-red-100 text-gray-700">
             <tr>
               <th className="px-4 py-2 border">#</th>
               <th className="px-4 py-2 border">Department Name</th>

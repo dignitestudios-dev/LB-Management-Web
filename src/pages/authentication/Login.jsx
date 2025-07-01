@@ -3,7 +3,7 @@ import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { useLogin } from "../../hooks/api/Post"; // ✅ Adjust path if needed
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router";
-
+import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -11,7 +11,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const { postData, loading } = useLogin();
   const navigate = useNavigate();
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,19 +25,19 @@ export default function LoginPage() {
         const user = res?.data?.user;
 
         if (!token || !user) {
-          alert("Login failed: Token or user not received");
+          ErrorToast("Login failed: Token or user not received");
           return;
         }
 
         // Save token and user info
-        Cookies.set("token", token, { expires: 1 });
+        Cookies.set("token", token, { expires: 7 });
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
-        alert("Login successful!");
+        SuccessToast("Login successful!");
 
         // ✅ Redirect based on role
         const role = user?.role?.name?.toLowerCase();
-        if (role === "admin") {
+        if (role == "admin") {
           navigate("/app/dashboard");
         } else {
           navigate("/app/userdashboard");
@@ -47,12 +46,11 @@ export default function LoginPage() {
     );
   };
 
-
   return (
     <div className="min-h-screen flex">
       {/* Left Section - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#f4f8ff] px-6 py-12">
-        <div className="w-full max-w-md bg-white rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
+        <div className="w-full max-w-md bg-[rgb(237 237 237)] rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
           {/* Logo / Heading */}
           <div className="text-center mb-8">
             <h2 className="text-4xl font-bold text-black">Welcome Back</h2>
@@ -63,7 +61,9 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div className="relative">
-              <label className="block text-gray-800 font-semibold mb-2">Email</label>
+              <label className="block text-gray-800 font-semibold mb-2">
+                Email
+              </label>
               <div className="relative">
                 <input
                   type="email"
@@ -79,7 +79,6 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -109,19 +108,15 @@ export default function LoginPage() {
               {loading ? "Logging in..." : "Log In"}
             </button>
 
-
             {/* Switch to Register */}
-
           </form>
         </div>
       </div>
 
       {/* Right Section - Image/Gradient */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]" >
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]">
         <h1 className="text-white">Hello</h1>
       </div>
-
-
     </div>
   );
 }
