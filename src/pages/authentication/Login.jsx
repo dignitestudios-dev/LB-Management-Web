@@ -34,7 +34,6 @@ export default function LoginPage() {
         localStorage.setItem("user", JSON.stringify(user));
         SuccessToast("Login successful!");
 
-        // ✅ Redirect based on role
         const role = user?.role?.name?.toLowerCase();
         if (role == "admin") {
           navigate("/app/dashboard");

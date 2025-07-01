@@ -24,8 +24,6 @@ const useLogin = () => {
       return response?.data;
     } catch (error) {
       processError(error);
-      SuccessToast(error?.response?.data?.message || "Something went wrong"); // ✅ Show error message
-      processError(error?.response?.data?.message);
     } finally {
       setLoading(false);
     }
