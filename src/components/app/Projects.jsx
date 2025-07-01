@@ -7,7 +7,9 @@ const Projects = () => {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
-
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  const [editedName, setEditedName] = useState("");
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -42,6 +44,36 @@ const Projects = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  const openEditModal = (role) => {
+    setEditingRole(role);
+    setEditedName(role.name);
+    setEditModalOpen(true);
+  };
+
+  const updateRole = async () => {
+    try {
+      await axios.put(`/projects`, { id: editingRole._id, name: editedName });
+      SuccessToast("Role updated successfully");
+      setEditModalOpen(false);
+      setEditingRole(null);
+      fetchProjects();
+    } catch (err) {
+      ErrorToast("Failed to update role");
+    }
+  };
+
+  const deleteRole = async (roleId) => {
+    if (!window.confirm("Are you sure you want to delete this role?")) return;
+
+    try {
+      await axios.delete(`/projects/${roleId}`);
+      SuccessToast("Role deleted successfully");
+      fetchProjects();
+    } catch (err) {
+      ErrorToast("Failed to delete role");
+    }
+  };
 
   return (
     <div className=" max-w-7xl mx-auto">
@@ -78,6 +110,7 @@ const Projects = () => {
                 <th className="px-4 py-2 border">#</th>
                 <th className="px-4 py-2 border">Project Name</th>
                 <th className="px-4 py-2 border">Created At</th>
+                <th className="px-4 py-2 border">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -93,12 +126,54 @@ const Projects = () => {
                   <td className="px-4 py-2 text-center text-sm border">
                     {new Date(project.createdAt).toLocaleDateString()}
                   </td>
+                  <td className="px-4 py-2 text-center border space-x-2">
+                    <button
+                      onClick={() => openEditModal(project)}
+                      className=" bg-blue-500 py-1 px-3 rounded-md text-white hover:underline"
+                    >
+                      Edit
+                    </button>
+                    {/* <button
+                      onClick={() => deleteRole(project._id)}
+                      className="text-white py-1 bg-red-500 px-3 rounded-md hover:underline"
+                    >
+                      Delete
+                    </button> */}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-md w-96">
+            <h2 className="text-lg font-semibold mb-4">Edit Role</h2>
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateRole}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

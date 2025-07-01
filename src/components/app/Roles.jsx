@@ -51,7 +51,7 @@ const Roles = () => {
 
   const updateRole = async () => {
     try {
-      await axios.put(`/roles/${editingRole._id}`, { name: editedName });
+      await axios.put(`/roles`, { id: editingRole._id, name: editedName });
       SuccessToast("Role updated successfully");
       setEditModalOpen(false);
       setEditingRole(null);
@@ -125,16 +125,16 @@ const Roles = () => {
                   <td className="px-4 py-2 text-center border space-x-2">
                     <button
                       onClick={() => openEditModal(role)}
-                      className=" bg-blue-500 px-3 rounded-md text-white hover:underline"
+                      className=" bg-blue-500 py-1 px-3 rounded-md text-white hover:underline"
                     >
                       Edit
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => deleteRole(role._id)}
-                      className="text-white bg-red-500 px-3 rounded-md hover:underline"
+                      className="text-white bg-red-500 py-1 px-3 rounded-md hover:underline"
                     >
                       Delete
-                    </button>
+                    </button> */}
                   </td>
                 </tr>
               ))}
