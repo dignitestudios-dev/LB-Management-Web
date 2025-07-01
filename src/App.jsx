@@ -5,32 +5,22 @@ import { AppRoutes } from "./routes/app/AppRoutes";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-
-  useEffect(() => {
-    const token = Cookies.get("token");
-    setIsAuthenticated(!!token); // shorthand for setting true/false
-  console.log(token,"this is token")
-
-  }, []);
-  
-
-
   // Protected route wrapper
   const ProtectedRoute = () => {
-    if (isAuthenticated === null) return null; // Optional: or show a loader
-    return isAuthenticated ? <Outlet /> : <Navigate to="/auth/login" />;
+    const token = Cookies.get("token");
+    console.log(token, "Test");
+    if (token === null) return null; // Optional: or show a loader
+    return token ? <Outlet /> : <Navigate to="/auth/login" />;
   };
-
+  // console.log(isAuthenticated,"testToken")
   return (
     <Routes>
-      {/* Redirect /app/ to dashboard or login */}
       <Route
         path="/"
         element={
-          isAuthenticated === null ? null : (
-            <Navigate to={isAuthenticated ? "app/dashboard" : "/auth/login"} />
-          )
+          <Navigate
+            to={Cookies.get("token") ? "app/dashboard" : "/auth/login"}
+          />
         }
       />
 
