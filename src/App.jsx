@@ -17,16 +17,14 @@ function App() {
     if (isAuthenticated === null) return null; // Optional: or show a loader
     return isAuthenticated ? <Outlet /> : <Navigate to="/auth/login" />;
   };
-
+console.log(isAuthenticated,"testToken")
   return (
     <Routes>
       {/* Redirect /app/ to dashboard or login */}
       <Route
         path="/"
         element={
-          isAuthenticated === null ? null : (
-            <Navigate to={isAuthenticated ? "app/dashboard" : "/auth/login"} />
-          )
+          <Navigate to={isAuthenticated ? "app/dashboard" : "/auth/login"} />
         }
       />
 

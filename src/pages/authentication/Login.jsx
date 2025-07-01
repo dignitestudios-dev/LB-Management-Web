@@ -23,7 +23,6 @@ export default function LoginPage() {
       (res, navigate) => {
         const token = res?.data?.token;
         const user = res?.data?.user;
-
         if (!token || !user) {
           ErrorToast("Login failed: Token or user not received");
           return;
@@ -38,6 +37,7 @@ export default function LoginPage() {
         // ✅ Redirect based on role
         const role = user?.role?.name?.toLowerCase();
         if (role == "admin") {
+          alert("test")
           navigate("/app/dashboard");
         } else {
           navigate("/app/userdashboard");
@@ -79,7 +79,6 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -110,13 +109,12 @@ export default function LoginPage() {
             </button>
 
             {/* Switch to Register */}
-
           </form>
         </div>
       </div>
 
       {/* Right Section - Image/Gradient */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]" >
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]">
         <img src="/demo.png" alt="" />
       </div>
     </div>
