@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "../../axios";
-import { ErrorToast } from "../../components/global/Toaster";
+import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { processError } from "../../lib/utils";
 import { useNavigate } from "react-router";
 
@@ -24,7 +24,7 @@ const useLogin = () => {
       return response?.data;
     } catch (error) {
       processError(error);
-      alert(error?.response?.data?.message || "Something went wrong"); // ✅ Show error message
+      SuccessToast(error?.response?.data?.message || "Something went wrong"); // ✅ Show error message
     } finally {
       setLoading(false);
     }
