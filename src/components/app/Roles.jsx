@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../axios"; // ✅ your axios instance
+import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
+import { ImSpinner3 } from "react-icons/im";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -9,7 +10,8 @@ const Roles = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [editedName, setEditedName] = useState("");
-  // Fetch roles
+  const [updating, setUpdating] = useState(false); // ✅ added loader for update
+
   const fetchRoles = async () => {
     try {
       setLoading(true);
@@ -22,7 +24,6 @@ const Roles = () => {
     }
   };
 
-  // Create new role
   const createRole = async () => {
     if (!newRole.trim()) {
       ErrorToast("Role name is required");
@@ -50,7 +51,13 @@ const Roles = () => {
   };
 
   const updateRole = async () => {
+    if (!editedName.trim()) {
+      ErrorToast("Role name is required");
+      return;
+    }
+
     try {
+      setUpdating(true); // ✅ start loader
       await axios.put(`/roles`, { id: editingRole._id, name: editedName });
       SuccessToast("Role updated successfully");
       setEditModalOpen(false);
@@ -58,6 +65,8 @@ const Roles = () => {
       fetchRoles();
     } catch (err) {
       ErrorToast("Failed to update role");
+    } finally {
+      setUpdating(false); // ✅ stop loader
     }
   };
 
@@ -75,8 +84,8 @@ const Roles = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Add Role Form */}
-      <div className="bg-[rgb(237 237 237)] shadow-md p-4 rounded-md mb-6">
+      {/* Create Role Form */}
+      <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
         <h3 className="text-lg font-semibold mb-2">Create New Role</h3>
         <div className="flex gap-4">
           <input
@@ -95,8 +104,8 @@ const Roles = () => {
         </div>
       </div>
 
-      {/* Role List */}
-      <div className="bg-[rgb(237 237 237)] shadow-md rounded-md p-4">
+      {/* Role List Table */}
+      <div className="bg-[rgb(237_237_237)] shadow-md rounded-md p-4">
         <h3 className="text-lg font-semibold mb-3">All Roles</h3>
         {loading ? (
           <p className="text-gray-600">Loading roles...</p>
@@ -125,13 +134,14 @@ const Roles = () => {
                   <td className="px-4 py-2 text-center border space-x-2">
                     <button
                       onClick={() => openEditModal(role)}
-                      className=" bg-blue-500 py-1 px-3 rounded-md text-white hover:underline"
+                      className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
                     >
                       Edit
                     </button>
+                    {/* Uncomment below if delete is needed */}
                     {/* <button
                       onClick={() => deleteRole(role._id)}
-                      className="text-white bg-red-500 py-1 px-3 rounded-md hover:underline"
+                      className="text-white bg-red-500 py-1 px-3 rounded-md hover:bg-red-600"
                     >
                       Delete
                     </button> */}
@@ -143,6 +153,7 @@ const Roles = () => {
         )}
       </div>
 
+      {/* Edit Role Modal */}
       {editModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-md shadow-md w-96">
@@ -162,9 +173,10 @@ const Roles = () => {
               </button>
               <button
                 onClick={updateRole}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                disabled={updating}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2"
               >
-                Update
+                Update {updating && <ImSpinner3 className="animate-spin" />}
               </button>
             </div>
           </div>

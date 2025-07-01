@@ -1,11 +1,135 @@
 import React, { useEffect, useState } from "react";
-import { useUsers } from "../../hooks/api/Get"; // Using the same custom hook
+import axios from "../../axios";
+import { ErrorToast, SuccessToast } from "../global/Toaster";
+import { ImSpinner3 } from "react-icons/im";
 
 const Shift = () => {
-  const { data: shiftData, loading } = useUsers("/shifts");
+  const [shiftsData, setShiftsData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newShiftName, setNewShiftName] = useState("");
+  const [startHour, setStartHour] = useState("");
+  const [endHour, setEndHour] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingShift, setEditingShift] = useState(null);
+  const [editedName, setEditedName] = useState("");
+  const [editStartHour, setEditStartHour] = useState("");
+  const [editEndHour, setEditEndHour] = useState("");
+  const [updating, setUpdating] = useState(false);
+
+  const fetchShifts = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/shifts/");
+      setShiftsData(res.data.data);
+    } catch (err) {
+      ErrorToast("Failed to fetch shifts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchShifts();
+  }, []);
+
+  const createShift = async () => {
+    if (!newShiftName.trim() || !startHour.trim() || !endHour.trim()) {
+      ErrorToast("Please fill out all shift fields");
+      return;
+    }
+
+    try {
+      await axios.post("/shifts", {
+        name: newShiftName,
+        startHour,
+        endHour,
+      });
+      SuccessToast("Shift created successfully");
+      setNewShiftName("");
+      setStartHour("");
+      setEndHour("");
+      fetchShifts();
+    } catch (err) {
+      ErrorToast("Failed to create shift");
+    }
+  };
+
+  const openEditModal = (shift) => {
+    setEditingShift(shift);
+    setEditedName(shift.name);
+    setEditStartHour(shift.startHour);
+    setEditEndHour(shift.endHour);
+    setEditModalOpen(true);
+  };
+
+  const updateShift = async () => {
+    if (!editedName.trim() || !editStartHour.trim() || !editEndHour.trim()) {
+      ErrorToast("All fields are required");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      await axios.put(`/shifts`, {
+        id: editingShift._id,
+        name: editedName,
+        startHour: editStartHour,
+        endHour: editEndHour,
+      });
+      SuccessToast("Shift updated successfully");
+      setEditModalOpen(false);
+      setEditingShift(null);
+      fetchShifts();
+    } catch (err) {
+      ErrorToast("Failed to update shift");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const formatHour = (hour) => {
+    const period = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+    return `${hour12}:00 ${period}`;
+  };
 
   return (
-    <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow">
+    <div className="bg-[rgb(237_237_237)] p-6 rounded-xl shadow">
+      {/* Create Shift */}
+      <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
+        <h3 className="text-lg font-semibold mb-2">Create New Shift</h3>
+        <div className="flex gap-4 flex-wrap">
+          <input
+            type="text"
+            placeholder="Enter Shift Name"
+            value={newShiftName}
+            onChange={(e) => setNewShiftName(e.target.value)}
+            className="border p-2 rounded w-full sm:w-[200px]"
+          />
+          <input
+            type="number"
+            placeholder="Start Hour (0-23)"
+            value={startHour}
+            onChange={(e) => setStartHour(e.target.value)}
+            className="border p-2 rounded w-full sm:w-[150px]"
+          />
+          <input
+            type="number"
+            placeholder="End Hour (0-23)"
+            value={endHour}
+            onChange={(e) => setEndHour(e.target.value)}
+            className="border p-2 rounded w-full sm:w-[150px]"
+          />
+          <button
+            onClick={createShift}
+            className="bg-[#f40e00] text-white px-6 py-2 rounded hover:bg-red-700"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Shift Table */}
       {loading ? (
         <p className="text-gray-600">Loading...</p>
       ) : (
@@ -16,36 +140,82 @@ const Shift = () => {
               <th className="px-4 py-2 border">Shift Name</th>
               <th className="px-4 py-2 border">Shift Time</th>
               <th className="px-4 py-2 border">Created At</th>
+              <th className="px-4 py-2 border">Action</th>
             </tr>
           </thead>
           <tbody>
-            {shiftData.map((shft, index) => {
-              const formatHour = (hour) => {
-                const period = hour >= 12 ? "PM" : "AM";
-                const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-                return `${hour12}:00 ${period}`;
-              };
-
-              const shiftTime = `${formatHour(shft.startHour)} - ${formatHour(
-                shft.endHour
+            {shiftsData.map((shift, index) => {
+              const shiftTime = `${formatHour(shift.startHour)} - ${formatHour(
+                shift.endHour
               )}`;
               return (
-                <tr key={shft._id} className="text-gray-800 hover:bg-gray-50">
-                  <td className="px-4 text-center py-2 border">{index + 1}</td>
+                <tr key={shift._id} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 border text-center">{index + 1}</td>
                   <td className="px-4 py-2 border text-center font-medium">
-                    {shft.name}
+                    {shift.name}
                   </td>
-                  <td className="px-4 py-2 border text-center font-medium">
-                    {shiftTime}
+                  <td className="px-4 py-2 border text-center">{shiftTime}</td>
+                  <td className="px-4 py-2 border text-center text-sm">
+                    {new Date(shift.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-4 py-2 border text-sm text-center">
-                    {new Date(shft.createdAt).toLocaleDateString()}
+                  <td className="px-4 py-2 border text-center">
+                    <button
+                      onClick={() => openEditModal(shift)}
+                      className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      )}
+
+      {/* Edit Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-md w-96">
+            <h2 className="text-lg font-semibold mb-4">Edit Shift</h2>
+            <input
+              type="text"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              className="w-full border p-2 rounded mb-3"
+              placeholder="Shift Name"
+            />
+            <input
+              type="number"
+              value={editStartHour}
+              onChange={(e) => setEditStartHour(e.target.value)}
+              className="w-full border p-2 rounded mb-3"
+              placeholder="Start Hour (0-23)"
+            />
+            <input
+              type="number"
+              value={editEndHour}
+              onChange={(e) => setEditEndHour(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+              placeholder="End Hour (0-23)"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateShift}
+                disabled={updating}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+              >
+               Update {updating && <ImSpinner3 className="animate-spin" />} 
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

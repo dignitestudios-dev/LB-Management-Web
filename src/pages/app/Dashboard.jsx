@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import Users from "../../components/app/Users";
 import Departments from "../../components/app/Departments";
@@ -20,7 +20,7 @@ import { useUsers } from "../../hooks/api/Get";
 import { SuccessToast } from "../../components/global/Toaster";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("summary");
   const navigate = useNavigate();
   const { postData, loading } = useLogin();
   const { data: user, loading: userLoading } = useUsers("/users/me");

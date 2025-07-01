@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
+import { ImSpinner3 } from "react-icons/im";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -8,8 +9,10 @@ const Projects = () => {
   const [creating, setCreating] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
   const [editedName, setEditedName] = useState("");
+  const [updating, setUpdating] = useState(false);
+
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -45,40 +48,57 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  const openEditModal = (role) => {
-    setEditingRole(role);
-    setEditedName(role.name);
+  const openEditModal = (project) => {
+    setEditingProject(project);
+    setEditedName(project.name);
     setEditModalOpen(true);
   };
 
-  const updateRole = async () => {
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingProject(null);
+    setEditedName("");
+  };
+
+  const updateProject = async () => {
+    if (!editedName.trim()) {
+      ErrorToast("Project name cannot be empty");
+      return;
+    }
+
     try {
-      await axios.put(`/projects`, { id: editingRole._id, name: editedName });
-      SuccessToast("Role updated successfully");
-      setEditModalOpen(false);
-      setEditingRole(null);
+      setUpdating(true);
+      await axios.put(`/projects`, {
+        id: editingProject._id,
+        name: editedName,
+      });
+      SuccessToast("Project updated successfully");
+      closeEditModal();
       fetchProjects();
     } catch (err) {
-      ErrorToast("Failed to update role");
+      ErrorToast("Failed to update project");
+    } finally {
+      setUpdating(false);
     }
   };
 
-  const deleteRole = async (roleId) => {
-    if (!window.confirm("Are you sure you want to delete this role?")) return;
+  const deleteProject = async (projectId) => {
+    if (!window.confirm("Are you sure you want to delete this project?"))
+      return;
 
     try {
-      await axios.delete(`/projects/${roleId}`);
-      SuccessToast("Role deleted successfully");
+      await axios.delete(`/projects/${projectId}`);
+      SuccessToast("Project deleted successfully");
       fetchProjects();
     } catch (err) {
-      ErrorToast("Failed to delete role");
+      ErrorToast("Failed to delete project");
     }
   };
 
   return (
-    <div className=" max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Create Project Form */}
-      <div className="bg-[rgb(237 237 237)] shadow-md p-4 rounded-md mb-6">
+      <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
         <div className="flex items-center gap-3">
           <input
             type="text"
@@ -90,13 +110,14 @@ const Projects = () => {
           <button
             onClick={createProject}
             disabled={creating}
-            className="bg-[#f40e00] text-white px-4 py-2 rounded hover:bg-red-700"
+            className="bg-[#f40e00] text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
           >
             {creating ? "Creating..." : "Create"}
           </button>
         </div>
       </div>
-      <div className="bg-[rgb(237 237 237)] shadow-md rounded-md p-4">
+
+      <div className="bg-[rgb(237_237_237)] shadow-md rounded-md p-4">
         <h3 className="text-lg font-semibold mb-3">All Projects</h3>
         {/* Project List */}
         {loading ? (
@@ -129,12 +150,13 @@ const Projects = () => {
                   <td className="px-4 py-2 text-center border space-x-2">
                     <button
                       onClick={() => openEditModal(project)}
-                      className=" bg-blue-500 py-1 px-3 rounded-md text-white hover:underline"
+                      className="bg-blue-500 py-1 px-3 rounded-md text-white hover:underline"
                     >
                       Edit
                     </button>
+                    {/* Uncomment to enable delete */}
                     {/* <button
-                      onClick={() => deleteRole(project._id)}
+                      onClick={() => deleteProject(project._id)}
                       className="text-white py-1 bg-red-500 px-3 rounded-md hover:underline"
                     >
                       Delete
@@ -147,28 +169,31 @@ const Projects = () => {
         )}
       </div>
 
+      {/* Edit Modal */}
       {editModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-md shadow-md w-96">
-            <h2 className="text-lg font-semibold mb-4">Edit Role</h2>
+            <h2 className="text-lg font-semibold mb-4">Edit Project</h2>
             <input
               type="text"
               value={editedName}
               onChange={(e) => setEditedName(e.target.value)}
               className="w-full border p-2 rounded mb-4"
+              placeholder="Project name"
             />
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setEditModalOpen(false)}
+                onClick={closeEditModal}
                 className="px-4 py-2 border rounded hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
-                onClick={updateRole}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={updateProject}
+                disabled={updating}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                Update
+                {updating && <ImSpinner3 className="animate-spin" />}
               </button>
             </div>
           </div>

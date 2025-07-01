@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { useUsers } from "../../hooks/api/Get";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
 
 const Users = () => {
-  const { data: users, loading, setRefetch, refech } = useUsers("/users");
+  const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
   const [shifts, setShifts] = useState([]);
+
+  const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [departments, setDepartments] = useState([]);
+  const [editLoading, setEditLoading] = useState(false);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    role: "",
+    department: "",
+    shift: "",
+    employeeCode: "",
+  });
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -20,7 +33,18 @@ const Users = () => {
     employeeCode: "",
   });
 
-  // Fetch roles and departments
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/users");
+      setUsers(res.data.data);
+    } catch (err) {
+      ErrorToast("Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchFormOptions = async () => {
     try {
       const [roleRes, deptRes, shiftRes] = await Promise.all([
@@ -32,13 +56,12 @@ const Users = () => {
       setDepartments(deptRes.data.data);
       setShifts(shiftRes.data.data);
     } catch (err) {
-      ErrorToast("Failed to load roles or departments");
+      ErrorToast("Failed to load form data");
     }
   };
 
-  console.log(shifts, "shift-->");
-
   useEffect(() => {
+    fetchUsers();
     fetchFormOptions();
   }, []);
 
@@ -49,84 +72,121 @@ const Users = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitLoading(true);
-    if (
-      !form.name ||
-      !form.email ||
-      !form.password ||
-      !form.role ||
-      !form.department ||
-      !form.employeeCode ||
-      !form.shift
-    ) {
-      setSubmitLoading(false);
+
+    const required = [
+      "name",
+      "email",
+      "password",
+      "role",
+      "department",
+      "shift",
+      "employeeCode",
+    ];
+    if (required.some((key) => !form[key])) {
       ErrorToast("Please fill all fields");
+      setSubmitLoading(false);
       return;
     }
 
     try {
       await axios.post("/users/", form);
       SuccessToast("User created successfully!");
-      setSubmitLoading(false);
-      setRefetch(!refech);
       setForm({
         name: "",
         email: "",
         password: "",
         role: "",
         department: "",
-        employeeCode: "",
         shift: "",
+        employeeCode: "",
       });
+      fetchUsers();
     } catch (err) {
-      setSubmitLoading(false);
       ErrorToast("User creation failed");
+    } finally {
+      setSubmitLoading(false);
     }
+  };
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role?._id || "",
+      department: user.department?._id || "",
+      shift: user.shift?._id || "",
+      employeeCode: user.employeeCode || "",
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditChange = (e) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const updateUser = async () => {
+    if (!editingUser) return;
+
+    const { name, email, role, department, shift, employeeCode } = editForm;
+
+    if (!name || !email || !role || !department || !shift || !employeeCode) {
+      ErrorToast("All fields  are required");
+      return;
+    }
+
+    try {
+      setEditLoading(true);
+      await axios.put("/users", {
+        userId: editingUser._id,
+        name,
+        role,
+        department,
+        shift,
+        employeeCode,
+      });
+
+      SuccessToast("User updated successfully");
+      setEditModalOpen(false);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err) {
+      ErrorToast("Failed to update user");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const formatHour = (hour) => {
+    const period = hour >= 12 ? "PM" : "AM";
+    const h = hour % 12 || 12;
+    return `${h}:00 ${period}`;
   };
 
   return (
     <div className="p-6">
-      {/* User Creation Form */}
+      {/* Create User Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-[rgb(237 237 237)] p-4 rounded-lg shadow mb-6 space-y-3"
+        className="bg-[rgb(237_237_237)] p-4 rounded-lg shadow mb-6 space-y-3"
       >
         <h3 className="text-lg font-semibold text-gray-700 mb-2">
           Create New User
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            name="name"
-            type="text"
-            placeholder="Name"
-            value={form.name}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          />
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          />
-          <input
-            name="employeeCode"
-            type="text"
-            placeholder="Employee Code"
-            value={form.employeeCode}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          />
+          {["name", "email", "password", "employeeCode"].map((field) => (
+            <input
+              key={field}
+              name={field}
+              type={field === "password" ? "password" : "text"}
+              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+              value={form[field]}
+              onChange={handleChange}
+              className="p-2 border rounded w-full"
+            />
+          ))}
+
           <select
             name="role"
             value={form.role}
@@ -134,12 +194,13 @@ const Users = () => {
             className="p-2 border rounded w-full"
           >
             <option value="">Select Role</option>
-            {roles.map((role) => (
-              <option key={role._id} value={role._id}>
-                {role.name}
+            {roles.map((r) => (
+              <option key={r._id} value={r._id}>
+                {r.name}
               </option>
             ))}
           </select>
+
           <select
             name="department"
             value={form.department}
@@ -147,36 +208,25 @@ const Users = () => {
             className="p-2 border rounded w-full"
           >
             <option value="">Select Department</option>
-            {departments.map((dept) => (
-              <option key={dept._id} value={dept._id}>
-                {dept.name}
+            {departments.map((d) => (
+              <option key={d._id} value={d._id}>
+                {d.name}
               </option>
             ))}
           </select>
+
           <select
             name="shift"
             value={form.shift}
             onChange={handleChange}
             className="p-2 border rounded w-full"
           >
-            <option value="">Select Shifts</option>
-            {shifts.map((shft) => {
-              const formatHour = (hour) => {
-                const period = hour >= 12 ? "PM" : "AM";
-                const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-                return `${hour12}:00 ${period}`;
-              };
-
-              const shiftTime = `${formatHour(shft.startHour)} - ${formatHour(
-                shft.endHour
-              )}`;
-
-              return (
-                <option key={shft?._id} value={shft?._id}>
-                  {shft?.name} ({shiftTime})
-                </option>
-              );
-            })}
+            <option value="">Select Shift</option>
+            {shifts.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name} ({formatHour(s.startHour)} - {formatHour(s.endHour)})
+              </option>
+            ))}
           </select>
         </div>
 
@@ -185,17 +235,16 @@ const Users = () => {
           className="mt-4 bg-[#f40e00] text-white px-6 py-2 rounded hover:bg-red-700 flex items-center justify-center gap-2"
           disabled={submitLoading}
         >
-          Create User
-          {submitLoading && <ImSpinner3 className="animate-spin" size={22} />}
+          {submitLoading && <ImSpinner3 className="animate-spin" />} Create User
         </button>
       </form>
 
-      {/* User Table */}
+      {/* Users Table */}
       {loading ? (
-        <p>Loading users...</p>
-      ) : users?.length > 0 ? (
+        <p className="text-center text-gray-500">Loading users...</p>
+      ) : users.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="min-w-full border bg-[rgb(237 237 237)] rounded-xl shadow">
+          <table className="min-w-full border bg-[rgb(237_237_237)] rounded-xl shadow">
             <thead className="bg-red-100 text-gray-800">
               <tr>
                 <th className="px-4 py-3 border">#</th>
@@ -204,12 +253,13 @@ const Users = () => {
                 <th className="px-4 py-3 border">Employee Code</th>
                 <th className="px-4 py-3 border">Department</th>
                 <th className="px-4 py-3 border">Role</th>
+                <th className="px-4 py-3 border">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user,i) => (
+              {users.map((user, i) => (
                 <tr key={user._id} className="hover:bg-blue-50">
-                  <td className="border text-center px-4 py-2">{i+1}</td>
+                  <td className="border text-center px-4 py-2">{i + 1}</td>
                   <td className="border text-center px-4 py-2">{user.name}</td>
                   <td className="border text-center px-4 py-2">{user.email}</td>
                   <td className="border text-center px-4 py-2">
@@ -221,13 +271,102 @@ const Users = () => {
                   <td className="border text-center px-4 py-2">
                     {user.role?.name || "—"}
                   </td>
+                  <td className="px-4 py-2 text-center border">
+                    <button
+                      onClick={() => openEditModal(user)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <p className="text-gray-600">No users found.</p>
+        <p className="text-center text-gray-600">No users found.</p>
+      )}
+
+      {/* Edit Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-md w-full max-w-xl">
+            <h2 className="text-lg font-semibold mb-4">Edit User</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {["name", "employeeCode"].map((field) => (
+                <input
+                  key={field}
+                  name={field}
+                  type={"text"}
+                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  value={editForm[field]}
+                  onChange={handleEditChange}
+                  className="p-2 border rounded"
+                />
+              ))}
+
+              <select
+                name="role"
+                value={editForm.role}
+                onChange={handleEditChange}
+                className="p-2 border rounded"
+              >
+                <option value="">Select Role</option>
+                {roles.map((r) => (
+                  <option key={r._id} value={r._id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                name="department"
+                value={editForm.department}
+                onChange={handleEditChange}
+                className="p-2 border rounded"
+              >
+                <option value="">Select Department</option>
+                {departments.map((d) => (
+                  <option key={d._id} value={d._id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                name="shift"
+                value={editForm.shift}
+                onChange={handleEditChange}
+                className="p-2 border rounded"
+              >
+                <option value="">Select Shift</option>
+                {shifts.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.name} ({formatHour(s.startHour)} -{" "}
+                    {formatHour(s.endHour)})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end mt-4 space-x-2">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateUser}
+                disabled={editLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+              >
+                Update {editLoading && <ImSpinner3 className="animate-spin" />}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

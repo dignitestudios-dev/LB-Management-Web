@@ -23,8 +23,7 @@ const useLogin = () => {
       }
       return response?.data;
     } catch (error) {
-      processError(error);
-      alert(error?.response?.data?.message || "Something went wrong"); // ✅ Show error message
+      processError(error?.response?.data?.message);
     } finally {
       setLoading(false);
     }
