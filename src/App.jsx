@@ -22,7 +22,7 @@ function App() {
     <Routes>
       {/* Redirect /app/ to dashboard or login */}
       <Route
-        path="app"
+        path="/"
         element={
           isAuthenticated === null ? null : (
             <Navigate to={isAuthenticated ? "app/dashboard" : "/auth/login"} />
