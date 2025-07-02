@@ -21,11 +21,8 @@ const UserDashboard = () => {
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
-
       minute: "2-digit",
-
       second: "2-digit",
-
       hour12: true,
     })
   );
@@ -41,6 +38,13 @@ const UserDashboard = () => {
   const { checkInData, checkInloading } = useCheckin();
 
   const { data: user, loading: userLoading } = useUsers("/users/me");
+
+  const [timerInterval, setTimerInterval] = useState(null); // To store the timer interval
+
+  // Add these states to manage stopped time for checkout
+  const [isTimeStoppedForCheckout, setIsTimeStoppedForCheckout] =
+    useState(false);
+  const [stoppedTime, setStoppedTime] = useState(null);
 
   const handleLogout = async () => {
     await postData("/auth/logout", false, null, null, (res) => {
@@ -61,18 +65,18 @@ const UserDashboard = () => {
       setCurrentTime(
         new Date().toLocaleTimeString("en-US", {
           hour: "numeric",
-
           minute: "2-digit",
-
           second: "2-digit",
-
           hour12: true,
         })
       );
     }, 1000);
 
-    return () => clearInterval(timer);
+    setTimerInterval(timer); // Save the timer interval
+
+    // return () => clearInterval(timer);
   }, []);
+  
 
   useEffect(() => {
     const fetchToday = async () => {
@@ -106,7 +110,6 @@ const UserDashboard = () => {
       { checkInTime },
       (res) => {
         SuccessToast("Check-In successful!");
-
         setTodayAttendance({ ...todayAttendance, checkInTime });
       }
     );
@@ -119,8 +122,20 @@ const UserDashboard = () => {
       return;
     }
 
+    // Stop the timer and record the time when Check Out is clicked
+    clearInterval(timerInterval);
+    setStoppedTime(new Date().toISOString());
+    setIsTimeStoppedForCheckout(true);
     setIsModalOpen(true);
   };
+
+  // Reset stopped time when modal closes
+  useEffect(() => {
+    if (!isModalOpen) {
+      setIsTimeStoppedForCheckout(false);
+      setStoppedTime(null);
+    }
+  }, [isModalOpen]);
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] p-6 flex flex-col items-center">
@@ -225,9 +240,7 @@ const UserDashboard = () => {
                   "en-US",
                   {
                     hour: "numeric",
-
                     minute: "2-digit",
-
                     hour12: true,
                   }
                 )}
@@ -246,9 +259,7 @@ const UserDashboard = () => {
                   "en-US",
                   {
                     hour: "numeric",
-
                     minute: "2-digit",
-
                     hour12: true,
                   }
                 )}
@@ -295,8 +306,12 @@ const UserDashboard = () => {
               onClose={() => setIsModalOpen(false)}
               postData={postData}
               checkInTime={todayAttendance?.checkInTime}
-              setTodayAttendance={setTodayAttendance} // ✅ pass it
-              todayAttendance={todayAttendance} // optional but helpful
+              setTodayAttendance={setTodayAttendance}
+              todayAttendance={todayAttendance}
+              isTimeStoppedForCheckout={isTimeStoppedForCheckout}
+              stoppedTime={stoppedTime}
+              setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
+              setStoppedTime={setStoppedTime}
             />
           </div>
         </div>
@@ -312,30 +327,29 @@ export default UserDashboard;
 // ProjectList Component Inline
 
 // ===========================
-
 const ProjectList = ({
   onClose,
   postData,
   checkInTime,
   setTodayAttendance,
   todayAttendance,
+  isTimeStoppedForCheckout,
+  stoppedTime,
+  setIsTimeStoppedForCheckout,
+  setStoppedTime,
 }) => {
   const { loading, data: projects } = useUsers("/projects");
 
   const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
-  const [isTimeStoppedForCheckout, setIsTimeStoppedForCheckout] =
-    useState(false);
-  const [stoppedTime, setStoppedTime] = useState(null);
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
-
     const endTime = isTimeStoppedForCheckout
       ? new Date(stoppedTime)
       : new Date();
-    return Math.floor((endTime - new Date(checkInTime)) / 60000) + 1; // Add 1 minute to exact time
+    return Math.floor((endTime - new Date(checkInTime)) / 60000);
   };
 
   const totalAvailableMinutes = availableMinutes();
@@ -363,10 +377,8 @@ const ProjectList = ({
       // Distribute evenMinutes to all, and +1 to the first few if there's a remainder
       const initialEntries = Array.from({ length: projectCount }, (_, i) => ({
         project: "",
-        hoursWorked: Math.floor(
-          (i < remaining ? evenMinutes + 1 : evenMinutes) / 60
-        ),
-        minutesWorked: (i < remaining ? evenMinutes + 1 : evenMinutes) % 60,
+        hoursWorked: 0,
+        minutesWorked: 0,
         description: "",
       }));
 
@@ -376,13 +388,7 @@ const ProjectList = ({
   };
 
   const handleSubmit = async () => {
-    // Stop the time when checkout is clicked
-    if (!isTimeStoppedForCheckout) {
-      const currentTime = new Date().toISOString();
-      setStoppedTime(currentTime);
-      setIsTimeStoppedForCheckout(true);
-    }
-
+    // Remove local time stop logic, use parent's stoppedTime
     const checkoutTime = stoppedTime || new Date().toISOString();
 
     const validProjects = entries.filter(
@@ -441,7 +447,7 @@ const ProjectList = ({
     const m = mins % 60;
 
     if (isTimeStoppedForCheckout) {
-      return `${h} hour(s) ${m} minute(s) (Time Stopped)`;
+      return `${h} hour(s) ${m} minute(s)`;
     }
 
     const s =
@@ -508,7 +514,7 @@ const ProjectList = ({
         <>
           <div className="text-sm text-gray-700 space-y-1">
             <p>
-              <strong>Total Time Since Check-In:</strong>{" "}
+              <strong>Total Time Duration:</strong>{" "}
               <span className="text-blue-700 font-medium">{getDuration()}</span>
             </p>
             <p>
@@ -557,58 +563,65 @@ const ProjectList = ({
                   </select>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="number"
-                      placeholder={`Hours (max: ${maxHours})`}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={entry.hoursWorked}
-                      min="0"
-                      max={maxHours}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        if (val < 0) return;
+                    <div>
+                      <label htmlFor={`hoursWorked-${index}`}>Hours</label>
+                      <input
+                        type="number"
+                        placeholder={`Hours (max: ${maxHours})`}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={entry.hoursWorked}
+                        min="0"
+                        max={maxHours}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          if (val < 0) return;
 
-                        const currentMinutes =
-                          parseInt(entry.minutesWorked) || 0;
-                        const totalMinutesForEntry = val * 60 + currentMinutes;
+                          const currentMinutes =
+                            parseInt(entry.minutesWorked) || 0;
+                          const totalMinutesForEntry =
+                            val * 60 + currentMinutes;
 
-                        if (totalMinutesForEntry <= maxForThis) {
-                          handleChange(index, "hoursWorked", val);
-                        } else {
-                          ErrorToast(
-                            `Total time for this entry cannot exceed ${Math.floor(
-                              maxForThis / 60
-                            )}h ${maxForThis % 60}m.`
-                          );
-                        }
-                      }}
-                    />
+                          if (totalMinutesForEntry <= maxForThis) {
+                            handleChange(index, "hoursWorked", val);
+                          } else {
+                            ErrorToast(
+                              `Total time for this entry cannot exceed ${Math.floor(
+                                maxForThis / 60
+                              )}h ${maxForThis % 60}m.`
+                            );
+                          }
+                        }}
+                      />
+                    </div>
 
-                    <input
-                      type="number"
-                      placeholder={`Minutes (0-59)`}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={entry.minutesWorked}
-                      min="0"
-                      max="59"
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        if (val < 0 || val > 59) return;
+                    <div>
+                      <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
+                      <input
+                        type="number"
+                        placeholder={`Minutes (0-59)`}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={entry.minutesWorked}
+                        min="0"
+                        max="59"
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          if (val < 0 || val > 59) return;
 
-                        const currentHours = parseInt(entry.hoursWorked) || 0;
-                        const totalMinutesForEntry = currentHours * 60 + val;
+                          const currentHours = parseInt(entry.hoursWorked) || 0;
+                          const totalMinutesForEntry = currentHours * 60 + val;
 
-                        if (totalMinutesForEntry <= maxForThis) {
-                          handleChange(index, "minutesWorked", val);
-                        } else {
-                          ErrorToast(
-                            `Total time for this entry cannot exceed ${Math.floor(
-                              maxForThis / 60
-                            )}h ${maxForThis % 60}m.`
-                          );
-                        }
-                      }}
-                    />
+                          if (totalMinutesForEntry <= maxForThis) {
+                            handleChange(index, "minutesWorked", val);
+                          } else {
+                            ErrorToast(
+                              `Total time for this entry cannot exceed ${Math.floor(
+                                maxForThis / 60
+                              )}h ${maxForThis % 60}m.`
+                            );
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
 
                   <textarea

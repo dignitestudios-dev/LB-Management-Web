@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
+import SearchBar from "../../components/global/SearchBar";
+import Pagination from "../../components/global/Pagination";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -13,17 +15,33 @@ const Projects = () => {
   const [editedName, setEditedName] = useState("");
   const [updating, setUpdating] = useState(false);
 
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/projects/");
+      const res = await axios.get("/projects", {
+        params: {
+          search,
+          page: currentPage,
+          itemsPerPage,
+        },
+      });
       setProjects(res.data.data);
+      setTotalPages(Math.ceil(res.data.total / itemsPerPage));
     } catch (err) {
       ErrorToast("Failed to fetch projects");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProjects();
+  }, [search, currentPage]);
 
   const createProject = async () => {
     if (!newProjectName.trim()) {
@@ -33,20 +51,16 @@ const Projects = () => {
 
     try {
       setCreating(true);
-      await axios.post("/projects/", { name: newProjectName });
+      await axios.post("/projects", { name: newProjectName });
       SuccessToast("Project created successfully");
       setNewProjectName("");
-      fetchProjects(); // refresh list
+      fetchProjects();
     } catch (err) {
       ErrorToast("Failed to create project");
     } finally {
       setCreating(false);
     }
   };
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
 
   const openEditModal = (project) => {
     setEditingProject(project);
@@ -82,19 +96,6 @@ const Projects = () => {
     }
   };
 
-  const deleteProject = async (projectId) => {
-    if (!window.confirm("Are you sure you want to delete this project?"))
-      return;
-
-    try {
-      await axios.delete(`/projects/${projectId}`);
-      SuccessToast("Project deleted successfully");
-      fetchProjects();
-    } catch (err) {
-      ErrorToast("Failed to delete project");
-    }
-  };
-
   return (
     <div className="max-w-7xl mx-auto">
       {/* Create Project Form */}
@@ -118,54 +119,70 @@ const Projects = () => {
       </div>
 
       <div className="bg-[rgb(237_237_237)] shadow-md rounded-md p-4">
-        <h3 className="text-lg font-semibold mb-3">All Projects</h3>
+        <h3 className="text-lg font-semibold mb-3 text-[#f40e00]">
+          All Projects
+        </h3>
+
+        <SearchBar
+          value={search}
+          onChange={(query) => {
+            setSearch(query);
+            setCurrentPage(1); // Reset page on search
+          }}
+        />
+
         {/* Project List */}
         {loading ? (
-          <p className="text-gray-600">Loading projects...</p>
+          <p className="text-gray-600 mt-4">Loading projects...</p>
         ) : projects.length === 0 ? (
-          <p className="text-gray-500">No projects found.</p>
+          <p className="text-gray-500 mt-4">No projects found.</p>
         ) : (
-          <table className="w-full table-auto border border-gray-200 rounded-lg">
-            <thead className="bg-red-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2 border">#</th>
-                <th className="px-4 py-2 border">Project Name</th>
-                <th className="px-4 py-2 border">Created At</th>
-                <th className="px-4 py-2 border">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.map((project, index) => (
-                <tr
-                  key={project._id}
-                  className="text-gray-800 hover:bg-gray-50"
-                >
-                  <td className="px-4 py-2 text-center border">{index + 1}</td>
-                  <td className="px-4 py-2 text-center font-medium border">
-                    {project.name}
-                  </td>
-                  <td className="px-4 py-2 text-center text-sm border">
-                    {new Date(project.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-2 text-center border space-x-2">
-                    <button
-                      onClick={() => openEditModal(project)}
-                      className="bg-blue-500 py-1 px-3 rounded-md text-white hover:underline"
-                    >
-                      Edit
-                    </button>
-                    {/* Uncomment to enable delete */}
-                    {/* <button
-                      onClick={() => deleteProject(project._id)}
-                      className="text-white py-1 bg-red-500 px-3 rounded-md hover:underline"
-                    >
-                      Delete
-                    </button> */}
-                  </td>
+          <>
+            <table className="w-full table-auto border border-gray-200 rounded-lg mt-4">
+              <thead className="bg-red-100 text-gray-700">
+                <tr>
+                  <th className="px-4 py-2 border">#</th>
+                  <th className="px-4 py-2 border">Project Name</th>
+                  <th className="px-4 py-2 border">Created At</th>
+                  <th className="px-4 py-2 border">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {projects.map((project, index) => (
+                  <tr
+                    key={project._id}
+                    className="text-gray-800 hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-2 text-center border">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-2 text-center font-medium border">
+                      {project.name}
+                    </td>
+                    <td className="px-4 py-2 text-center text-sm border">
+                      {new Date(project.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-2 text-center border">
+                      <button
+                        onClick={() => openEditModal(project)}
+                        className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
         )}
       </div>
 
@@ -191,9 +208,9 @@ const Projects = () => {
               <button
                 onClick={updateProject}
                 disabled={updating}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
               >
-                {updating && <ImSpinner3 className="animate-spin" />}
+                Update {updating && <ImSpinner3 className="animate-spin" />}
               </button>
             </div>
           </div>
