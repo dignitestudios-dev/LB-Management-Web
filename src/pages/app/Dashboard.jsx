@@ -28,10 +28,15 @@ const Dashboard = () => {
   const { data: user, loading: userLoading } = useUsers("/users/me");
   const dropdownRef = useRef(null);
   useEffect(() => {
-    if (user?.role?.name != "Admin") {
-      navigate("/app/userdashboard");
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      console.log(parsedUser, "roless");
+      if (parsedUser.role?.name !== "Admin") {
+        navigate("/app/userdashboard");
+      }
     }
-  }, []);
+  }, [navigate]);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
