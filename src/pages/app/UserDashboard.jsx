@@ -38,14 +38,14 @@ const UserDashboard = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const { postData, loading } = useLogin();
-  const { checkInData, checkInloading} = useCheckin();
+  const { checkInData, checkInloading } = useCheckin();
 
   const { data: user, loading: userLoading } = useUsers("/users/me");
 
   const handleLogout = async () => {
     await postData("/auth/logout", false, null, null, (res) => {
       Cookies.remove("token");
-      
+
       localStorage.removeItem("token");
 
       localStorage.removeItem("user");
@@ -324,67 +324,103 @@ const ProjectList = ({
 
   const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [isTimeStoppedForCheckout, setIsTimeStoppedForCheckout] =
+    useState(false);
+  const [stoppedTime, setStoppedTime] = useState(null);
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
 
-    const now = new Date();
-
-    return Math.floor((now - new Date(checkInTime)) / 60000);
+    const endTime = isTimeStoppedForCheckout
+      ? new Date(stoppedTime)
+      : new Date();
+    return Math.floor((endTime - new Date(checkInTime)) / 60000) + 1; // Add 1 minute to exact time
   };
 
   const totalAvailableMinutes = availableMinutes();
 
-  const totalEnteredMinutes = entries.reduce(
-    (sum, entry) => sum + (parseInt(entry.minutesWorked) || 0),
-
-    0
-  );
+  const totalEnteredMinutes = entries.reduce((sum, entry) => {
+    const hours = parseInt(entry.hoursWorked) || 0;
+    const minutes = parseInt(entry.minutesWorked) || 0;
+    return sum + hours * 60 + minutes;
+  }, 0);
 
   const remainingMinutes = totalAvailableMinutes - totalEnteredMinutes;
 
   const handleChange = (index, field, value) => {
     const updatedEntries = [...entries];
-
     updatedEntries[index][field] = value;
-
     setEntries(updatedEntries);
   };
 
+  const handleProjectCountSubmit = () => {
+    if (projectCount && projectCount > 0 && projectCount <= 10) {
+      const totalMinutes = availableMinutes();
+      const evenMinutes = Math.floor(totalMinutes / projectCount);
+      const remaining = totalMinutes % projectCount;
+
+      // Distribute evenMinutes to all, and +1 to the first few if there's a remainder
+      const initialEntries = Array.from({ length: projectCount }, (_, i) => ({
+        project: "",
+        hoursWorked: Math.floor(
+          (i < remaining ? evenMinutes + 1 : evenMinutes) / 60
+        ),
+        minutesWorked: (i < remaining ? evenMinutes + 1 : evenMinutes) % 60,
+        description: "",
+      }));
+
+      setEntries(initialEntries);
+      setShowProjectForm(true);
+    }
+  };
+
   const handleSubmit = async () => {
-    const checkoutTime = new Date().toISOString();
+    // Stop the time when checkout is clicked
+    if (!isTimeStoppedForCheckout) {
+      const currentTime = new Date().toISOString();
+      setStoppedTime(currentTime);
+      setIsTimeStoppedForCheckout(true);
+    }
+
+    const checkoutTime = stoppedTime || new Date().toISOString();
 
     const validProjects = entries.filter(
-      (entry) => entry.project && entry.minutesWorked && entry.description
+      (entry) =>
+        entry.project &&
+        (entry.hoursWorked || entry.minutesWorked) &&
+        entry.description
     );
 
-    const totalEntered = validProjects.reduce(
-      (sum, entry) => sum + parseInt(entry.minutesWorked),
-
-      0
-    );
+    const totalEntered = validProjects.reduce((sum, entry) => {
+      const hours = parseInt(entry.hoursWorked) || 0;
+      const minutes = parseInt(entry.minutesWorked) || 0;
+      return sum + hours * 60 + minutes;
+    }, 0);
 
     if (validProjects.length === 0) {
       ErrorToast("Please fill at least one valid project entry.");
-
       return;
     }
 
     if (totalEntered > totalAvailableMinutes) {
       ErrorToast(
-        `Total entered minutes (${totalEntered}) cannot exceed available time (${totalAvailableMinutes}).`
+        `Total entered time (${Math.floor(totalEntered / 60)}h ${
+          totalEntered % 60
+        }m) cannot exceed available time (${Math.floor(
+          totalAvailableMinutes / 60
+        )}h ${totalAvailableMinutes % 60}m).`
       );
       return;
     }
 
     const payload = {
       checkoutTime,
-
       projects: validProjects.map((entry) => ({
         project: entry.project,
-
-        minutesWorked: parseInt(entry.minutesWorked),
-
+        minutesWorked:
+          (parseInt(entry.hoursWorked) || 0) * 60 +
+          (parseInt(entry.minutesWorked) || 0), // Convert hours to minutes
         description: entry.description,
       })),
     };
@@ -395,27 +431,23 @@ const ProjectList = ({
         ...todayAttendance,
         checkOutTime: checkoutTime,
       });
-
       onClose();
     });
   };
 
-  // const getDuration = () => {
-  //   const mins = totalAvailableMinutes;
-  //   const h = Math.floor(mins / 60);
-  //   const m = mins % 60;
-  //   return `${h} hour(s) ${m} minute(s)`;
-  // };
-
   const getDuration = () => {
     const mins = totalAvailableMinutes;
-    const h = Math.floor(mins / 60); // Calculate hours
-    const m = mins % 60; // Get the remaining minutes
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+
+    if (isTimeStoppedForCheckout) {
+      return `${h} hour(s) ${m} minute(s) (Time Stopped)`;
+    }
+
     const s =
       Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) %
-      60; // Calculate seconds
-
-    return `${h} hour(s) ${m} minute(s) ${s} second(s)`; // Include seconds in the return
+      60;
+    return `${h} hour(s) ${m} minute(s) ${s} second(s)`;
   };
 
   return (
@@ -433,24 +465,44 @@ const ProjectList = ({
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={(e) => {
               const count = parseInt(e.target.value);
-              if (isNaN(count) || count < 1 || count > 10) return;
-
+              if (isNaN(count) || count < 1 || count > 10) {
+                setProjectCount(null);
+                return;
+              }
               setProjectCount(count);
-
-              const totalMinutes = availableMinutes();
-              const evenMinutes = Math.floor(totalMinutes / count);
-              const remaining = totalMinutes % count;
-
-              // Distribute evenMinutes to all, and +1 to the first few if there's a remainder
-              const initialEntries = Array.from({ length: count }, (_, i) => ({
-                project: "",
-                minutesWorked: i < remaining ? evenMinutes + 1 : evenMinutes,
-                description: "",
-              }));
-
-              setEntries(initialEntries);
             }}
           />
+          {projectCount && (
+            <button
+              onClick={handleProjectCountSubmit}
+              className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+            >
+              Okay
+            </button>
+          )}
+        </div>
+      ) : !showProjectForm ? (
+        <div className="space-y-4">
+          <p className="text-gray-700 font-medium">
+            You selected {projectCount} project(s). Click "Okay" to proceed.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setProjectCount(null);
+                setEntries([]);
+              }}
+              className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleProjectCountSubmit}
+              className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+            >
+              Okay
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -462,7 +514,7 @@ const ProjectList = ({
             <p>
               <strong>Time Remaining:</strong>{" "}
               <span className="text-red-600 font-medium">
-                {remainingMinutes} minutes
+                {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
               </span>
             </p>
           </div>
@@ -472,12 +524,17 @@ const ProjectList = ({
           ) : (
             entries.map((entry, index) => {
               const otherMinutes = entries.reduce((sum, ent, i) => {
-                if (i !== index)
-                  return sum + (parseInt(ent.minutesWorked) || 0);
+                if (i !== index) {
+                  const hours = parseInt(ent.hoursWorked) || 0;
+                  const minutes = parseInt(ent.minutesWorked) || 0;
+                  return sum + hours * 60 + minutes;
+                }
                 return sum;
               }, 0);
 
               const maxForThis = totalAvailableMinutes - otherMinutes;
+              const maxHours = Math.floor(maxForThis / 60);
+              const maxMinutes = maxForThis % 60;
 
               return (
                 <div
@@ -499,25 +556,60 @@ const ProjectList = ({
                     ))}
                   </select>
 
-                  <input
-                    type="number"
-                    placeholder={`Minutes Worked (max: ${maxForThis})`}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={entry.minutesWorked}
-                    min="0"
-                    max={maxForThis}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (isNaN(val) || val < 0) return;
-                      if (val <= maxForThis) {
-                        handleChange(index, "minutesWorked", val);
-                      } else {
-                        ErrorToast(
-                          `You can't enter more than ${maxForThis} minutes for this entry.`
-                        );
-                      }
-                    }}
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="number"
+                      placeholder={`Hours (max: ${maxHours})`}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={entry.hoursWorked}
+                      min="0"
+                      max={maxHours}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        if (val < 0) return;
+
+                        const currentMinutes =
+                          parseInt(entry.minutesWorked) || 0;
+                        const totalMinutesForEntry = val * 60 + currentMinutes;
+
+                        if (totalMinutesForEntry <= maxForThis) {
+                          handleChange(index, "hoursWorked", val);
+                        } else {
+                          ErrorToast(
+                            `Total time for this entry cannot exceed ${Math.floor(
+                              maxForThis / 60
+                            )}h ${maxForThis % 60}m.`
+                          );
+                        }
+                      }}
+                    />
+
+                    <input
+                      type="number"
+                      placeholder={`Minutes (0-59)`}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={entry.minutesWorked}
+                      min="0"
+                      max="59"
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        if (val < 0 || val > 59) return;
+
+                        const currentHours = parseInt(entry.hoursWorked) || 0;
+                        const totalMinutesForEntry = currentHours * 60 + val;
+
+                        if (totalMinutesForEntry <= maxForThis) {
+                          handleChange(index, "minutesWorked", val);
+                        } else {
+                          ErrorToast(
+                            `Total time for this entry cannot exceed ${Math.floor(
+                              maxForThis / 60
+                            )}h ${maxForThis % 60}m.`
+                          );
+                        }
+                      }}
+                    />
+                  </div>
 
                   <textarea
                     placeholder="Description"
@@ -538,6 +630,9 @@ const ProjectList = ({
               onClick={() => {
                 setProjectCount(null);
                 setEntries([]);
+                setShowProjectForm(false);
+                setIsTimeStoppedForCheckout(false);
+                setStoppedTime(null);
               }}
               className="text-sm font-medium text-red-600 hover:underline"
             >
@@ -554,9 +649,9 @@ const ProjectList = ({
 
               <button
                 onClick={handleSubmit}
-                className="px-4 py-2 rounded-md bg-red-600 text-white text-sm"
+                className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
               >
-                Submit
+                {isTimeStoppedForCheckout ? "Confirm Checkout" : "Checkout"}
               </button>
             </div>
           </div>
