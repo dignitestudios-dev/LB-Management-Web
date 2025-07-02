@@ -31,7 +31,7 @@ const Projects = () => {
         },
       });
       setProjects(res.data.data);
-      setTotalPages(Math.ceil(res.data.total / itemsPerPage));
+      setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
       ErrorToast("Failed to fetch projects");
     } finally {
@@ -125,7 +125,7 @@ const Projects = () => {
 
         <SearchBar
           value={search}
-          onChange={(query) => {
+          onSearch={(query) => {
             setSearch(query);
             setCurrentPage(1); // Reset page on search
           }}

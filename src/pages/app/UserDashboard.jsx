@@ -422,11 +422,16 @@ const ProjectList = ({
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   const BREAK_MINUTES = 60;
 
   const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
   const rawMinutes = Math.floor((endTime - new Date(checkInTime)) / 60000);
+
+  const filteredProjects = projects.filter((proj) =>
+    proj.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
@@ -678,26 +683,36 @@ const ProjectList = ({
                   key={index}
                   className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
                 >
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={entry.project}
-                    onChange={(e) =>
-                      handleChange(index, "project", e.target.value)
-                    }
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((proj) => (
-                      <option key={proj._id} value={proj._id}>
-                        {proj.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Search project..."
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
 
-                  {errors[index]?.project && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {errors[index].project}
-                    </p>
-                  )}
+                    <select
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={entry.project}
+                      onChange={(e) =>
+                        handleChange(index, "project", e.target.value)
+                      }
+                    >
+                      <option value="">Select a project</option>
+                      {filteredProjects.map((proj) => (
+                        <option key={proj._id} value={proj._id}>
+                          {proj.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    {errors[index]?.project && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors[index].project}
+                      </p>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>

@@ -113,7 +113,7 @@ const Departments = () => {
       <h2 className="text-xl font-bold text-[#f40e00] mb-4">All Departments</h2>
       <SearchBar
         value={search}
-        onChange={(query) => {
+        onSearch={(query) => {
           setSearch(query);
           setCurrentPage(1); // Reset to page 1 on search
         }}

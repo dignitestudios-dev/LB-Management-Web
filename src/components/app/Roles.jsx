@@ -127,7 +127,7 @@ const Roles = () => {
 
         <SearchBar
           value={search}
-          onChange={(query) => {
+          onSearch={(query) => {
             setSearch(query);
             setCurrentPage(1);
           }}
@@ -173,14 +173,13 @@ const Roles = () => {
               </tbody>
             </table>
 
-           
-              <div className="mt-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              </div>
+            <div className="mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
           </>
         )}
       </div>
