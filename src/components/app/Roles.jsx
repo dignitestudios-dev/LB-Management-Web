@@ -2,27 +2,45 @@ import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
+import SearchBar from "../../components/global/SearchBar";
+import Pagination from "../../components/global/Pagination";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
-  const [newRole, setNewRole] = useState("");
   const [loading, setLoading] = useState(false);
+  const [newRole, setNewRole] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [editedName, setEditedName] = useState("");
-  const [updating, setUpdating] = useState(false); // ✅ added loader for update
+  const [updating, setUpdating] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/roles/");
+      const res = await axios.get("/roles", {
+        params: {
+          search,
+          page: currentPage,
+          limit: itemsPerPage,
+        },
+      });
       setRoles(res.data.data);
+      setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
       ErrorToast("Failed to fetch roles");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchRoles();
+  }, [search, currentPage]);
 
   const createRole = async () => {
     if (!newRole.trim()) {
@@ -31,7 +49,7 @@ const Roles = () => {
     }
 
     try {
-      await axios.post("/roles/", { name: newRole });
+      await axios.post("/roles", { name: newRole });
       SuccessToast("Role created successfully");
       setNewRole("");
       fetchRoles();
@@ -39,10 +57,6 @@ const Roles = () => {
       ErrorToast("Failed to create role");
     }
   };
-
-  useEffect(() => {
-    fetchRoles();
-  }, []);
 
   const openEditModal = (role) => {
     setEditingRole(role);
@@ -57,8 +71,11 @@ const Roles = () => {
     }
 
     try {
-      setUpdating(true); // ✅ start loader
-      await axios.put(`/roles`, { id: editingRole._id, name: editedName });
+      setUpdating(true);
+      await axios.put(`/roles`, {
+        id: editingRole._id,
+        name: editedName,
+      });
       SuccessToast("Role updated successfully");
       setEditModalOpen(false);
       setEditingRole(null);
@@ -66,7 +83,7 @@ const Roles = () => {
     } catch (err) {
       ErrorToast("Failed to update role");
     } finally {
-      setUpdating(false); // ✅ stop loader
+      setUpdating(false);
     }
   };
 
@@ -104,56 +121,71 @@ const Roles = () => {
         </div>
       </div>
 
-      {/* Role List Table */}
+      {/* Roles List with Search */}
       <div className="bg-[rgb(237_237_237)] shadow-md rounded-md p-4">
-        <h3 className="text-lg font-semibold mb-3">All Roles</h3>
+        <h3 className="text-lg font-semibold mb-3 text-[#f40e00]">All Roles</h3>
+
+        <SearchBar
+          value={search}
+          onChange={(query) => {
+            setSearch(query);
+            setCurrentPage(1);
+          }}
+        />
+
         {loading ? (
-          <p className="text-gray-600">Loading roles...</p>
+          <p className="text-gray-600 mt-4">Loading roles...</p>
         ) : roles.length === 0 ? (
-          <p className="text-gray-500">No roles found.</p>
+          <p className="text-gray-500 mt-4">No roles found.</p>
         ) : (
-          <table className="w-full table-auto border border-gray-200 rounded-lg">
-            <thead className="bg-red-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2 border">#</th>
-                <th className="px-4 py-2 border">Role Name</th>
-                <th className="px-4 py-2 border">Created At</th>
-                <th className="px-4 py-2 border">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map((role, index) => (
-                <tr key={role._id} className="text-gray-800 hover:bg-gray-50">
-                  <td className="px-4 py-2 text-center border">{index + 1}</td>
-                  <td className="px-4 py-2 text-center font-medium border">
-                    {role.name}
-                  </td>
-                  <td className="px-4 py-2 text-center text-sm border">
-                    {new Date(role.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-2 text-center border space-x-2">
-                    <button
-                      onClick={() => openEditModal(role)}
-                      className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
-                    >
-                      Edit
-                    </button>
-                    {/* Uncomment below if delete is needed */}
-                    {/* <button
-                      onClick={() => deleteRole(role._id)}
-                      className="text-white bg-red-500 py-1 px-3 rounded-md hover:bg-red-600"
-                    >
-                      Delete
-                    </button> */}
-                  </td>
+          <>
+            <table className="w-full table-auto border border-gray-200 rounded-lg mt-4">
+              <thead className="bg-red-100 text-gray-700">
+                <tr>
+                  <th className="px-4 py-2 border">#</th>
+                  <th className="px-4 py-2 border">Role Name</th>
+                  <th className="px-4 py-2 border">Created At</th>
+                  <th className="px-4 py-2 border">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {roles.map((role, index) => (
+                  <tr key={role._id} className="text-gray-800 hover:bg-gray-50">
+                    <td className="px-4 py-2 text-center border">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-2 text-center font-medium border">
+                      {role.name}
+                    </td>
+                    <td className="px-4 py-2 text-center text-sm border">
+                      {new Date(role.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-2 text-center border space-x-2">
+                      <button
+                        onClick={() => openEditModal(role)}
+                        className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+           
+              <div className="mt-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+          </>
         )}
       </div>
 
-      {/* Edit Role Modal */}
+      {/* Edit Modal */}
       {editModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-md shadow-md w-96">
@@ -163,6 +195,7 @@ const Roles = () => {
               value={editedName}
               onChange={(e) => setEditedName(e.target.value)}
               className="w-full border p-2 rounded mb-4"
+              placeholder="Role name"
             />
             <div className="flex justify-end space-x-2">
               <button
@@ -174,7 +207,7 @@ const Roles = () => {
               <button
                 onClick={updateRole}
                 disabled={updating}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
               >
                 Update {updating && <ImSpinner3 className="animate-spin" />}
               </button>

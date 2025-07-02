@@ -10,7 +10,6 @@ import { ImCross, ImSpinner3 } from "react-icons/im";
 import { TbReportAnalytics } from "react-icons/tb";
 import { useRef } from "react"; // already imported React
 
-
 const UserDashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -26,10 +25,10 @@ const UserDashboard = () => {
 
   const today = new Date();
 
-  const day = today.toLocaleDateString('en-US', { weekday: 'long' });
+  const day = today.toLocaleDateString("en-US", { weekday: "long" });
 
-  const options = { day: '2-digit', month: 'long', year: 'numeric' };
-  const currentDate = new Date().toLocaleDateString('en-US', options);
+  const options = { day: "2-digit", month: "long", year: "numeric" };
+  const currentDate = new Date().toLocaleDateString("en-US", options);
 
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -82,7 +81,6 @@ const UserDashboard = () => {
     };
   }, [isProfileOpen]);
 
-
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(
@@ -99,7 +97,6 @@ const UserDashboard = () => {
 
     // return () => clearInterval(timer);
   }, []);
-
 
   useEffect(() => {
     const fetchToday = async () => {
@@ -133,7 +130,6 @@ const UserDashboard = () => {
       { checkInTime },
       (res) => {
         SuccessToast("Check-In successful!");
-
         setTodayAttendance({ ...todayAttendance, checkInTime });
       }
     );
@@ -161,14 +157,11 @@ const UserDashboard = () => {
     }
   }, [isModalOpen]);
 
-
   const rawMinutes = todayAttendance?.checkInTime
     ? Math.floor((new Date() - new Date(todayAttendance.checkInTime)) / 60000)
     : 0;
 
   const adjustedWorkedMinutes = Math.max(rawMinutes, 0);
-
-
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
@@ -189,17 +182,31 @@ const UserDashboard = () => {
                 Welcome, {user?.name || "Guest"}
               </p>
               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm">
-                <img src="/user.png" alt="Profile" className="w-full h-full object-cover" />
+                <img
+                  src="/user.png"
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
             {isProfileOpen && (
               <div
-                ref={dropdownRef} className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700">
+                ref={dropdownRef}
+                className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700"
+              >
                 <div className="space-y-1">
-                  <p><strong>Name:</strong> {user.name}</p>
-                  <p><strong>Code:</strong> {user.employeeCode}</p>
-                  <p><strong>Department:</strong> {user.department.name}</p>
-                  <p><strong>Role:</strong> {user.role.name}</p>
+                  <p>
+                    <strong>Name:</strong> {user.name}
+                  </p>
+                  <p>
+                    <strong>Code:</strong> {user.employeeCode}
+                  </p>
+                  <p>
+                    <strong>Department:</strong> {user.department.name}
+                  </p>
+                  <p>
+                    <strong>Role:</strong> {user.role.name}
+                  </p>
                 </div>
                 <hr className="my-2" />
                 <button
@@ -219,11 +226,11 @@ const UserDashboard = () => {
         <div className="w-64 bg-white border-r p-6 shadow-md">
           <ul className="space-y-4">
             <li
-              className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition bg-red-100 text-[#f40e00] font-semibold`}>
+              className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition bg-red-100 text-[#f40e00] font-semibold`}
+            >
               <TbReportAnalytics />
               Attendance
             </li>
-
           </ul>
         </div>
 
@@ -252,31 +259,35 @@ const UserDashboard = () => {
               </div>
 
               <div className="flex justify-center items-center gap-6 mt-3 mb-3">
-
                 {todayAttendance?.checkInTime && (
                   <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
                     <p className="font-semibold uppercase tracking-wide text-xs text-blue-600 mb-1">
                       Checked In At
                     </p>
                     <p className="text-lg font-bold">
-                      {new Date(todayAttendance.checkInTime).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
+                      {new Date(todayAttendance.checkInTime).toLocaleTimeString(
+                        "en-US",
+                        {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        }
+                      )}
                     </p>
                   </div>
                 )}
-                {todayAttendance?.checkInTime && !todayAttendance?.checkOutTime && (
-                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
-                    <p className="font-semibold uppercase tracking-wide text-xs text-yellow-600 mb-1">
-                      Total Duration (Excl. Break)
-                    </p>
-                    <p className="text-lg font-bold">
-                      {Math.floor(adjustedWorkedMinutes / 60)} hour(s) {adjustedWorkedMinutes % 60} minute(s)
-                    </p>
-                  </div>
-                )}
+                {todayAttendance?.checkInTime &&
+                  !todayAttendance?.checkOutTime && (
+                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
+                      <p className="font-semibold uppercase tracking-wide text-xs text-yellow-600 mb-1">
+                        Total Duration (Excl. Break)
+                      </p>
+                      <p className="text-lg font-bold">
+                        {Math.floor(adjustedWorkedMinutes / 60)} hour(s){" "}
+                        {adjustedWorkedMinutes % 60} minute(s)
+                      </p>
+                    </div>
+                  )}
 
                 {todayAttendance?.checkOutTime && (
                   <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
@@ -284,7 +295,9 @@ const UserDashboard = () => {
                       Checked Out At
                     </p>
                     <p className="text-lg font-bold">
-                      {new Date(todayAttendance.checkOutTime).toLocaleTimeString("en-US", {
+                      {new Date(
+                        todayAttendance.checkOutTime
+                      ).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true,
@@ -292,7 +305,6 @@ const UserDashboard = () => {
                     </p>
                   </div>
                 )}
-
               </div>
 
               <div className="flex gap-4 justify-center mt-10">
@@ -321,16 +333,21 @@ const UserDashboard = () => {
                 <div className="space-y-3">
                   <p>
                     <strong>Check-In:</strong>{" "}
-                    {new Date(todayAttendance.checkInTime).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {new Date(todayAttendance.checkInTime).toLocaleTimeString(
+                      "en-US",
+                      {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      }
+                    )}
                   </p>
                   {todayAttendance.checkOutTime && (
                     <p>
                       <strong>Check-Out:</strong>{" "}
-                      {new Date(todayAttendance.checkOutTime).toLocaleTimeString("en-US", {
+                      {new Date(
+                        todayAttendance.checkOutTime
+                      ).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true,
@@ -354,7 +371,10 @@ const UserDashboard = () => {
               <h2 className="text-xl font-semibold mb-4 text-black">
                 Select Project for Check Out
               </h2>
-              <ImCross className="cursor-pointer" onClick={() => setIsModalOpen(false)} />
+              <ImCross
+                className="cursor-pointer"
+                onClick={() => setIsModalOpen(false)}
+              />
             </div>
 
             <ProjectList
@@ -395,31 +415,34 @@ const ProjectList = ({
   setIsTimeStoppedForCheckout,
   setStoppedTime,
 }) => {
-  const { loading, data: projects } = useUsers("/projects");
+  const { loading, data: projects } = useUsers("/projects", 1, 1000);
 
   const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   const BREAK_MINUTES = 60;
 
   const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
   const rawMinutes = Math.floor((endTime - new Date(checkInTime)) / 60000);
 
+  const filteredProjects = projects.filter((proj) =>
+    proj.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const availableMinutes = () => {
     if (!checkInTime) return 0;
-    const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
+    const endTime = isTimeStoppedForCheckout
+      ? new Date(stoppedTime)
+      : new Date();
     return Math.max(
       Math.floor((endTime - new Date(checkInTime)) / 60000) - BREAK_MINUTES,
       0
     );
   };
-
-
-
-
 
   const totalAvailableMinutes = availableMinutes();
 
@@ -467,7 +490,8 @@ const ProjectList = ({
       if (!entry.project) entryErrors.project = "Project is required";
       if (!entry.hoursWorked && !entry.minutesWorked)
         entryErrors.time = "Hours or minutes required";
-      if (!entry.description) entryErrors.description = "Description is required";
+      if (!entry.description)
+        entryErrors.description = "Description is required";
 
       if (Object.keys(entryErrors).length > 0) {
         newErrors[index] = entryErrors;
@@ -501,7 +525,8 @@ const ProjectList = ({
 
     if (totalEntered > totalAvailableMinutes) {
       ErrorToast(
-        `Total entered time (${Math.floor(totalEntered / 60)}h ${totalEntered % 60
+        `Total entered time (${Math.floor(totalEntered / 60)}h ${
+          totalEntered % 60
         }m) cannot exceed available time (${Math.floor(
           totalAvailableMinutes / 60
         )}h ${totalAvailableMinutes % 60}m).`
@@ -520,7 +545,6 @@ const ProjectList = ({
       setIsSubmitting(false);
       return;
     }
-
 
     const payload = {
       checkoutTime,
@@ -543,7 +567,6 @@ const ProjectList = ({
       onClose();
     });
   };
-
 
   const getDuration = () => {
     const mins = totalAvailableMinutes;
@@ -620,7 +643,8 @@ const ProjectList = ({
             <p>
               <strong>Total Time Duration:</strong>{" "}
               <span className="text-blue-700 font-medium">
-                {Math.floor(rawMinutes / 60)} hour(s) {rawMinutes % 60} minute(s)
+                {Math.floor(rawMinutes / 60)} hour(s) {rawMinutes % 60}{" "}
+                minute(s)
               </span>
             </p>
             <p>
@@ -636,8 +660,6 @@ const ProjectList = ({
               </span>
             </p>
           </div>
-
-
 
           {loading ? (
             <p className="text-gray-500">Loading projects...</p>
@@ -661,25 +683,36 @@ const ProjectList = ({
                   key={index}
                   className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
                 >
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={entry.project}
-                    onChange={(e) =>
-                      handleChange(index, "project", e.target.value)
-                    }
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((proj) => (
-                      <option key={proj._id} value={proj._id}>
-                        {proj.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Search project..."
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
 
-                  {errors[index]?.project && (
-                    <p className="text-xs text-red-600 mt-1">{errors[index].project}</p>
-                  )}
+                    <select
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={entry.project}
+                      onChange={(e) =>
+                        handleChange(index, "project", e.target.value)
+                      }
+                    >
+                      <option value="">Select a project</option>
+                      {filteredProjects.map((proj) => (
+                        <option key={proj._id} value={proj._id}>
+                          {proj.name}
+                        </option>
+                      ))}
+                    </select>
 
+                    {errors[index]?.project && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors[index].project}
+                      </p>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -743,9 +776,10 @@ const ProjectList = ({
                     </div>
 
                     {errors[index]?.time && (
-                      <p className="text-xs text-red-600 mt-1 col-span-2">{errors[index].time}</p>
+                      <p className="text-xs text-red-600 mt-1 col-span-2">
+                        {errors[index].time}
+                      </p>
                     )}
-
                   </div>
 
                   <textarea
@@ -758,12 +792,11 @@ const ProjectList = ({
                     }
                   />
                   {errors[index]?.description && (
-                    <p className="text-xs text-red-600 mt-1">{errors[index].description}</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors[index].description}
+                    </p>
                   )}
-
                 </div>
-
-
               );
             })
           )}
@@ -786,28 +819,36 @@ const ProjectList = ({
               <button
                 onClick={onClose}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-sm transition ${isSubmitting
+                className={`px-4 py-2 rounded-md text-sm transition ${
+                  isSubmitting
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                }`}
               >
                 Cancel
               </button>
 
-
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-white text-sm transition ${isSubmitting ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
-                  }`}
+                className={`px-4 py-2 rounded-md text-white text-sm transition ${
+                  isSubmitting
+                    ? "bg-red-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
-                {isSubmitting ? <ImSpinner3 className="animate-spin" /> : isTimeStoppedForCheckout ? "Confirm Checkout" : "Checkout"}
+                {isSubmitting ? (
+                  <ImSpinner3 className="animate-spin" />
+                ) : isTimeStoppedForCheckout ? (
+                  "Confirm Checkout"
+                ) : (
+                  "Checkout"
+                )}
               </button>
-
             </div>
           </div>
         </>
       )}
     </div>
   );
-};
+};s

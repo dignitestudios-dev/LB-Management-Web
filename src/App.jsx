@@ -4,6 +4,9 @@ import LoginPage from "./pages/authentication/Login";
 import { AppRoutes } from "./routes/app/AppRoutes";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import ForgetPassword from "./pages/authentication/ForgetPassword";
+import VerifyOtp from "./pages/authentication/VerifyOtp";
+import ResetPassword from "./pages/authentication/PasswordUpdate";
 function App() {
   // Protected route wrapper
   const ProtectedRoute = () => {
@@ -34,6 +37,9 @@ function App() {
       {/* Public Auth Routes */}
       <Route path="auth">
         <Route path="login" element={<LoginPage />} />
+        <Route path="forget-password" element={<ForgetPassword />} />
+        <Route path="verify-otp" element={<VerifyOtp />} />
+        <Route path="reset-password" element={<ResetPassword />} />
       </Route>
     </Routes>
   );

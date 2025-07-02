@@ -13,6 +13,7 @@ import {
   FaUserShield,
   FaSignOutAlt,
   FaBusinessTime,
+  FaTasks,
 } from "react-icons/fa";
 import Shift from "../../components/app/Shifts";
 import { useLogin } from "../../hooks/api/Post";
@@ -58,13 +59,64 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f4f8ff]">
+    <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
       {/* Sidebar */}
-      <aside className="w-64 bg-[rgb(237 237 237)] shadow-2xl border-r border-gray-200 p-6 flex flex-col">
-        <div>
-          <img src="/logo.webp" alt="" className="pb-10 pt-3" />
+      <div className="w-full flex justify-between items-center px-6 py-4 bg-white border-b shadow-sm">
+        <div className="text-2xl font-bold text-black">
+          <img src="/logo.webp" alt="" className="w-auto h-8" />
+        </div>
+        {userLoading ? (
+          <p className="text-sm font-medium text-gray-500">Loading...</p>
+        ) : (
+          <div className="relative">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
+              <p className="text-sm font-medium text-gray-700">
+                Welcome, {user?.name || "Guest"}
+              </p>
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm">
+                <img
+                  src="/user.png"
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            {isProfileOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700">
+                <div className="space-y-1">
+                  <p>
+                    <strong>Name:</strong> {user.name}
+                  </p>
+                  <p>
+                    <strong>Code:</strong> {user.employeeCode}
+                  </p>
+                  <p>
+                    <strong>Department:</strong> {user.department.name}
+                  </p>
+                  <p>
+                    <strong>Role:</strong> {user.role.name}
+                  </p>
+                </div>
+                <hr className="my-2" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
+                >
+                  <IoLogOut className="text-lg" /> Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-          <ul className="space-y-2">
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className="w-64 bg-white border-r p-6 shadow-md">
+          <ul className="space-y-2 mt-10">
             <SidebarItem
               icon={<FaChartBar />}
               label="Get Summary"
@@ -97,73 +149,22 @@ const Dashboard = () => {
               onClick={() => setActiveTab("roles")}
             />
             <SidebarItem
-              icon={<FaUserShield />}
+              icon={<FaTasks />}
               label="All Projects"
               active={activeTab === "projects"}
               onClick={() => setActiveTab("projects")}
             />
           </ul>
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto bg-gray-50">
-        <div className="w-full flex justify-between items-center mb-6 px-2 max-w-7xl">
-          <div className="text-2xl font-bold text-black"></div>
-
-          {userLoading ? (
-            <p className="text-sm font-medium text-gray-500">Loading...</p>
-          ) : (
-            <div className="relative">
-              <div
-                className="flex items-center gap-3 cursor-pointer"
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-              >
-                <p className="text-sm font-medium text-gray-700">
-                  Welcome, {user?.name || "Guest"}
-                </p>
-
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm">
-                  <img
-                    src="/user.png"
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* 🔽 Dropdown */}
-
-              {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700">
-                  <div className="space-y-1">
-                    <p>
-                      <strong>Name:</strong> {user.name}
-                    </p>
-
-                    <p>
-                      <strong>Role:</strong> {user.role.name}
-                    </p>
-                  </div>
-
-                  <hr className="my-2" />
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
-                  >
-                    <IoLogOut className="text-lg" />
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="text-2xl font-semibold text-gray-800 mb-4 capitalize">
-        </div>
-        {renderContent()}
-      </main>
+        {/* Main Content */}
+        <main className="flex-1 p-8 overflow-y-auto bg-gray-50">
+          <div className="text-2xl font-semibold text-gray-800 mb-4 capitalize">
+            {/* {activeTab.replace("-", " ")} */}
+          </div>
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };

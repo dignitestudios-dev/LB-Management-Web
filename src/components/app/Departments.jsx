@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
+import SearchBar from "../global/SearchBar";
+import Pagination from "../global/Pagination";
 
 const Departments = () => {
   const [departments, setDepartments] = useState([]);
@@ -12,11 +14,23 @@ const Departments = () => {
   const [editedName, setEditedName] = useState("");
   const [updating, setUpdating] = useState(false);
 
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/departments");
+      const res = await axios.get("/departments", {
+        params: {
+          search,
+          page: currentPage,
+          itemsPerPage,
+        },
+      });
       setDepartments(res.data.data);
+      setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
       ErrorToast("Failed to fetch departments");
     } finally {
@@ -26,7 +40,7 @@ const Departments = () => {
 
   useEffect(() => {
     fetchDepartments();
-  }, []);
+  }, [search, currentPage]);
 
   const createDepartment = async () => {
     if (!newDepartment.trim()) {
@@ -97,41 +111,70 @@ const Departments = () => {
 
       {/* Department List */}
       <h2 className="text-xl font-bold text-[#f40e00] mb-4">All Departments</h2>
+      <SearchBar
+        value={search}
+        onChange={(query) => {
+          setSearch(query);
+          setCurrentPage(1); // Reset to page 1 on search
+        }}
+      />
 
       {loading ? (
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600 mt-4">Loading...</p>
       ) : (
-        <table className="w-full table-auto border border-gray-200 rounded-lg">
-          <thead className="bg-red-100 text-gray-700">
-            <tr>
-              <th className="px-4 py-2 border">#</th>
-              <th className="px-4 py-2 text-center border">Department Name</th>
-              <th className="px-4 py-2 text-center border">Created At</th>
-              <th className="px-4 py-2 text-center border">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {departments.map((dept, index) => (
-              <tr key={dept._id} className="text-gray-800 hover:bg-gray-50">
-                <td className="px-4 py-2 text-center border">{index + 1}</td>
-                <td className="px-4 py-2 text-center border font-medium">
-                  {dept.name}
-                </td>
-                <td className="px-4 py-2 text-center border text-sm">
-                  {new Date(dept.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-2 text-center border text-sm">
-                  <button
-                    onClick={() => openEditModal(dept)}
-                    className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
-                  >
-                    Edit
-                  </button>
-                </td>
+        <>
+          <table className="w-full table-auto border border-gray-200 rounded-lg mt-4">
+            <thead className="bg-red-100 text-gray-700">
+              <tr>
+                <th className="px-4 py-2 border">#</th>
+                <th className="px-4 py-2 text-center border">
+                  Department Name
+                </th>
+                <th className="px-4 py-2 text-center border">Created At</th>
+                <th className="px-4 py-2 text-center border">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {departments.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-4 text-gray-500">
+                    No departments found.
+                  </td>
+                </tr>
+              ) : (
+                departments.map((dept, index) => (
+                  <tr key={dept._id} className="text-gray-800 hover:bg-gray-50">
+                    <td className="px-4 py-2 text-center border">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-2 text-center border font-medium">
+                      {dept.name}
+                    </td>
+                    <td className="px-4 py-2 text-center border text-sm">
+                      {new Date(dept.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-2 text-center border text-sm">
+                      <button
+                        onClick={() => openEditModal(dept)}
+                        className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          <div className="mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </>
       )}
 
       {/* Edit Modal */}
@@ -157,7 +200,7 @@ const Departments = () => {
                 disabled={updating}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
               >
-              Update  {updating && <ImSpinner3 className="animate-spin" />} 
+                Update {updating && <ImSpinner3 className="animate-spin" />}
               </button>
             </div>
           </div>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
+import SearchBar from "../global/SearchBar";
+import Pagination from "../global/Pagination";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -33,17 +35,31 @@ const Users = () => {
     employeeCode: "",
   });
 
+  // Pagination & Search
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10); // Fixed limit
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/users");
+      const res = await axios.get("/users", {
+        params: { search, page, limit },
+      });
+      console.log(res?.data?.pagination?.totalPages, "datacomes");
       setUsers(res.data.data);
+      setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
       ErrorToast("Failed to fetch users");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [search, page]);
 
   const fetchFormOptions = async () => {
     try {
@@ -61,7 +77,6 @@ const Users = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
     fetchFormOptions();
   }, []);
 
@@ -238,52 +253,71 @@ const Users = () => {
           {submitLoading && <ImSpinner3 className="animate-spin" />} Create User
         </button>
       </form>
+      <SearchBar
+        onSearch={(q) => {
+          setSearch(q);
+          setPage(1); // Reset to page 1 on new search
+        }}
+      />
 
       {/* Users Table */}
       {loading ? (
         <p className="text-center text-gray-500">Loading users...</p>
       ) : users.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border bg-[rgb(237_237_237)] rounded-xl shadow">
-            <thead className="bg-red-100 text-gray-800">
-              <tr>
-                <th className="px-4 py-3 border">#</th>
-                <th className="px-4 py-3 border">Name</th>
-                <th className="px-4 py-3 border">Email</th>
-                <th className="px-4 py-3 border">Employee Code</th>
-                <th className="px-4 py-3 border">Department</th>
-                <th className="px-4 py-3 border">Role</th>
-                <th className="px-4 py-3 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user, i) => (
-                <tr key={user._id} className="hover:bg-blue-50">
-                  <td className="border text-center px-4 py-2">{i + 1}</td>
-                  <td className="border text-center px-4 py-2">{user.name}</td>
-                  <td className="border text-center px-4 py-2">{user.email}</td>
-                  <td className="border text-center px-4 py-2">
-                    {user.employeeCode}
-                  </td>
-                  <td className="border text-center px-4 py-2">
-                    {user.department?.name || "—"}
-                  </td>
-                  <td className="border text-center px-4 py-2">
-                    {user.role?.name || "—"}
-                  </td>
-                  <td className="px-4 py-2 text-center border">
-                    <button
-                      onClick={() => openEditModal(user)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                    >
-                      Edit
-                    </button>
-                  </td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border bg-[rgb(237_237_237)] rounded-xl shadow">
+              <thead className="bg-red-100 text-gray-800">
+                <tr>
+                  <th className="px-4 py-3 border">#</th>
+                  <th className="px-4 py-3 border">Name</th>
+                  <th className="px-4 py-3 border">Email</th>
+                  <th className="px-4 py-3 border">Employee Code</th>
+                  <th className="px-4 py-3 border">Department</th>
+                  <th className="px-4 py-3 border">Role</th>
+                  <th className="px-4 py-3 border">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {users.map((user, i) => (
+                  <tr key={user._id} className="hover:bg-blue-50">
+                    <td className="border text-center px-4 py-2">{i + 1}</td>
+                    <td className="border text-center px-4 py-2">
+                      {user.name}
+                    </td>
+                    <td className="border text-center px-4 py-2">
+                      {user.email}
+                    </td>
+                    <td className="border text-center px-4 py-2">
+                      {user.employeeCode}
+                    </td>
+                    <td className="border text-center px-4 py-2">
+                      {user.department?.name || "—"}
+                    </td>
+                    <td className="border text-center px-4 py-2">
+                      {user.role?.name || "—"}
+                    </td>
+                    <td className="px-4 py-2 text-center border">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination */}
+          {/* Pagination */}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
+        </>
       ) : (
         <p className="text-center text-gray-600">No users found.</p>
       )}
