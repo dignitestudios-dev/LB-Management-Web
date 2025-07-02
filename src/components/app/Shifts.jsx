@@ -106,7 +106,7 @@ const Shift = () => {
   };
 
   return (
-    <div className="bg-[rgb(237_237_237)] p-6 rounded-xl shadow">
+    <div className=" p-6 rounded-xl shadow">
       {/* Create Shift */}
       <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
         <h3 className="text-lg font-semibold mb-2">Create New Shift</h3>
@@ -154,49 +154,51 @@ const Shift = () => {
         <p className="text-gray-600">Loading...</p>
       ) : shiftsData.length > 0 ? (
         <>
-          <table className="w-full table-auto border border-gray-200 rounded-lg">
-            <thead className="bg-red-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2 border">#</th>
-                <th className="px-4 py-2 border">Shift Name</th>
-                <th className="px-4 py-2 border">Shift Time</th>
-                <th className="px-4 py-2 border">Created At</th>
-                <th className="px-4 py-2 border">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shiftsData.map((shift, index) => {
-                const shiftTime = `${formatHour(
-                  shift.startHour
-                )} - ${formatHour(shift.endHour)}`;
-                return (
-                  <tr key={shift._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 border text-center">
-                      {(page - 1) * limit + index + 1}
-                    </td>
-                    <td className="px-4 py-2 border text-center font-medium">
-                      {shift.name}
-                    </td>
-                    <td className="px-4 py-2 border text-center">
-                      {shiftTime}
-                    </td>
-                    <td className="px-4 py-2 border text-center text-sm">
-                      {new Date(shift.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-2 border text-center">
-                      <button
-                        onClick={() => openEditModal(shift)}
-                        className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto bg-[rgb(237_237_237)] rounded-xl shadow p-4 ">
 
+            <table className="min-w-full p-4 border  ">
+              <thead className="bg-red-100 text-gray-700">
+                <tr>
+                  <th className="px-4 py-2 border">#</th>
+                  <th className="px-4 py-2 border">Shift Name</th>
+                  <th className="px-4 py-2 border">Shift Time</th>
+                  <th className="px-4 py-2 border">Created At</th>
+                  <th className="px-4 py-2 border">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shiftsData.map((shift, index) => {
+                  const shiftTime = `${formatHour(
+                    shift.startHour
+                  )} - ${formatHour(shift.endHour)}`;
+                  return (
+                    <tr key={shift._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 border text-center">
+                        {(page - 1) * limit + index + 1}
+                      </td>
+                      <td className="px-4 py-2 border text-center font-medium">
+                        {shift.name}
+                      </td>
+                      <td className="px-4 py-2 border text-center">
+                        {shiftTime}
+                      </td>
+                      <td className="px-4 py-2 border text-center text-sm">
+                        {new Date(shift.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2 border text-center">
+                        <button
+                          onClick={() => openEditModal(shift)}
+                          className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
           <Pagination
             currentPage={page}
             totalPages={totalPages}

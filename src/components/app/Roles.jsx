@@ -121,18 +121,15 @@ const Roles = () => {
         </div>
       </div>
 
+      <SearchBar
+        value={search}
+        onSearch={(query) => {
+          setSearch(query);
+          setCurrentPage(1);
+        }}
+      />
       {/* Roles List with Search */}
       <div className="bg-[rgb(237_237_237)] shadow-md rounded-md p-4">
-        <h3 className="text-lg font-semibold mb-3 text-[#f40e00]">All Roles</h3>
-
-        <SearchBar
-          value={search}
-          onSearch={(query) => {
-            setSearch(query);
-            setCurrentPage(1);
-          }}
-        />
-
         {loading ? (
           <p className="text-gray-600 mt-4">Loading roles...</p>
         ) : roles.length === 0 ? (
