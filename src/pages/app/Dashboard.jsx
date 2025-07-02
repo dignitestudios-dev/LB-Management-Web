@@ -159,7 +159,6 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-8 overflow-y-auto bg-gray-50">
-         
           <div className="text-2xl font-semibold text-gray-800 mb-4 capitalize">
             {/* {activeTab.replace("-", " ")} */}
           </div>
