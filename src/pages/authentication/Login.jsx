@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { useLogin } from "../../hooks/api/Post"; // ✅ Adjust path if needed
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 
 export default function LoginPage() {
@@ -96,7 +96,9 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-
+            <div className="-mt-4 text-end text-blue-500">
+              <NavLink to={"/auth/forget-password"}>Forget Password? </NavLink>
+            </div>
             {/* Submit */}
             <button
               type="submit"
