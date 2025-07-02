@@ -3,7 +3,7 @@ import React from "react";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   return (
-    <div className="flex justify-center mt-4 gap-2">
+    <div className="flex justify-end mt-4 gap-2">
       <button
         className={`px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-80 disabled:cursor-not-allowed`}
         disabled={currentPage === 1}
