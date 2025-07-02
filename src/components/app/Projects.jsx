@@ -31,7 +31,7 @@ const Projects = () => {
         },
       });
       setProjects(res.data.data);
-      setTotalPages(Math.ceil(res.data.total / itemsPerPage));
+      setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
       ErrorToast("Failed to fetch projects");
     } finally {
@@ -100,6 +100,7 @@ const Projects = () => {
     <div className="max-w-7xl mx-auto">
       {/* Create Project Form */}
       <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
+        <h3 className="text-lg font-semibold mb-2">Projects</h3>
         <div className="flex items-center gap-3">
           <input
             type="text"
@@ -117,20 +118,14 @@ const Projects = () => {
           </button>
         </div>
       </div>
-
+      <SearchBar
+        value={search}
+        onSearch={(query) => {
+          setSearch(query);
+          setCurrentPage(1); // Reset page on search
+        }}
+      />
       <div className="bg-[rgb(237_237_237)] shadow-md rounded-md p-4">
-        <h3 className="text-lg font-semibold mb-3 text-[#f40e00]">
-          All Projects
-        </h3>
-
-        <SearchBar
-          value={search}
-          onChange={(query) => {
-            setSearch(query);
-            setCurrentPage(1); // Reset page on search
-          }}
-        />
-
         {/* Project List */}
         {loading ? (
           <p className="text-gray-600 mt-4">Loading projects...</p>

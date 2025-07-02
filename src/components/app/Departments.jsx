@@ -88,7 +88,7 @@ const Departments = () => {
   };
 
   return (
-    <div className="bg-[rgb(237_237_237)] p-6 rounded-xl shadow">
+    <div className=" p-6 rounded-xl shadow">
       {/* Create Department */}
       <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
         <h3 className="text-lg font-semibold mb-2">Create New Department</h3>
@@ -109,11 +109,9 @@ const Departments = () => {
         </div>
       </div>
 
-      {/* Department List */}
-      <h2 className="text-xl font-bold text-[#f40e00] mb-4">All Departments</h2>
       <SearchBar
         value={search}
-        onChange={(query) => {
+        onSearch={(query) => {
           setSearch(query);
           setCurrentPage(1); // Reset to page 1 on search
         }}
@@ -123,50 +121,54 @@ const Departments = () => {
         <p className="text-gray-600 mt-4">Loading...</p>
       ) : (
         <>
-          <table className="w-full table-auto border border-gray-200 rounded-lg mt-4">
-            <thead className="bg-red-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2 border">#</th>
-                <th className="px-4 py-2 text-center border">
-                  Department Name
-                </th>
-                <th className="px-4 py-2 text-center border">Created At</th>
-                <th className="px-4 py-2 text-center border">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {departments.length === 0 ? (
+          <div className="overflow-x-auto bg-[rgb(237_237_237)] rounded-xl shadow p-4 ">
+            <table className="min-w-full border bg-[rgb(237_237_237)] rounded-xl shadow">
+              <thead className="bg-red-100 text-gray-700">
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-500">
-                    No departments found.
-                  </td>
+                  <th className="px-4 py-2 border">#</th>
+                  <th className="px-4 py-2 text-center border">
+                    Department Name
+                  </th>
+                  <th className="px-4 py-2 text-center border">Created At</th>
+                  <th className="px-4 py-2 text-center border">Action</th>
                 </tr>
-              ) : (
-                departments.map((dept, index) => (
-                  <tr key={dept._id} className="text-gray-800 hover:bg-gray-50">
-                    <td className="px-4 py-2 text-center border">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </td>
-                    <td className="px-4 py-2 text-center border font-medium">
-                      {dept.name}
-                    </td>
-                    <td className="px-4 py-2 text-center border text-sm">
-                      {new Date(dept.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-2 text-center border text-sm">
-                      <button
-                        onClick={() => openEditModal(dept)}
-                        className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
+              </thead>
+              <tbody>
+                {departments.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="text-center py-4 text-gray-500">
+                      No departments found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-
+                ) : (
+                  departments.map((dept, index) => (
+                    <tr
+                      key={dept._id}
+                      className="text-gray-800 hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-2 text-center border">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
+                      <td className="px-4 py-2 text-center border font-medium">
+                        {dept.name}
+                      </td>
+                      <td className="px-4 py-2 text-center border text-sm">
+                        {new Date(dept.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2 text-center border text-sm">
+                        <button
+                          onClick={() => openEditModal(dept)}
+                          className="bg-blue-500 py-1 px-3 rounded-md text-white hover:bg-blue-600"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
           <div className="mt-4">
             <Pagination
               currentPage={currentPage}

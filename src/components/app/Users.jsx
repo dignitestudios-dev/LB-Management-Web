@@ -265,8 +265,8 @@ const Users = () => {
         <p className="text-center text-gray-500">Loading users...</p>
       ) : users.length > 0 ? (
         <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border bg-[rgb(237_237_237)] rounded-xl shadow">
+          <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
+            <table className="min-w-full border ">
               <thead className="bg-red-100 text-gray-800">
                 <tr>
                   <th className="px-4 py-3 border">#</th>
