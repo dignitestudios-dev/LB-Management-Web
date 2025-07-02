@@ -99,7 +99,6 @@ const UserDashboard = () => {
 
     // return () => clearInterval(timer);
   }, []);
-  
 
 
   useEffect(() => {
@@ -160,6 +159,15 @@ const UserDashboard = () => {
       setStoppedTime(null);
     }
   }, [isModalOpen]);
+
+
+  const rawMinutes = todayAttendance?.checkInTime
+    ? Math.floor((new Date() - new Date(todayAttendance.checkInTime)) / 60000)
+    : 0;
+
+  const adjustedWorkedMinutes = Math.max(rawMinutes, 0);
+
+
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
@@ -243,6 +251,7 @@ const UserDashboard = () => {
               </div>
 
               <div className="flex justify-center items-center gap-6 mt-3 mb-3">
+
                 {todayAttendance?.checkInTime && (
                   <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
                     <p className="font-semibold uppercase tracking-wide text-xs text-blue-600 mb-1">
@@ -257,6 +266,17 @@ const UserDashboard = () => {
                     </p>
                   </div>
                 )}
+                {todayAttendance?.checkInTime && !todayAttendance?.checkOutTime && (
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
+                    <p className="font-semibold uppercase tracking-wide text-xs text-yellow-600 mb-1">
+                      Total Duration (Excl. Break)
+                    </p>
+                    <p className="text-lg font-bold">
+                      {Math.floor(adjustedWorkedMinutes / 60)} hour(s) {adjustedWorkedMinutes % 60} minute(s)
+                    </p>
+                  </div>
+                )}
+
                 {todayAttendance?.checkOutTime && (
                   <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
                     <p className="font-semibold uppercase tracking-wide text-xs text-green-600 mb-1">
@@ -271,6 +291,7 @@ const UserDashboard = () => {
                     </p>
                   </div>
                 )}
+
               </div>
 
               <div className="flex gap-4 justify-center mt-10">
@@ -358,9 +379,6 @@ export default UserDashboard;
 // ===========================
 
 // ProjectList Component Inline
-
-// ===========================
-// ===========================
 
 // ProjectList Component Inline
 
@@ -491,6 +509,18 @@ const ProjectList = ({
       return;
     }
 
+    // ❌ Prevent if not exactly equal
+    if (totalEntered !== totalAvailableMinutes) {
+      ErrorToast(
+        `Please use all available time before confirming checkout. Time remaining: ${Math.floor(
+          remainingMinutes / 60
+        )}h ${remainingMinutes % 60}m.`
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+
     const payload = {
       checkoutTime,
       projects: validProjects.map((entry) => ({
@@ -537,7 +567,7 @@ const ProjectList = ({
             How many projects did you work on today?
           </p>
           <input
-            type="number"
+            type="text"
             min="1"
             max="10"
             placeholder="Enter number of projects"
@@ -654,7 +684,7 @@ const ProjectList = ({
                     <div>
                       <label htmlFor={`hoursWorked-${index}`}>Hours</label>
                       <input
-                        type="number"
+                        type="text"
                         placeholder={`Hours (max: ${maxHours})`}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={entry.hoursWorked}
@@ -685,7 +715,7 @@ const ProjectList = ({
                     <div>
                       <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
                       <input
-                        type="number"
+                        type="text"
                         placeholder={`Minutes (0-59)`}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={entry.minutesWorked}
@@ -712,8 +742,8 @@ const ProjectList = ({
                     </div>
 
                     {errors[index]?.time && (
-  <p className="text-xs text-red-600 mt-1 col-span-2">{errors[index].time}</p>
-)}
+                      <p className="text-xs text-red-600 mt-1 col-span-2">{errors[index].time}</p>
+                    )}
 
                   </div>
 
@@ -727,12 +757,12 @@ const ProjectList = ({
                     }
                   />
                   {errors[index]?.description && (
-  <p className="text-xs text-red-600 mt-1">{errors[index].description}</p>
-)}
+                    <p className="text-xs text-red-600 mt-1">{errors[index].description}</p>
+                  )}
 
                 </div>
 
-                
+
               );
             })
           )}
@@ -754,10 +784,15 @@ const ProjectList = ({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-md text-sm transition ${isSubmitting
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 Cancel
               </button>
+
 
               <button
                 onClick={handleSubmit}
