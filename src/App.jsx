@@ -11,7 +11,6 @@ function App() {
   // Protected route wrapper
   const ProtectedRoute = () => {
     const token = Cookies.get("token");
-    console.log(token, "Test");
     if (token === null) return null; // Optional: or show a loader
     return token ? <Outlet /> : <Navigate to="/auth/login" />;
   };

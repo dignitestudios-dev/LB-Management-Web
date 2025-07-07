@@ -116,7 +116,7 @@ const Roles = () => {
             onClick={createRole}
             className="bg-[#f40e00] text-white px-4 py-2 rounded hover:bg-red-700"
           >
-            Add
+            Create
           </button>
         </div>
       </div>

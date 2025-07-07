@@ -17,6 +17,7 @@
     "crypto-js": "^4.2.0",
     "formik": "^2.4.6",
     "js-cookie": "^3.0.5",
+    "moment-timezone": "^0.6.0",
     "react": "^19.0.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",

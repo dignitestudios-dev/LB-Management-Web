@@ -14,14 +14,15 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  const [currentTime, setCurrentTime] = useState(
-    new Date().toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    })
-  );
+const [currentTime, setCurrentTime] = useState(
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Karachi", 
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(new Date())
+);
 
   const today = new Date();
 
@@ -81,22 +82,24 @@ const UserDashboard = () => {
     };
   }, [isProfileOpen]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(
-        new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true,
-        })
-      );
-    }, 1000);
+ useEffect(() => {
+  const timer = setInterval(() => {
+    // Format the time based on Pakistan Standard Time
+    const pakistanTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Karachi", // Ensuring Pakistan Standard Time
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(new Date());
 
-    setTimerInterval(timer); // Save the timer interval
+    setCurrentTime(pakistanTime); // Update the time state
+  }, 1000);
 
-    // return () => clearInterval(timer);
-  }, []);
+  setTimerInterval(timer); // Save the timer interval
+
+  return () => clearInterval(timer); // Clear interval when component unmounts
+}, []);
 
   useEffect(() => {
     const fetchToday = async () => {
@@ -397,13 +400,7 @@ const UserDashboard = () => {
 
 export default UserDashboard;
 
-// ===========================
 
-// ProjectList Component Inline
-
-// ProjectList Component Inline
-
-// ===========================
 const ProjectList = ({
   onClose,
   postData,
@@ -416,28 +413,58 @@ const ProjectList = ({
   setStoppedTime,
 }) => {
   const { loading, data: projects } = useUsers("/projects", 1, 1000);
-
   const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerms, setSearchTerms] = useState([]); // Array to store search terms for each entry
+  const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
+  const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
 
   const BREAK_MINUTES = 60;
 
   const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
   const rawMinutes = Math.floor((endTime - new Date(checkInTime)) / 60000);
 
-  const filteredProjects = projects.filter((proj) =>
-    proj.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
+
+  const handleSearchChange = (e, index) => {
+    const updatedSearchTerms = [...searchTerms];
+    updatedSearchTerms[index] = e.target.value || ''; // Ensure it's a string, even if empty
+    setSearchTerms(updatedSearchTerms);
+  };
+
+
+
+  const handleSelect = (project, index) => {
+    const updatedSelectedProjects = [...selectedProjects];
+    updatedSelectedProjects[index] = project; // Update selected project for this index
+
+    setSelectedProjects(updatedSelectedProjects);
+    setSearchTerms((prevSearchTerms) => {
+      const updatedSearchTerms = [...prevSearchTerms];
+      updatedSearchTerms[index] = project.name; // Set the search term to selected project's name
+      return updatedSearchTerms;
+    });
+    setOpenDropdownIndex(null); // Close dropdown after selection
+
+    const updatedEntries = [...entries];
+    updatedEntries[index] = {
+      ...updatedEntries[index],
+      project: project._id, // Set selected project for this entry
+    };
+    setEntries(updatedEntries);
+  };
+
+
+  const toggleDropdown = (index) => {
+    setOpenDropdownIndex((prev) => (prev === index ? null : index)); // Open/close dropdown
+  };
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
-    const endTime = isTimeStoppedForCheckout
-      ? new Date(stoppedTime)
-      : new Date();
+    const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
     return Math.max(
       Math.floor((endTime - new Date(checkInTime)) / 60000) - BREAK_MINUTES,
       0
@@ -466,7 +493,6 @@ const ProjectList = ({
       const evenMinutes = Math.floor(totalMinutes / projectCount);
       const remaining = totalMinutes % projectCount;
 
-      // Distribute evenMinutes to all, and +1 to the first few if there's a remainder
       const initialEntries = Array.from({ length: projectCount }, (_, i) => ({
         project: "",
         hoursWorked: 0,
@@ -484,7 +510,6 @@ const ProjectList = ({
 
     const newErrors = {};
 
-    // Validate all entries
     entries.forEach((entry, index) => {
       const entryErrors = {};
       if (!entry.project) entryErrors.project = "Project is required";
@@ -507,7 +532,6 @@ const ProjectList = ({
 
     setErrors({}); // Clear previous errors
 
-    // Continue with your logic
     const checkoutTime = stoppedTime || new Date().toISOString();
 
     const validProjects = entries.filter(
@@ -525,8 +549,7 @@ const ProjectList = ({
 
     if (totalEntered > totalAvailableMinutes) {
       ErrorToast(
-        `Total entered time (${Math.floor(totalEntered / 60)}h ${
-          totalEntered % 60
+        `Total entered time (${Math.floor(totalEntered / 60)}h ${totalEntered % 60
         }m) cannot exceed available time (${Math.floor(
           totalAvailableMinutes / 60
         )}h ${totalAvailableMinutes % 60}m).`
@@ -535,7 +558,6 @@ const ProjectList = ({
       return;
     }
 
-    // ❌ Prevent if not exactly equal
     if (totalEntered !== totalAvailableMinutes) {
       ErrorToast(
         `Please use all available time before confirming checkout. Time remaining: ${Math.floor(
@@ -578,8 +600,7 @@ const ProjectList = ({
     }
 
     const s =
-      Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) %
-      60;
+      Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) % 60;
     return `${h} hour(s) ${m} minute(s) ${s} second(s)`;
   };
 
@@ -665,6 +686,16 @@ const ProjectList = ({
             <p className="text-gray-500">Loading projects...</p>
           ) : (
             entries.map((entry, index) => {
+
+              // Get the search term for this entry
+              const searchTermForEntry = searchTerms[index] || '';
+
+              // Filter projects based on the current search term for this entry
+              const filteredProjects = projects.filter((proj) =>
+                proj.name.toLowerCase().includes(searchTermForEntry.toLowerCase())
+              );
+
+              const selectedProject = selectedProjects[index];
               const otherMinutes = entries.reduce((sum, ent, i) => {
                 if (i !== index) {
                   const hours = parseInt(ent.hoursWorked) || 0;
@@ -687,25 +718,42 @@ const ProjectList = ({
                     <input
                       type="text"
                       placeholder="Search project..."
+                      value={searchTerms[index] || ''}  // Bind to the individual search term
+                      onChange={(e) => handleSearchChange(e, index)}  // Update specific index's search term
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
                     />
 
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={entry.project}
-                      onChange={(e) =>
-                        handleChange(index, "project", e.target.value)
-                      }
-                    >
-                      <option value="">Select a project</option>
-                      {filteredProjects.map((proj) => (
-                        <option key={proj._id} value={proj._id}>
-                          {proj.name}
-                        </option>
-                      ))}
-                    </select>
+                    {openDropdownIndex === index && (
+                      <div className="w-[28em] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        <ul className="max-h-60 overflow-y-auto">
+                          {filteredProjects.length > 0 ? (
+                            filteredProjects.map((proj) => (
+                              <li
+                                key={proj._id}
+                                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+                                onClick={() => handleSelect(proj, index)}
+                              >
+                                {proj.name}
+                              </li>
+                            ))
+                          ) : (
+                            <li className="px-3 py-2 text-gray-500">No projects found</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* {selectedProject && (
+                      <div className="mt-2">
+                        <p className="uppercase text-sm font-bold text-black">
+                          Selected Project:{" "}
+                          <span className="uppercase text-sm font-bold text-red-600">
+                            {selectedProject.name}
+                          </span>
+                        </p>
+                      </div>
+                    )} */}
 
                     {errors[index]?.project && (
                       <p className="text-xs text-red-600 mt-1">
@@ -819,11 +867,10 @@ const ProjectList = ({
               <button
                 onClick={onClose}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-sm transition ${
-                  isSubmitting
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm transition ${isSubmitting
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 Cancel
               </button>
@@ -831,11 +878,10 @@ const ProjectList = ({
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-white text-sm transition ${
-                  isSubmitting
-                    ? "bg-red-400 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
+                className={`px-4 py-2 rounded-md text-white text-sm transition ${isSubmitting
+                  ? "bg-red-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700"
+                  }`}
               >
                 {isSubmitting ? (
                   <ImSpinner3 className="animate-spin" />
@@ -851,4 +897,4 @@ const ProjectList = ({
       )}
     </div>
   );
-};s
+};

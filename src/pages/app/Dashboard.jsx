@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import Users from "../../components/app/Users";
 import Departments from "../../components/app/Departments";
@@ -26,6 +26,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { postData, loading } = useLogin();
   const { data: user, loading: userLoading } = useUsers("/users/me");
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      console.log(parsedUser, "roless");
+      if (parsedUser.role?.name !== "Admin") {
+        navigate("/app/userdashboard");
+      }
+    }
+  }, [navigate]);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -47,6 +58,22 @@ const Dashboard = () => {
         return <Summary />;
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileOpen]);
 
   const handleLogout = async () => {
     await postData("/auth/logout", false, null, null, (res) => {
@@ -85,7 +112,10 @@ const Dashboard = () => {
               </div>
             </div>
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700">
+              <div
+                ref={dropdownRef}
+                className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 space-y-2 text-sm text-gray-700"
+              >
                 <div className="space-y-1">
                   <p>
                     <strong>Name:</strong> {user.name}
