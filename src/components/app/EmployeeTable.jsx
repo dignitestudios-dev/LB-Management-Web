@@ -3,6 +3,7 @@ import React from "react";
 const EmployeeTable = ({ attendance }) => {
   return (
     <div className=" bg-white shadow-md rounded-xl">
+    
       <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-700">
         <thead>
           <tr className="bg-red-50 text-red-600 text-xs md:text-sm uppercase font-semibold tracking-wider">
@@ -81,12 +82,15 @@ const EmployeeTable = ({ attendance }) => {
                   ) : (
                     <span className="inline-block px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
                       ⏰{" "}
-                      {new Date(item?.checkOutTime).toLocaleTimeString("en-PK", {
-                        timeZone: "Asia/Karachi",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
+                      {new Date(item?.checkOutTime).toLocaleTimeString(
+                        "en-PK",
+                        {
+                          timeZone: "Asia/Karachi",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        }
+                      )}
                     </span>
                   )}
                 </td>
@@ -116,7 +120,9 @@ const EmployeeTable = ({ attendance }) => {
                     ? "—"
                     : item?.totalMinutes === 0
                     ? "—"
-                    : `${item.totalMinutes} mins`}
+                    : `${Math.floor(item.totalMinutes / 60)}h ${
+                        item.totalMinutes % 60
+                      }m`}
                 </td>
               </tr>
             ))

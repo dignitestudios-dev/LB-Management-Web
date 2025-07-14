@@ -207,9 +207,9 @@ const TimesheetTable = () => {
               <th className="px-6 py-3 text-left">Shift Date</th>
               <th className="px-6 py-3 text-left">Check In</th>
               <th className="px-6 py-3 text-left">Check Out</th>
+              <th className="px-6 py-3 text-left">Worked Hours</th>
               <th className="px-6 py-3 text-left">Reason</th>
               <th className="px-6 py-3 text-left">Missing Note</th>
-              <th className="px-6 py-3 text-left">Worked Hours</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
@@ -244,71 +244,87 @@ const TimesheetTable = () => {
                   </td>
 
                   {/* Check In */}
-               <td className="px-6 py-4">
-  {item?.checkInTime === null && item?.checkOutTime === null ? (
-    item?.missingReason === "weekend" ? (
-      <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-[#60d2c1] rounded-full">
-        📅 Day Off
-      </span>
-    ) : (
-      <span className="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
-        🚫 Absent
-      </span>
-    )
-  ) : item?.checkInTime === null ? (
-    <span className="inline-block px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">
-      ⛔ Missing
-    </span>
-  ) : (
-    <span className="inline-block px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-      🕒{" "}
-      {new Date(item?.checkInTime).toLocaleTimeString("en-PK", {
-        timeZone: "Asia/Karachi",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })}
-    </span>
-  )}
-</td>
-
+                  <td className="px-6 py-4">
+                    {item?.checkInTime === null &&
+                    item?.checkOutTime === null ? (
+                      item?.missingReason === "weekend" ? (
+                        <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-[#60d2c1] rounded-full">
+                          📅 Day Off
+                        </span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                          🚫 Absent
+                        </span>
+                      )
+                    ) : item?.checkInTime === null ? (
+                      <span className="inline-block px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">
+                        ⛔ Missing
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                        🕒{" "}
+                        {new Date(item?.checkInTime).toLocaleTimeString(
+                          "en-PK",
+                          {
+                            timeZone: "Asia/Karachi",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        )}
+                      </span>
+                    )}
+                  </td>
 
                   {/* Check Out */}
-                <td className="px-6 py-4">
-  {item?.checkInTime === null && item?.checkOutTime === null ? (
-    item?.missingReason === "weekend" ? (
-      <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-[#60d2c1] rounded-full">
-        📅 Day Off
-      </span>
-    ) : (
-      <span className="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
-        🚫 Absent
-      </span>
-    )
-  ) : item?.checkOutTime === null ? (
-    <span className="inline-block px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">
-      ⛔ Missing
-    </span>
-  ) : (
-    <span className="inline-block px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-      ⏰{" "}
-      {new Date(item?.checkOutTime).toLocaleTimeString("en-PK", {
-        timeZone: "Asia/Karachi",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })}
-    </span>
-  )}
-</td>
+                  <td className="px-6 py-4">
+                    {item?.checkInTime === null &&
+                    item?.checkOutTime === null ? (
+                      item?.missingReason === "weekend" ? (
+                        <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-[#60d2c1] rounded-full">
+                          📅 Day Off
+                        </span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                          🚫 Absent
+                        </span>
+                      )
+                    ) : item?.checkOutTime === null ? (
+                      <span className="inline-block px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">
+                        ⛔ Missing
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+                        ⏰{" "}
+                        {new Date(item?.checkOutTime).toLocaleTimeString(
+                          "en-PK",
+                          {
+                            timeZone: "Asia/Karachi",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        )}
+                      </span>
+                    )}
+                  </td>
 
+                  <td className="px-6 py-4 font-semibold text-sm">
+                    {item?.checkInTime === null && item?.checkOutTime === null
+                      ? "—"
+                      : item?.totalMinutes === 0
+                      ? "—"
+                      : `${Math.floor(item.totalMinutes / 60)}h ${
+                          item.totalMinutes % 60
+                        }m`}
+                  </td>
 
                   {/* Worked Hours */}
                   <td className="px-6 py-4 font-semibold text-sm">
-                   {item?.missingReason
-  ? item.missingReason.charAt(0).toUpperCase() + item.missingReason.slice(1).toLowerCase()
-  : "—"}
-
+                    {item?.missingReason
+                      ? item.missingReason.charAt(0).toUpperCase() +
+                        item.missingReason.slice(1).toLowerCase()
+                      : "—"}
                   </td>
                   <td className="relative cursor-pointer group px-6 py-4 font-semibold text-sm text-gray-700">
                     <span>
@@ -324,14 +340,6 @@ const TimesheetTable = () => {
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-red-100"></div>
                       </div>
                     )}
-                  </td>
-
-                  <td className="px-6 py-4 font-semibold text-sm">
-                    {item?.checkInTime === null && item?.checkOutTime === null
-                      ? "—"
-                      : item?.totalMinutes === 0
-                      ? "—"
-                      : `${item.totalMinutes} mins`}
                   </td>
                 </tr>
               ))
