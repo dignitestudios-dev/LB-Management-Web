@@ -7,14 +7,18 @@ import Cookies from "js-cookie";
 import ForgetPassword from "./pages/authentication/ForgetPassword";
 import VerifyOtp from "./pages/authentication/VerifyOtp";
 import ResetPassword from "./pages/authentication/PasswordUpdate";
+import { baseUrl } from "./axios";
 function App() {
   // Protected route wrapper
+
   const ProtectedRoute = () => {
     const token = Cookies.get("token");
     if (token === null) return null; // Optional: or show a loader
     return token ? <Outlet /> : <Navigate to="/auth/login" />;
   };
-  // console.log(isAuthenticated,"testToken")
+
+ 
+
   return (
     <Routes>
       <Route

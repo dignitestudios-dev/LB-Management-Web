@@ -9,20 +9,50 @@ import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImCross, ImSpinner3 } from "react-icons/im";
 import { TbReportAnalytics } from "react-icons/tb";
 import { useRef } from "react"; // already imported React
-
+import { PiArticleNyTimes } from "react-icons/pi";
+import TimesheetTable from "./TimeSheet";
+import ModalMissingAttendance from "./ModalMissingAttendance";
+import axios from "../../axios";
 const UserDashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isUpdate, setIsUpdate] = useState(false);
 
-const [currentTime, setCurrentTime] = useState(
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Karachi", 
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  }).format(new Date())
-);
+  const [missingAttendance, setMissingAttendance] = useState(null);
+
+  const fetchAttendance = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/attendance/missing`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setMissingAttendance(result.data);
+        setModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching initial attendance", error);
+    } finally {
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [isUpdate]);
+
+  const [currentTime, setCurrentTime] = useState(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Karachi",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(new Date())
+  );
 
   const today = new Date();
 
@@ -35,6 +65,7 @@ const [currentTime, setCurrentTime] = useState(
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCheckInLoading, setCheckInLoading] = useState(false);
+  const [ForgotisModalOpen, setForgotisModalOpen] = useState(false);
 
   const [todayAttendance, setTodayAttendance] = useState(null);
 
@@ -46,7 +77,8 @@ const [currentTime, setCurrentTime] = useState(
   const { data: user, loading: userLoading } = useUsers("/users/me");
 
   const [timerInterval, setTimerInterval] = useState(null); // To store the timer interval
-
+  const [checkOutTimeForgot, setcheckOutTimeForgot] = useState(null);
+  const [checkInTimeForgot, setcheckInTimeForgot] = useState(null);
   // Add these states to manage stopped time for checkout
   const [isTimeStoppedForCheckout, setIsTimeStoppedForCheckout] =
     useState(false);
@@ -82,24 +114,24 @@ const [currentTime, setCurrentTime] = useState(
     };
   }, [isProfileOpen]);
 
- useEffect(() => {
-  const timer = setInterval(() => {
-    // Format the time based on Pakistan Standard Time
-    const pakistanTime = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Karachi", // Ensuring Pakistan Standard Time
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    }).format(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // Format the time based on Pakistan Standard Time
+      const pakistanTime = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Karachi", // Ensuring Pakistan Standard Time
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      }).format(new Date());
 
-    setCurrentTime(pakistanTime); // Update the time state
-  }, 1000);
+      setCurrentTime(pakistanTime); // Update the time state
+    }, 1000);
 
-  setTimerInterval(timer); // Save the timer interval
+    setTimerInterval(timer); // Save the timer interval
 
-  return () => clearInterval(timer); // Clear interval when component unmounts
-}, []);
+    return () => clearInterval(timer); // Clear interval when component unmounts
+  }, []);
 
   useEffect(() => {
     const fetchToday = async () => {
@@ -166,8 +198,49 @@ const [currentTime, setCurrentTime] = useState(
 
   const adjustedWorkedMinutes = Math.max(rawMinutes, 0);
 
+  const getTimeDifference = (start, end) => {
+    if (!start || !end) return null;
+
+    const [startH, startM] = start.split(":").map(Number);
+    const [endH, endM] = end.split(":").map(Number);
+
+    let startDate = new Date(0, 0, 0, startH, startM);
+    let endDate = new Date(0, 0, 0, endH, endM);
+
+    if (endDate < startDate) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
+
+    const diffMs = endDate - startDate;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    return `${hours}h ${minutes}m`;
+  };
+  const [selectedReasons, setSelectedReasons] = useState({});
+  const [shiftDate, setShiftDate] = useState("");
+  const [description, setDiscription] = useState("");
+  const [selectmissingType, setSelectmissingType] = useState("");
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
+      {modalOpen && missingAttendance.length > 0 && (
+        <ModalMissingAttendance
+          setIsUpdate={setIsUpdate}
+          setShiftDate={setShiftDate}
+          setDiscription={setDiscription}
+          setModalOpen={setModalOpen}
+          setIsModalOpen={setForgotisModalOpen}
+          missingAttendance={missingAttendance}
+          checkInTime={checkInTimeForgot}
+          checkOutTime={checkOutTimeForgot}
+          setcheckOutTime={setcheckOutTimeForgot}
+          setcheckInTime={setcheckInTimeForgot}
+          setSelectedReasons={setSelectedReasons}
+          setSelectmissingType={setSelectmissingType}
+          selectedReasons={selectedReasons}
+        />
+      )}
+
       {/* Topbar */}
       <div className="w-full flex justify-between items-center px-6 py-4 bg-white border-b shadow-sm">
         <div className="text-2xl font-bold text-black">
@@ -199,16 +272,19 @@ const [currentTime, setCurrentTime] = useState(
               >
                 <div className="space-y-1">
                   <p>
-                    <strong>Name:</strong> {user.name}
+                    <strong>Name:</strong> {user?.name}
                   </p>
                   <p>
-                    <strong>Code:</strong> {user.employeeCode}
+                    <strong>Code:</strong> {user?.employeeCode}
                   </p>
                   <p>
-                    <strong>Department:</strong> {user.department.name}
+                    <strong>Department:</strong> {user?.department?.name}
                   </p>
                   <p>
-                    <strong>Role:</strong> {user.role.name}
+                    <strong>Role:</strong> {user?.role?.name}
+                  </p>
+                  <p>
+                    <strong>Shift:</strong> {user?.shift?.name}
                   </p>
                 </div>
                 <hr className="my-2" />
@@ -229,10 +305,26 @@ const [currentTime, setCurrentTime] = useState(
         <div className="w-64 bg-white border-r p-6 shadow-md">
           <ul className="space-y-4">
             <li
-              className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition bg-red-100 text-[#f40e00] font-semibold`}
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition cursor-pointer font-semibold ${
+                activeTab === "dashboard"
+                  ? "bg-red-100 text-[#f40e00]"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
               <TbReportAnalytics />
               Attendance
+            </li>
+            <li
+              onClick={() => setActiveTab("timeSheet")}
+              className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition cursor-pointer font-semibold ${
+                activeTab === "timeSheet"
+                  ? "bg-red-100 text-[#f40e00]"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <PiArticleNyTimes />
+              Time Sheet
             </li>
           </ul>
         </div>
@@ -363,10 +455,50 @@ const [currentTime, setCurrentTime] = useState(
               )}
             </div>
           )}
+          {activeTab === "timeSheet" && <TimesheetTable />}
         </div>
       </div>
 
       {/* Modal */}
+      {ForgotisModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
+            <div className="flex justify-between">
+              <h2 className="text-xl font-semibold mb-4 text-black">
+                Select Project for Check Out
+              </h2>
+              <ImCross
+                className="cursor-pointer"
+                onClick={() => setForgotisModalOpen(false)}
+              />
+            </div>
+
+            <ForgotProjectList
+              // handleModalSubmit={handleModalSubmit}
+              getTimeDifference={getTimeDifference}
+              missingAttendance={missingAttendance}
+              checkOutTimeForgot={checkOutTimeForgot}
+              checkInTimeForgot={checkInTimeForgot}
+              onClose={() => setForgotisModalOpen(false)}
+              postData={postData}
+              checkInTime={todayAttendance?.checkInTime}
+              setTodayAttendance={setTodayAttendance}
+              setModalOpen={setModalOpen}
+              setIsModalOpen={setIsModalOpen}
+              setForgotisModalOpen={setForgotisModalOpen}
+              todayAttendance={todayAttendance}
+              isTimeStoppedForCheckout={isTimeStoppedForCheckout}
+              stoppedTime={stoppedTime}
+              setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
+              setStoppedTime={setStoppedTime}
+              selectedReasons={selectedReasons}
+              shiftDate={shiftDate}
+              selectmissingType={selectmissingType}
+              setIsUpdate={setIsUpdate}
+            />
+          </div>
+        </div>
+      )}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
@@ -381,6 +513,9 @@ const [currentTime, setCurrentTime] = useState(
             </div>
 
             <ProjectList
+              getTimeDifference={getTimeDifference}
+              checkOutTimeForgot={checkOutTimeForgot}
+              checkInTimeForgot={checkInTimeForgot}
               onClose={() => setIsModalOpen(false)}
               postData={postData}
               checkInTime={todayAttendance?.checkInTime}
@@ -400,7 +535,6 @@ const [currentTime, setCurrentTime] = useState(
 
 export default UserDashboard;
 
-
 const ProjectList = ({
   onClose,
   postData,
@@ -411,6 +545,9 @@ const ProjectList = ({
   stoppedTime,
   setIsTimeStoppedForCheckout,
   setStoppedTime,
+  checkOutTimeForgot,
+  getTimeDifference,
+  checkInTimeForgot,
 }) => {
   const { loading, data: projects } = useUsers("/projects", 1, 1000);
   const [projectCount, setProjectCount] = useState(null);
@@ -421,21 +558,16 @@ const ProjectList = ({
   const [searchTerms, setSearchTerms] = useState([]); // Array to store search terms for each entry
   const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
   const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
-
   const BREAK_MINUTES = 60;
 
   const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
   const rawMinutes = Math.floor((endTime - new Date(checkInTime)) / 60000);
 
-
-
   const handleSearchChange = (e, index) => {
     const updatedSearchTerms = [...searchTerms];
-    updatedSearchTerms[index] = e.target.value || ''; // Ensure it's a string, even if empty
+    updatedSearchTerms[index] = e.target.value || ""; // Ensure it's a string, even if empty
     setSearchTerms(updatedSearchTerms);
   };
-
-
 
   const handleSelect = (project, index) => {
     const updatedSelectedProjects = [...selectedProjects];
@@ -457,14 +589,15 @@ const ProjectList = ({
     setEntries(updatedEntries);
   };
 
-
   const toggleDropdown = (index) => {
     setOpenDropdownIndex((prev) => (prev === index ? null : index)); // Open/close dropdown
   };
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
-    const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
+    const endTime = isTimeStoppedForCheckout
+      ? new Date(stoppedTime)
+      : new Date();
     return Math.max(
       Math.floor((endTime - new Date(checkInTime)) / 60000) - BREAK_MINUTES,
       0
@@ -549,7 +682,8 @@ const ProjectList = ({
 
     if (totalEntered > totalAvailableMinutes) {
       ErrorToast(
-        `Total entered time (${Math.floor(totalEntered / 60)}h ${totalEntered % 60
+        `Total entered time (${Math.floor(totalEntered / 60)}h ${
+          totalEntered % 60
         }m) cannot exceed available time (${Math.floor(
           totalAvailableMinutes / 60
         )}h ${totalAvailableMinutes % 60}m).`
@@ -600,9 +734,12 @@ const ProjectList = ({
     }
 
     const s =
-      Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) % 60;
+      Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) %
+      60;
     return `${h} hour(s) ${m} minute(s) ${s} second(s)`;
   };
+
+  console.log(checkInTime, "checkInTimeForgot====>", checkInTime, "===>");
 
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
@@ -686,13 +823,14 @@ const ProjectList = ({
             <p className="text-gray-500">Loading projects...</p>
           ) : (
             entries.map((entry, index) => {
-
               // Get the search term for this entry
-              const searchTermForEntry = searchTerms[index] || '';
+              const searchTermForEntry = searchTerms[index] || "";
 
               // Filter projects based on the current search term for this entry
               const filteredProjects = projects.filter((proj) =>
-                proj.name.toLowerCase().includes(searchTermForEntry.toLowerCase())
+                proj.name
+                  .toLowerCase()
+                  .includes(searchTermForEntry.toLowerCase())
               );
 
               const selectedProject = selectedProjects[index];
@@ -718,8 +856,8 @@ const ProjectList = ({
                     <input
                       type="text"
                       placeholder="Search project..."
-                      value={searchTerms[index] || ''}  // Bind to the individual search term
-                      onChange={(e) => handleSearchChange(e, index)}  // Update specific index's search term
+                      value={searchTerms[index] || ""} // Bind to the individual search term
+                      onChange={(e) => handleSearchChange(e, index)} // Update specific index's search term
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
                     />
@@ -738,7 +876,9 @@ const ProjectList = ({
                               </li>
                             ))
                           ) : (
-                            <li className="px-3 py-2 text-gray-500">No projects found</li>
+                            <li className="px-3 py-2 text-gray-500">
+                              No projects found
+                            </li>
                           )}
                         </ul>
                       </div>
@@ -867,10 +1007,11 @@ const ProjectList = ({
               <button
                 onClick={onClose}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-sm transition ${isSubmitting
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                className={`px-4 py-2 rounded-md text-sm transition ${
+                  isSubmitting
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Cancel
               </button>
@@ -878,10 +1019,522 @@ const ProjectList = ({
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-white text-sm transition ${isSubmitting
-                  ? "bg-red-400 cursor-not-allowed"
-                  : "bg-red-600 hover:bg-red-700"
-                  }`}
+                className={`px-4 py-2 rounded-md text-white text-sm transition ${
+                  isSubmitting
+                    ? "bg-red-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {isSubmitting ? (
+                  <ImSpinner3 className="animate-spin" />
+                ) : isTimeStoppedForCheckout ? (
+                  "Confirm Checkout"
+                ) : (
+                  "Checkout"
+                )}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const ForgotProjectList = ({
+  onClose,
+  checkInTime,
+  todayAttendance,
+  isTimeStoppedForCheckout,
+  stoppedTime,
+  setIsTimeStoppedForCheckout,
+  setStoppedTime,
+  checkOutTimeForgot,
+  getTimeDifference,
+  checkInTimeForgot,
+  shiftDate,
+  selectedReasons,
+  selectmissingType,
+  setForgotisModalOpen,
+  setIsUpdate,
+}) => {
+  const BREAK_MINUTES = 60;
+
+  const { loading, data: projects } = useUsers("/projects", 1, 1000);
+  const [projectCount, setProjectCount] = useState(null);
+  const [entries, setEntries] = useState([]);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  console.log("entries --- ", entries);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [searchTerms, setSearchTerms] = useState([]); // Array to store search terms for each entry
+  const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
+  const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
+
+  const availableMinutes = () => {
+    if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
+
+    const createDateTime = (timeStr) => {
+      const [hours, minutes] = timeStr.trim().split(":").map(Number);
+      const date = new Date(shiftDate);
+      date.setUTCHours(hours, minutes, 0, 0); // Set time in UTC
+      return date;
+    };
+
+    const checkInDate = createDateTime(checkInTimeForgot);
+    const checkOutDate = createDateTime(checkOutTimeForgot);
+
+    const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
+
+    return Math.max(diffInMinutes - BREAK_MINUTES, 0);
+  };
+
+  const totalAvailableMinutes = availableMinutes();
+  console.log("totalAvailable", totalAvailableMinutes);
+
+  const totalEnteredMinutes = entries.reduce((sum, entry) => {
+    const hours = parseInt(entry.hoursWorked) || 0;
+    const minutes = parseInt(entry.minutesWorked) || 0;
+    return sum + hours * 60 + minutes;
+  }, 0);
+
+  const remainingMinutes = totalAvailableMinutes - totalEnteredMinutes;
+
+  const handleSearchChange = (e, index) => {
+    const updatedSearchTerms = [...searchTerms];
+    updatedSearchTerms[index] = e.target.value || ""; // Ensure it's a string, even if empty
+    setSearchTerms(updatedSearchTerms);
+  };
+
+  const handleChange = (index, field, value) => {
+    const updatedEntries = [...entries];
+    updatedEntries[index][field] = value;
+    setEntries(updatedEntries);
+  };
+
+  const handleSelect = (project, index) => {
+    const updatedSelectedProjects = [...selectedProjects];
+    updatedSelectedProjects[index] = project; // Update selected project for this index
+
+    setSelectedProjects(updatedSelectedProjects);
+    setSearchTerms((prevSearchTerms) => {
+      const updatedSearchTerms = [...prevSearchTerms];
+      updatedSearchTerms[index] = project.name; // Set the search term to selected project's name
+      return updatedSearchTerms;
+    });
+    setOpenDropdownIndex(null); // Close dropdown after selection
+
+    const updatedEntries = [...entries];
+    updatedEntries[index] = {
+      ...updatedEntries[index],
+      project: project._id, // Set selected project for this entry
+    };
+    setEntries(updatedEntries);
+  };
+
+  const toggleDropdown = (index) => {
+    setOpenDropdownIndex((prev) => (prev === index ? null : index)); // Open/close dropdown
+  };
+
+  const handleProjectCountSubmit = () => {
+    if (projectCount && projectCount > 0 && projectCount <= 10) {
+      const totalMinutes = availableMinutes();
+      const evenMinutes = Math.floor(totalMinutes / projectCount);
+      const remaining = totalMinutes % projectCount;
+
+      const initialEntries = Array.from({ length: projectCount }, (_, i) => ({
+        project: "",
+        hoursWorked: 0,
+        minutesWorked: 0,
+        description: "",
+      }));
+
+      setEntries(initialEntries);
+      setShowProjectForm(true);
+    }
+  };
+
+  const validProjects = entries.filter(
+    (entry) =>
+      entry.project &&
+      (entry.hoursWorked || entry.minutesWorked) &&
+      entry.description
+  );
+
+  const toUTCHoursOnly = (localTimeStr) => {
+    if (!localTimeStr) return "";
+    const localDate = new Date(`1970-01-01T${localTimeStr}:00+05:00`);
+    return localDate.toISOString().substring(11, 16); // HH:mm only
+  };
+
+  const payload = {
+    shiftDate: shiftDate,
+    reason: selectmissingType === "checkout_missing" ? "" : selectedReasons,
+    note: entries
+      ?.map((entry) => entry?.description)
+      .filter(Boolean)
+      .join(", "),
+
+    checkInTime: toUTCHoursOnly(checkInTimeForgot),
+    checkOutTime: toUTCHoursOnly(checkOutTimeForgot),
+    projects: validProjects?.map((entry) => ({
+      project: entry?.project,
+      minutesWorked:
+        (parseInt(entry.hoursWorked) || 0) * 60 +
+        (parseInt(entry.minutesWorked) || 0),
+      description: entry.description,
+    })),
+  };
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    console.log("payload-- ", payload);
+    const newErrors = {};
+
+    entries.forEach((entry, index) => {
+      const entryErrors = {};
+      if (!entry.project) entryErrors.project = "Project is required";
+      if (!entry.hoursWorked && !entry.minutesWorked)
+        entryErrors.time = "Hours or minutes required";
+      if (!entry.description)
+        entryErrors.description = "Description is required";
+
+      if (Object.keys(entryErrors).length > 0) {
+        newErrors[index] = entryErrors;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      ErrorToast("Please fill all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setErrors({}); // Clear previous errors
+
+    const checkoutTime = stoppedTime || new Date().toISOString();
+
+    const validProjects = entries.filter(
+      (entry) =>
+        entry.project &&
+        (entry.hoursWorked || entry.minutesWorked) &&
+        entry.description
+    );
+
+    const totalEntered = validProjects.reduce((sum, entry) => {
+      const hours = parseInt(entry.hoursWorked) || 0;
+      const minutes = parseInt(entry.minutesWorked) || 0;
+      return sum + hours * 60 + minutes;
+    }, 0);
+
+    if (totalEntered > totalAvailableMinutes) {
+      ErrorToast(
+        `Total entered time (${Math.floor(totalEntered / 60)}h ${
+          totalEntered % 60
+        }m) cannot exceed available time (${Math.floor(
+          totalAvailableMinutes / 60
+        )}h ${totalAvailableMinutes % 60}m).`
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (totalEntered !== totalAvailableMinutes) {
+      ErrorToast(
+        `Please use all available time before confirming checkout. Time remaining: ${Math.floor(
+          remainingMinutes / 60
+        )}h ${remainingMinutes % 60}m.`
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await axios.post("/attendance/missing", payload);
+      console.log("Success:", res.data);
+      SuccessToast("Submitted successfully");
+      setIsUpdate((prev) => !prev);
+      setForgotisModalOpen(false);
+    } catch (err) {
+      console.error("Submission failed:", err);
+      ErrorToast("Failed to submit");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
+      {projectCount === null ? (
+        <div className="space-y-4">
+          <p className="text-gray-700 font-medium">
+            How many projects did you work on today?
+          </p>
+          <input
+            type="text"
+            min="1"
+            max="10"
+            placeholder="Enter number of projects"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => {
+              const count = parseInt(e.target.value);
+              if (isNaN(count) || count < 1 || count > 10) {
+                setProjectCount(null);
+                return;
+              }
+              setProjectCount(count);
+            }}
+          />
+          {projectCount && (
+            <button
+              onClick={handleProjectCountSubmit}
+              className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+            >
+              Okay
+            </button>
+          )}
+        </div>
+      ) : !showProjectForm ? (
+        <div className="space-y-4">
+          <p className="text-gray-700 font-medium">
+            You selected {projectCount} project(s). Click "Okay" to proceed.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setProjectCount(null);
+                setEntries([]);
+              }}
+              className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleProjectCountSubmit}
+              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="text-sm text-gray-700 space-y-1">
+            <p>
+              <strong>Total Time Duration:</strong>{" "}
+              <span className="text-blue-700 font-medium">
+                {getTimeDifference(checkInTimeForgot, checkOutTimeForgot)}
+              </span>
+            </p>
+            <p>
+              <strong>Break Time:</strong>{" "}
+              <span className="text-yellow-600 font-medium">
+                {Math.floor(BREAK_MINUTES / 60)} hour
+              </span>
+            </p>
+            <p>
+              <p>
+                <strong>Time Remaining:</strong>{" "}
+                <span className="text-red-600 font-medium">
+                  {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
+                </span>
+              </p>
+            </p>
+          </div>
+
+          {loading ? (
+            <p className="text-gray-500">Loading projects...</p>
+          ) : (
+            entries.map((entry, index) => {
+              const searchTermForEntry = searchTerms[index] || "";
+
+              const filteredProjects = projects.filter((proj) =>
+                proj.name
+                  .toLowerCase()
+                  .includes(searchTermForEntry.toLowerCase())
+              );
+
+              const selectedProject = selectedProjects[index];
+              const otherMinutes = entries.reduce((sum, ent, i) => {
+                if (i !== index) {
+                  const hours = parseInt(ent.hoursWorked) || 0;
+                  const minutes = parseInt(ent.minutesWorked) || 0;
+                  return sum + hours * 60 + minutes;
+                }
+                return sum;
+              }, 0);
+
+              const maxForThis = totalAvailableMinutes - otherMinutes;
+              const maxHours = Math.floor(maxForThis / 60);
+              const maxMinutes = maxForThis % 60;
+
+              return (
+                <div
+                  key={index}
+                  className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
+                >
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Search project..."
+                      value={searchTerms[index] || ""} // Bind to the individual search term
+                      onChange={(e) => handleSearchChange(e, index)} // Update specific index's search term
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
+                    />
+
+                    {openDropdownIndex === index && (
+                      <div className="w-[28em] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        <ul className="max-h-60 overflow-y-auto">
+                          {filteredProjects.length > 0 ? (
+                            filteredProjects.map((proj) => (
+                              <li
+                                key={proj._id}
+                                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+                                onClick={() => handleSelect(proj, index)}
+                              >
+                                {proj.name}
+                              </li>
+                            ))
+                          ) : (
+                            <li className="px-3 py-2 text-gray-500">
+                              No projects found
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {errors[index]?.project && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors[index].project}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor={`hoursWorked-${index}`}>Hours</label>
+                      <input
+                        type="text"
+                        placeholder={`Hours (max: ${maxHours})`}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={entry.hoursWorked}
+                        min="0"
+                        max={maxHours}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          if (val < 0) return;
+
+                          const currentMinutes =
+                            parseInt(entry.minutesWorked) || 0;
+                          const totalMinutesForEntry =
+                            val * 60 + currentMinutes;
+
+                          if (totalMinutesForEntry <= maxForThis) {
+                            handleChange(index, "hoursWorked", val);
+                          } else {
+                            ErrorToast(
+                              `Total time for this entry cannot exceed ${Math.floor(
+                                maxForThis / 60
+                              )}h ${maxForThis % 60}m.`
+                            );
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
+                      <input
+                        type="text"
+                        placeholder={`Minutes (0-59)`}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={entry.minutesWorked}
+                        min="0"
+                        max="59"
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          if (val < 0 || val > 59) return;
+
+                          const currentHours = parseInt(entry.hoursWorked) || 0;
+                          const totalMinutesForEntry = currentHours * 60 + val;
+
+                          if (totalMinutesForEntry <= maxForThis) {
+                            handleChange(index, "minutesWorked", val);
+                          } else {
+                            ErrorToast(
+                              `Total time for this entry cannot exceed ${Math.floor(
+                                maxForThis / 60
+                              )}h ${maxForThis % 60}m.`
+                            );
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {errors[index]?.time && (
+                      <p className="text-xs text-red-600 mt-1 col-span-2">
+                        {errors[index].time}
+                      </p>
+                    )}
+                  </div>
+
+                  <textarea
+                    placeholder="Description"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                    value={entry.description}
+                    onChange={(e) =>
+                      handleChange(index, "description", e.target.value)
+                    }
+                  />
+                  {errors[index]?.description && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors[index].description}
+                    </p>
+                  )}
+                </div>
+              );
+            })
+          )}
+
+          <div className="flex justify-between items-center pt-2">
+            <button
+              onClick={() => {
+                setProjectCount(null);
+                setEntries([]);
+                setShowProjectForm(false);
+                setIsTimeStoppedForCheckout(false);
+                setStoppedTime(null);
+              }}
+              className="text-sm font-medium text-red-600 hover:underline"
+            >
+              ← Back
+            </button>
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-md text-sm transition ${
+                  isSubmitting
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-md text-white text-sm transition ${
+                  isSubmitting
+                    ? "bg-red-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
                 {isSubmitting ? (
                   <ImSpinner3 className="animate-spin" />

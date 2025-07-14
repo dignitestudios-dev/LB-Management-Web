@@ -5,9 +5,10 @@
 // import FILENAME(PASCALCASE) from "./FILENAME(CAMELCASE).png";
 import Logo from "./logo.webp";
 import NoInternetImage from "./nointernet.png";
+import Nodata from "./nodata.jpeg";
 
 // export {
 //     FILENAME(PASCALCASE)
 // }
 
-export { Logo, NoInternetImage };
+export { Logo, NoInternetImage, Nodata };

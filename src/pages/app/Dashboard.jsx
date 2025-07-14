@@ -20,6 +20,8 @@ import { useLogin } from "../../hooks/api/Post";
 import { useUsers } from "../../hooks/api/Get";
 import { SuccessToast } from "../../components/global/Toaster";
 import { IoLogOut } from "react-icons/io5";
+import EmployeeTimeSheet from "../../components/app/EmployeeTimeSheet";
+import { PiArticleNyTimes } from "react-icons/pi";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("summary");
@@ -54,6 +56,8 @@ const Dashboard = () => {
         return <Projects />;
       case "shifts":
         return <Shift />;
+      case "timeSheet":
+        return <EmployeeTimeSheet />;
       default:
         return <Summary />;
     }
@@ -183,6 +187,12 @@ const Dashboard = () => {
               label="All Projects"
               active={activeTab === "projects"}
               onClick={() => setActiveTab("projects")}
+            />
+            <SidebarItem
+              icon={<PiArticleNyTimes />}
+              label="Time Sheet"
+              active={activeTab === "timeSheet"}
+              onClick={() => setActiveTab("timeSheet")}
             />
           </ul>
         </div>
