@@ -125,18 +125,20 @@ const EmployeeTimeSheet = () => {
         className="flex justify-between p-4"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        <div>
-          {selectedUser && (
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500">
-                Showing Attendance For : 
-              </span>
-              <h2 className="text-xl mx-2 font-bold text-gray-800">
-                {selectedUser?.name}
-              </h2>
-            </div>
-          )}
-        </div>
+        {tableShow && (
+          <div>
+            {selectedUser && (
+              <div className="flex items-center">
+                <span className="text-sm text-gray-500">
+                  Showing Attendance For :
+                </span>
+                <h2 className="text-xl mx-2 font-bold text-gray-800">
+                  {selectedUser?.name}
+                </h2>
+              </div>
+            )}
+          </div>
+        )}
         <button className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-md shadow-sm transition">
           <GrFilter className="text-lg" />
           <span className="text-sm font-semibold">Filter</span>

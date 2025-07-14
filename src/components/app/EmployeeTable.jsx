@@ -3,16 +3,15 @@ import React from "react";
 const EmployeeTable = ({ attendance }) => {
   return (
     <div className=" bg-white shadow-md rounded-xl">
-    
       <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-700">
         <thead>
           <tr className="bg-red-50 text-red-600 text-xs md:text-sm uppercase font-semibold tracking-wider">
             <th className="px-6 py-3 text-left">Shift Date</th>
             <th className="px-6 py-3 text-left">Check In</th>
             <th className="px-6 py-3 text-left">Check Out</th>
+            <th className="px-6 py-3 text-left">Worked Hours</th>
             <th className="px-6 py-3 text-left">Reason</th>
             <th className="px-6 py-3 text-left">Missing Note</th>
-            <th className="px-6 py-3 text-left">Worked Hours</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
@@ -94,7 +93,15 @@ const EmployeeTable = ({ attendance }) => {
                     </span>
                   )}
                 </td>
-
+                <td className="px-6 py-4 font-semibold text-sm">
+                  {item?.checkInTime === null && item?.checkOutTime === null
+                    ? "—"
+                    : item?.totalMinutes === 0
+                    ? "—"
+                    : `${Math.floor(item.totalMinutes / 60)}h ${
+                        item.totalMinutes % 60
+                      }m`}
+                </td>
                 {/* Worked Hours */}
                 <td className="px-6 py-4 font-semibold text-sm">
                   {item?.missingReason}
@@ -113,16 +120,6 @@ const EmployeeTable = ({ attendance }) => {
                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-red-100"></div>
                     </div>
                   )}
-                </td>
-
-                <td className="px-6 py-4 font-semibold text-sm">
-                  {item?.checkInTime === null && item?.checkOutTime === null
-                    ? "—"
-                    : item?.totalMinutes === 0
-                    ? "—"
-                    : `${Math.floor(item.totalMinutes / 60)}h ${
-                        item.totalMinutes % 60
-                      }m`}
                 </td>
               </tr>
             ))
