@@ -9,8 +9,8 @@ const EmployeeTable = ({ attendance }) => {
             <th className="px-6 py-3 text-left">Shift Date</th>
             <th className="px-6 py-3 text-left">Check In</th>
             <th className="px-6 py-3 text-left">Check Out</th>
-            <th className="px-6 py-3 text-left">Missing Note</th>
             <th className="px-6 py-3 text-left">Reason</th>
+            <th className="px-6 py-3 text-left">Missing Note</th>
             <th className="px-6 py-3 text-left">Worked Hours</th>
           </tr>
         </thead>
@@ -81,9 +81,11 @@ const EmployeeTable = ({ attendance }) => {
                   ) : (
                     <span className="inline-block px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
                       ⏰{" "}
-                      {new Date(item.checkOutTime).toLocaleTimeString("en-GB", {
+                      {new Date(item?.checkOutTime).toLocaleTimeString("en-PK", {
+                        timeZone: "Asia/Karachi",
                         hour: "2-digit",
                         minute: "2-digit",
+                        hour12: true,
                       })}
                     </span>
                   )}

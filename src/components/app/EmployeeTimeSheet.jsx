@@ -188,14 +188,14 @@ const EmployeeTimeSheet = () => {
                             setError("");
                           }}
                         >
-                          {console.log(item._id, "ID")}
+                        
 
                           <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
                             {getInitials(item.name)}
                           </div>
                           <div className="flex-1">
                             <div className="text-sm font-medium text-gray-800">
-                              {item.name} ({item.employeeId || "ID"})
+                              {item.name} 
                             </div>
                             <div className="text-xs text-gray-500">
                               {item.designation || "Designation"}

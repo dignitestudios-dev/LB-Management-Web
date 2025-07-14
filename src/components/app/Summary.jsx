@@ -137,70 +137,71 @@ const Summary = () => {
             ))}
           </select>
         </div>
-       
-   <div className="w-64">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Employee <span className="text-red-500">*</span>
-  </label>
 
-  <div className="relative">
-    <div
-      onClick={() => setShowDropdown(!showDropdown)}
-      className="w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
-    >
-      {selectedUser ? selectedUser.name : "Select Employee"}
-    </div>
+        <div className="w-64">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Employee <span className="text-red-500">*</span>
+          </label>
 
-    {showDropdown && (
-      <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md max-h-64 overflow-y-auto">
-        <div className="flex items-center px-3 py-2 border-b border-gray-200">
-          <input
-            type="text"
-            className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Search employee..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <FaSearch className="ml-2 text-gray-500" />
-        </div>
-
-        {loading ? (
-          <div className="p-2 text-sm text-gray-500">Loading...</div>
-        ) : users.length === 0 ? (
-          <div className="p-2 text-sm text-gray-500">No employees found.</div>
-        ) : (
-          users.map((item, index) => (
+          <div className="relative">
             <div
-              key={index}
-              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onClick={() => {
-                setSelectedUser(item);
-                setSelectedUserId(item._id);
-                setSelectedDepartmentId("");
-                setShowDropdown(false);
-                setError("");
-              }}
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
             >
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
-                {getInitials(item.name)}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-800">
-                  {item.name} ({item.employeeId || "ID"})
-                </div>
-                <div className="text-xs text-gray-500">
-                  {item.designation || "Designation"}
-                </div>
-              </div>
+              {selectedUser ? selectedUser.name : "Select Employee"}
             </div>
-          ))
-        )}
-      </div>
-    )}
-    {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
-  </div>
-</div>
 
+            {showDropdown && (
+              <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md max-h-64 overflow-y-auto">
+                <div className="flex items-center px-3 py-2 border-b border-gray-200">
+                  <input
+                    type="text"
+                    className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Search employee..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                  <FaSearch className="ml-2 text-gray-500" />
+                </div>
+
+                {loading ? (
+                  <div className="p-2 text-sm text-gray-500">Loading...</div>
+                ) : users.length === 0 ? (
+                  <div className="p-2 text-sm text-gray-500">
+                    No employees found.
+                  </div>
+                ) : (
+                  users.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedUser(item);
+                        setSelectedUserId(item._id);
+                        setSelectedDepartmentId("");
+                        setShowDropdown(false);
+                        setError("");
+                      }}
+                    >
+                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
+                        {getInitials(item.name)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800">
+                          {item.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {item.designation || "Designation"}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
+          </div>
+        </div>
 
         <button
           onClick={fetchSummary}
