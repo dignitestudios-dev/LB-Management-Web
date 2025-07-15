@@ -1,26 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "../../axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { MdDateRange } from "react-icons/md";
 import { FaSearch } from "react-icons/fa";
+import { RxCross2 } from "react-icons/rx";
 const Summary = () => {
   const currentDate = new Date();
+  const dropdownRef = useRef(null);
+  const startRef = useRef(null);
+  const endRef = useRef(null);
+
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
   const [year, setYear] = useState(currentDate.getFullYear());
   const [data, setData] = useState([]);
+  const [userLoading, setUserLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [department, setDepartment] = useState([]);
-  const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
+  const [users, setUsers] = useState([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+  });
+  console.log(users, "users==");
   const fetchSummary = async () => {
     try {
       setLoading(true);
@@ -53,31 +63,41 @@ const Summary = () => {
     }
   };
 
-  const fetchUsers = async (searchTerm = "") => {
+  const fetchUsers = async (searchTerm = "", page = 1) => {
+    setUserLoading(true);
     try {
-      setLoading(true);
       const res = await axios.get(
-        `/users?search=${encodeURIComponent(searchTerm)}`
+        `/users?search=${encodeURIComponent(searchTerm)}&page=${page}`
       );
 
-      setUsers(res?.data?.data);
+      const response = res.data;
+
+      if (response.success) {
+        setUsers(response.data); // ✅ Correct
+        setPagination({
+          currentPage: response.pagination.currentPage,
+          totalPages: response.pagination.totalPages,
+        });
+      }
     } catch (err) {
       ErrorToast("Failed to fetch users");
     } finally {
-      setLoading(false);
+      setUserLoading(false);
     }
   };
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchUsers(query, 1);
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
+
   useEffect(() => {
     fetchSummary();
     fetchDepartment();
     fetchUsers();
   }, []);
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      fetchUsers(query);
-    }, 500);
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
   const getInitials = (name) => {
     if (!name) return "";
     const words = name.trim().split(" ");
@@ -87,6 +107,23 @@ const Summary = () => {
       .join("")
       .toUpperCase();
   };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
@@ -98,8 +135,12 @@ const Summary = () => {
             <DatePicker
               selected={startDate}
               onChange={(date) => setStartDate(date)}
+              ref={startRef}
             />
-            <div className="absolute right-2 ">
+            <div
+              className="absolute right-2  cursor-pointer"
+              onClick={() => startRef.current.setFocus()}
+            >
               <MdDateRange />
             </div>
           </div>
@@ -110,8 +151,12 @@ const Summary = () => {
             <DatePicker
               selected={endDate}
               onChange={(date) => setEndDate(date)}
+              ref={endRef}
             />
-            <div className="absolute right-2 ">
+            <div
+              className="absolute right-2  cursor-pointer"
+              onClick={() => endRef.current.setFocus()}
+            >
               <MdDateRange />
             </div>
           </div>
@@ -138,17 +183,39 @@ const Summary = () => {
           </select>
         </div>
 
-        <div className="w-64">
+        <div className="w-64" ref={dropdownRef}>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Employee <span className="text-red-500">*</span>
           </label>
 
           <div className="relative">
             <div
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+              onClick={() => {
+                if (!selectedDepartmentId) setShowDropdown(!showDropdown);
+              }}
+              className={`w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm transition duration-150 ${
+                selectedDepartmentId
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : "cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              }`}
             >
-              {selectedUser ? selectedUser.name : "Select Employee"}
+              <div className="flex justify-between items-center">
+                <span>
+                  {selectedUser ? selectedUser.name : "Select Employee"}
+                </span>
+                {selectedUser && (
+                  <RxCross2
+                    className="ml-2 text-gray-500 hover:text-red-600 cursor-pointer text-base"
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent dropdown toggle
+                      setSelectedUser(null);
+                      setSelectedUserId("");
+                      setShowDropdown(false);
+                      setQuery("");
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {showDropdown && (
@@ -164,39 +231,69 @@ const Summary = () => {
                   <FaSearch className="ml-2 text-gray-500" />
                 </div>
 
-                {loading ? (
-                  <div className="p-2 text-sm text-gray-500">Loading...</div>
-                ) : users.length === 0 ? (
+                {userLoading ? (
+                  <div className="p-4 space-y-2">
+                    {[...Array(4)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-10 bg-gray-100 animate-pulse rounded-md"
+                      ></div>
+                    ))}
+                  </div>
+                ) : users?.length === 0 ? (
                   <div className="p-2 text-sm text-gray-500">
                     No employees found.
                   </div>
                 ) : (
-                  users.map((item, index) => (
+                  users?.map((item, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
                       onClick={() => {
                         setSelectedUser(item);
-                        setSelectedUserId(item._id);
+                        setSelectedUserId(item?._id);
                         setSelectedDepartmentId("");
                         setShowDropdown(false);
                         setError("");
                       }}
                     >
                       <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
-                        {getInitials(item.name)}
+                        {getInitials(item?.name)}
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-800">
-                          {item.name}
+                          {item?.name}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {item.designation || "Designation"}
+                          {item?.designation}
                         </div>
                       </div>
                     </div>
                   ))
                 )}
+                <div className="flex items-center justify-between p-2 text-sm border-t sticky bottom-0 bg-white">
+                  <button
+                    className="px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
+                    disabled={pagination?.currentPage === 1}
+                    onClick={() =>
+                      fetchUsers(query, pagination.currentPage - 1)
+                    }
+                  >
+                    Prev
+                  </button>
+                  <span className="text-gray-600">
+                    Page {pagination.currentPage} of {pagination.totalPages}
+                  </span>
+                  <button
+                    className="px-2 py-1 bg-red-100 text-red-600 rounded disabled:opacity-50"
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    onClick={() =>
+                      fetchUsers(query, pagination.currentPage + 1)
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
             {error && <p className="text-red-600 text-xs mt-1">{error}</p>}

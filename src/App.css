@@ -8,3 +8,6 @@
   width: 240px !important;
   padding-left: 10px;
 }
+.badge {
+  @apply inline-block px-3 py-1 text-xs font-semibold rounded-full;
+}

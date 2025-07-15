@@ -35,11 +35,18 @@ const EmployeeTimeSheet = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [attendance, setAttendance] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const fetchUsers = async (searchTerm = "") => {
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+  });
+
+  const fetchUsers = async (searchTerm = "", page = 1) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${baseUrl}/users?search=${encodeURIComponent(searchTerm)}`,
+        `${baseUrl}/users?search=${encodeURIComponent(
+          searchTerm
+        )}&page=${page}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -50,6 +57,10 @@ const EmployeeTimeSheet = () => {
       const result = await response.json();
       if (result.success) {
         setUsers(result.data);
+        setPagination({
+          currentPage: result.pagination.currentPage,
+          totalPages: result.pagination.totalPages,
+        });
       }
     } catch (error) {
       console.error("Error fetching users", error);
@@ -60,7 +71,7 @@ const EmployeeTimeSheet = () => {
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      fetchUsers(query);
+      fetchUsers(query, 1);
     }, 500);
     return () => clearTimeout(delayDebounce);
   }, [query]);
@@ -171,7 +182,8 @@ const EmployeeTimeSheet = () => {
                 </div>
 
                 {showDropdown && (
-                  <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md max-h-64 overflow-y-auto">
+                  <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md">
+                    {/* Search Input */}
                     <div className="flex items-center px-2 py-2 border-b">
                       <input
                         type="text"
@@ -183,39 +195,74 @@ const EmployeeTimeSheet = () => {
                       <FaSearch className="text-gray-400" />
                     </div>
 
-                    {loading ? (
-                      <div className="p-2 text-sm text-gray-500">
-                        Loading...
-                      </div>
-                    ) : users.length === 0 ? (
-                      <div className="p-2 text-sm text-gray-500">
-                        No employees found.
-                      </div>
-                    ) : (
-                      users.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            setSelectedUser(item);
-                            setShowDropdown(false);
-                            setError("");
-                          }}
-                        >
-                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
-                            {getInitials(item.name)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-800">
-                              {item.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {item.designation || "Designation"}
-                            </div>
-                          </div>
+                    {/* Scrollable List */}
+                    <div className="max-h-64 overflow-y-auto">
+                      {loading ? (
+                        <div className="p-4 space-y-2">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="h-10 bg-gray-100 animate-pulse rounded-md"
+                            ></div>
+                          ))}
                         </div>
-                      ))
-                    )}
+                      ) : users.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500">
+                          No employees found.
+                        </div>
+                      ) : (
+                        users.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setSelectedUser(item);
+                              setShowDropdown(false);
+                              setError("");
+                            }}
+                          >
+                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
+                              {getInitials(item.name)}
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-800">
+                                {item?.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {item?.designation}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Pagination Fixed Bottom */}
+                    <div className="flex items-center justify-between p-2 text-sm border-t sticky bottom-0 bg-white">
+                      <button
+                        className="px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
+                        disabled={pagination.currentPage === 1}
+                        onClick={() =>
+                          fetchUsers(query, pagination.currentPage - 1)
+                        }
+                      >
+                        Prev
+                      </button>
+                      <span className="text-gray-600">
+                        Page {pagination.currentPage} of {pagination.totalPages}
+                      </span>
+                      <button
+                        className="px-2 py-1 bg-red-100 text-red-600 rounded disabled:opacity-50"
+                        disabled={
+                          pagination.currentPage === pagination.totalPages
+                        }
+                        onClick={() =>
+                          fetchUsers(query, pagination.currentPage + 1)
+                        }
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 )}
                 <p className="text-red-600 text-[12px] mt-2 px-2 ">{error}</p>
@@ -278,7 +325,7 @@ const EmployeeTimeSheet = () => {
         </div>
       )}
       {tableShow ? (
-        <EmployeeTable attendance={attendance} />
+        <EmployeeTable attendance={attendance} loading={loading} />
       ) : (
         <div className="flex flex-col justify-center items-center h-[60vh]">
           {/* <img src={Nodata} className="w-[160px] h-[160px] " alt="" /> */}

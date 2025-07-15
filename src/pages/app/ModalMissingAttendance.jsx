@@ -203,42 +203,7 @@ const ModalMissingAttendance = ({
                       <input
                         type="time"
                         value={checkOutTime || ""}
-                        min={
-                          item?.type === "checkout_missing"
-                            ? formatTimeOnly(item?.checkInTimes)
-                            : checkInTime
-                        }
-                        onChange={(e) => {
-                          const selected = e.target.value;
-
-                          const checkInBase =
-                            item?.type === "checkout_missing"
-                              ? formatTimeOnly(item?.checkInTimes)
-                              : checkInTime;
-
-                          if (!selected || !checkInBase) return;
-
-                          const [inH, inM] = checkInBase.split(":").map(Number);
-                          const [outH, outM] = selected.split(":").map(Number);
-
-                          const checkInDate = new Date(0, 0, 0, inH, inM);
-                          const checkOutDate = new Date(0, 0, 0, outH, outM);
-                          const isOvernightShift =
-                            outH < 6 &&
-                            (inH >= 18 || checkOutDate < checkInDate);
-
-                          if (
-                            !isOvernightShift &&
-                            checkOutDate <= checkInDate
-                          ) {
-                            ErrorToast(
-                              "Checkout time must be after check-in time"
-                            );
-                            return;
-                          }
-
-                          setcheckOutTime(selected);
-                        }}
+                        onChange={(e) => setcheckOutTime(e.target.value)}
                         className="w-full border rounded-md px-2 py-1"
                       />
                     </div>
@@ -274,7 +239,6 @@ const ModalMissingAttendance = ({
                     <option value="">Select reason</option>
                     <option value="absent">Absent</option>
                     <option value="forgot">Forgot</option>
-                    <option value="weekend">Weekend</option>
                     <option value="holiday">Holiday</option>
                     <option value="other">Other</option>
                   </select>
@@ -333,7 +297,8 @@ const ModalMissingAttendance = ({
                 </div>
               )}
               {item?.reason === "forgot" ||
-              item?.type === "checkout_missing" ? (
+              item?.type === "checkout_missing" ||
+              item?.reason === "holiday" ? (
                 <div></div>
               ) : (
                 <div>
