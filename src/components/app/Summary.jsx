@@ -3,9 +3,29 @@ import axios from "../../axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { MdDateRange } from "react-icons/md";
-import { FaSearch } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { RxCross2 } from "react-icons/rx";
+import { useUsers } from "../../hooks/api/Get";
 const Summary = () => {
+  const { loading: projectloader, data: projects } = useUsers(
+    "/projects",
+    1,
+    1000
+  );
+  const getMonthRange = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const start = firstDay.toISOString().split("T")[0];
+    const end = lastDay.toISOString().split("T")[0];
+
+    return { start, end };
+  };
+  const { start, end } = getMonthRange();
   const currentDate = new Date();
   const dropdownRef = useRef(null);
   const startRef = useRef(null);
@@ -16,11 +36,12 @@ const Summary = () => {
   const [data, setData] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(start);
   const [endDate, setEndDate] = useState(new Date());
   const [department, setDepartment] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -30,16 +51,17 @@ const Summary = () => {
     currentPage: 1,
     totalPages: 1,
   });
-  console.log(users, "users==");
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [clearTrigger, setClearTrigger] = useState(false);
+
   const fetchSummary = async () => {
     try {
       setLoading(true);
       const isoStart = startDate.toISOString().split("T")[0];
       const isoEnd = endDate.toISOString().split("T")[0];
 
-      console.log(isoStart, isoEnd, "datesValue");
       const res = await axios.get(
-        `/projects/summary?startDate=${isoStart}&endDate=${isoEnd}&user=${selectedUserId}&department=${selectedDepartmentId}`
+        `/projects/summary?startDate=${isoStart}&endDate=${isoEnd}&user=${selectedUserId}&department=${selectedDepartmentId}&project=${projectId}`
       );
       setData(res.data?.data || []);
     } catch (error) {
@@ -107,6 +129,7 @@ const Summary = () => {
       .join("")
       .toUpperCase();
   };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -125,187 +148,291 @@ const Summary = () => {
     };
   }, [showDropdown]);
 
+  useEffect(() => {
+    if (clearTrigger) {
+      fetchSummary();
+      setClearTrigger(false);
+    }
+  }, [selectedUserId, selectedDepartmentId, projectId, clearTrigger]);
+
+  const handleClear = async () => {
+    setStartDate(new Date());
+    setEndDate(new Date());
+    setSelectedDepartmentId("");
+    setSelectedUser(null);
+    setSelectedUserId("");
+    setProjectId("");
+    setQuery("");
+    setShowDropdown(false);
+    setShowDrawer(false);
+    setClearTrigger(true);
+  };
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
-      <h2 className="text-xl font-bold text-[#f40e00] mb-4">Project Summary</h2>
-      <div className="flex flex-wrap gap-4 mb-6 items-end">
-        <div className="relative ">
-          <label className="block text-sm mb-1">Start Date</label>
-          <div className="flex items-center">
-            <DatePicker
-              selected={startDate}
-              onChange={(date) => setStartDate(date)}
-              ref={startRef}
-            />
-            <div
-              className="absolute right-2  cursor-pointer"
-              onClick={() => startRef.current.setFocus()}
-            >
-              <MdDateRange />
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setShowDrawer(true)}
+          className="bg-red-600 text-white px-4 py-2 rounded "
+        >
+          Filters
+        </button>
+      </div>
+
+      {showDrawer && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-40"
+          onClick={() => setShowDrawer(false)}
+        ></div>
+      )}
+
+      <div
+        className={`fixed top-0 right-0 h-full w-[300px] bg-white z-50 shadow-lg transform transition-transform duration-300 ${
+          showDrawer ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="p-4 h-full flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Filters</h3>
+              <button onClick={() => setShowDrawer(false)}>
+                <RxCross2 className="text-xl text-gray-500 hover:text-red-600" />
+              </button>
             </div>
-          </div>
-        </div>
-        <div className="relative">
-          <label className="block text-sm mb-1">End Date</label>
-          <div className=" flex items-center">
-            <DatePicker
-              selected={endDate}
-              onChange={(date) => setEndDate(date)}
-              ref={endRef}
-            />
-            <div
-              className="absolute right-2  cursor-pointer"
-              onClick={() => endRef.current.setFocus()}
-            >
-              <MdDateRange />
-            </div>
-          </div>
-        </div>
-        <div className="">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Department <span className="text-red-500">*</span>
-          </label>
 
-          <select
-            name="department"
-            id="department"
-            disabled={!!selectedUserId}
-            value={selectedDepartmentId}
-            onChange={(e) => setSelectedDepartmentId(e.target.value)}
-            className="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
-          >
-            <option value="">Select a department</option>
-            {department?.map((depart) => (
-              <option key={depart._id} value={depart._id}>
-                {depart?.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="w-64" ref={dropdownRef}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Employee <span className="text-red-500">*</span>
-          </label>
-
-          <div className="relative">
-            <div
-              onClick={() => {
-                if (!selectedDepartmentId) setShowDropdown(!showDropdown);
-              }}
-              className={`w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm transition duration-150 ${
-                selectedDepartmentId
-                  ? "opacity-50 cursor-not-allowed pointer-events-none"
-                  : "cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              }`}
-            >
-              <div className="flex justify-between items-center">
-                <span>
-                  {selectedUser ? selectedUser.name : "Select Employee"}
-                </span>
-                {selectedUser && (
-                  <RxCross2
-                    className="ml-2 text-gray-500 hover:text-red-600 cursor-pointer text-base"
-                    onClick={(e) => {
-                      e.stopPropagation(); // prevent dropdown toggle
-                      setSelectedUser(null);
-                      setSelectedUserId("");
-                      setShowDropdown(false);
-                      setQuery("");
-                    }}
+            <div className="space-y-4">
+              <div className="relative">
+                <label className="block text-sm mb-1">Start Date</label>
+                <div className="flex items-center">
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    ref={startRef}
+                    className="w-full border px-2 py-1 rounded"
                   />
-                )}
-              </div>
-            </div>
-
-            {showDropdown && (
-              <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md max-h-64 overflow-y-auto">
-                <div className="flex items-center px-3 py-2 border-b border-gray-200">
-                  <input
-                    type="text"
-                    className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Search employee..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                  <FaSearch className="ml-2 text-gray-500" />
+                  <div
+                    className="absolute right-9 cursor-pointer"
+                    onClick={() => startRef.current.setFocus()}
+                  >
+                    <MdDateRange />
+                  </div>
                 </div>
+              </div>
 
-                {userLoading ? (
-                  <div className="p-4 space-y-2">
-                    {[...Array(4)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-10 bg-gray-100 animate-pulse rounded-md"
-                      ></div>
+              <div className="relative">
+                <label className="block text-sm mb-1">End Date</label>
+                <div className="flex items-center">
+                  <DatePicker
+                    selected={endDate}
+                    onChange={(date) => setEndDate(date)}
+                    ref={endRef}
+                    className="w-full border px-2 py-1 rounded"
+                  />
+                  <div
+                    className="absolute right-9 cursor-pointer"
+                    onClick={() => endRef.current.setFocus()}
+                  >
+                    <MdDateRange />
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full relative">
+                <label className="block text-sm mb-1">Department</label>
+                <div className="relative">
+                  <select
+                    disabled={!!selectedUserId || !!projectId}
+                    value={selectedDepartmentId}
+                    onChange={(e) => setSelectedDepartmentId(e.target.value)}
+                    className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  >
+                    <option value="">Select Department</option>
+                    {department.map((depart) => (
+                      <option key={depart._id} value={depart._id}>
+                        {depart.name}
+                      </option>
                     ))}
-                  </div>
-                ) : users?.length === 0 ? (
-                  <div className="p-2 text-sm text-gray-500">
-                    No employees found.
-                  </div>
-                ) : (
-                  users?.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => {
-                        setSelectedUser(item);
-                        setSelectedUserId(item?._id);
-                        setSelectedDepartmentId("");
-                        setShowDropdown(false);
-                        setError("");
-                      }}
-                    >
-                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
-                        {getInitials(item?.name)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-800">
-                          {item?.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {item?.designation}
-                        </div>
+                  </select>
+                  <FaChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                    size={14}
+                  />
+                </div>
+              </div>
+              <div className="w-full relative">
+                <label className="block text-sm mb-1">Projects</label>
+                <div className="relative">
+                  <select
+                    disabled={!!selectedUserId || !!selectedDepartmentId}
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                    className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  >
+                    <option value="">Select Project</option>
+                    {projects?.map((project) => (
+                      <option key={project._id} value={project._id}>
+                        {project?.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <FaChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                    size={14}
+                  />
+                </div>
+              </div>
+
+              <div ref={dropdownRef}>
+                <label className="block text-sm mb-1">
+                  Employee <span className="text-red-500">*</span>
+                </label>
+
+                <div className="relative">
+                  <div
+                    onClick={() => {
+                      if (!selectedDepartmentId || !projectId)
+                        setShowDropdown(!showDropdown);
+                    }}
+                    className={`w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm transition duration-150 ${
+                      selectedDepartmentId || projectId
+                        ? "opacity-50 cursor-not-allowed pointer-events-none"
+                        : "cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span>
+                        {selectedUser ? selectedUser.name : "Select Employee"}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {selectedUser && (
+                          <RxCross2
+                            className="text-gray-500 hover:text-red-600 cursor-pointer text-base"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedUser(null);
+                              setSelectedUserId("");
+                              setShowDropdown(false);
+                              setQuery("");
+                            }}
+                          />
+                        )}
+                        {showDropdown ? (
+                          <FaChevronUp className="text-xs " />
+                        ) : (
+                          <FaChevronDown className="text-xs " />
+                        )}
                       </div>
                     </div>
-                  ))
-                )}
-                <div className="flex items-center justify-between p-2 text-sm border-t sticky bottom-0 bg-white">
-                  <button
-                    className="px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
-                    disabled={pagination?.currentPage === 1}
-                    onClick={() =>
-                      fetchUsers(query, pagination.currentPage - 1)
-                    }
-                  >
-                    Prev
-                  </button>
-                  <span className="text-gray-600">
-                    Page {pagination.currentPage} of {pagination.totalPages}
-                  </span>
-                  <button
-                    className="px-2 py-1 bg-red-100 text-red-600 rounded disabled:opacity-50"
-                    disabled={pagination.currentPage === pagination.totalPages}
-                    onClick={() =>
-                      fetchUsers(query, pagination.currentPage + 1)
-                    }
-                  >
-                    Next
-                  </button>
+                  </div>
+
+                  {showDropdown && (
+                    <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md max-h-64 overflow-y-auto">
+                      <div className="flex items-center px-3 py-2 border-b border-gray-200">
+                        <input
+                          type="text"
+                          className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Search employee..."
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                        />
+                        <FaSearch className="ml-2 text-gray-500" />
+                      </div>
+
+                      {userLoading ? (
+                        <div className="p-4 space-y-2">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="h-10 bg-gray-100 animate-pulse rounded-md"
+                            ></div>
+                          ))}
+                        </div>
+                      ) : users?.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500">
+                          No employees found.
+                        </div>
+                      ) : (
+                        users?.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setSelectedUser(item);
+                              setSelectedUserId(item?._id);
+                              setSelectedDepartmentId("");
+                              setShowDropdown(false);
+                              setError("");
+                            }}
+                          >
+                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
+                              {getInitials(item?.name)}
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-800">
+                                {item?.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {item?.designation}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div className="flex items-center justify-between p-2 text-sm border-t sticky bottom-0 bg-white">
+                        <button
+                          className="px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
+                          disabled={pagination?.currentPage === 1}
+                          onClick={() =>
+                            fetchUsers(query, pagination.currentPage - 1)
+                          }
+                        >
+                          Prev
+                        </button>
+                        <span className="text-gray-600">
+                          Page {pagination.currentPage} of{" "}
+                          {pagination.totalPages}
+                        </span>
+                        <button
+                          className="px-2 py-1 bg-red-100 text-red-600 rounded disabled:opacity-50"
+                          disabled={
+                            pagination.currentPage === pagination.totalPages
+                          }
+                          onClick={() =>
+                            fetchUsers(query, pagination.currentPage + 1)
+                          }
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {error && (
+                    <p className="text-red-600 text-xs mt-1">{error}</p>
+                  )}
                 </div>
               </div>
-            )}
-            {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
+            </div>
+          </div>
+
+          {/* Summary Button */}
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => {
+                fetchSummary();
+                setShowDrawer(false);
+              }}
+              className="bg-[#f40e00] w-[200px] text-white h-[49px]  rounded-md hover:bg-red-700 transition"
+            >
+              Get Summary
+            </button>
+            <button
+              onClick={handleClear}
+              className="bg-gray-300 text-gray-800  w-[200px] h-[49px] rounded-md hover:bg-gray-400 transition"
+            >
+              Clear Filters
+            </button>
           </div>
         </div>
-
-        <button
-          onClick={fetchSummary}
-          className="bg-[#f40e00] text-white px-6 py-2 rounded-md hover:bg-red-700 transition"
-        >
-          Get Summary
-        </button>
       </div>
 
       {loading ? (

@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { BsClockHistory } from "react-icons/bs";
 import { CiClock2, CiUser } from "react-icons/ci";
+import { FaEye } from "react-icons/fa";
 import { PiFileText } from "react-icons/pi";
 import { SlCalender } from "react-icons/sl";
+import ProjectModal from "./ProjectModal";
 
 const EmployeeTable = ({ attendance, loading }) => {
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <div className="bg-white shadow-sm border border-gray-200 ">
       <table className="min-w-full divide-y  divide-gray-200">
@@ -40,6 +45,9 @@ const EmployeeTable = ({ attendance, loading }) => {
                 <PiFileText className="w-4 h-4" />
                 Notes
               </div>
+            </th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <div className="flex items-center gap-2">Action</div>
             </th>
           </tr>
         </thead>
@@ -256,10 +264,27 @@ const EmployeeTable = ({ attendance, loading }) => {
                       )}
                     </div>
                   </td>
+                  <td className="px-6 py-4 relative">
+                    <button
+                      onClick={() => {
+                        setSelectedRow(item);
+                        setShowModal(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <FaEye />
+                    </button>
+                  </td>
                 </tr>
               ))}
         </tbody>
       </table>
+      <ProjectModal
+        showModal={showModal}
+        selectedRow={selectedRow}
+        setShowModal={setShowModal}
+        onClose={() => setShowModal(false)}
+      />
     </div>
   );
 };
