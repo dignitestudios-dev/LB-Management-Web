@@ -16,9 +16,37 @@ function App() {
     if (token === null) return null; // Optional: or show a loader
     return token ? <Outlet /> : <Navigate to="/auth/login" />;
   };
+  useEffect(() => {
+    // Disable Right Click
+    const disableContextMenu = (e) => e.preventDefault();
+    document.addEventListener("contextmenu", disableContextMenu);
 
- 
+    // Disable DevTools shortcuts
+    const disableDevTools = (e) => {
+      // F12
+      if (e.keyCode === 123) {
+        e.preventDefault();
+      }
+      // Ctrl+Shift+I or Cmd+Option+I (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "I") {
+        e.preventDefault();
+      }
+      // Ctrl+Shift+J
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "J") {
+        e.preventDefault();
+      }
+      // Ctrl+U (View source)
+      if ((e.ctrlKey || e.metaKey) && e.key === "u") {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("keydown", disableDevTools);
 
+    return () => {
+      document.removeEventListener("contextmenu", disableContextMenu);
+      document.removeEventListener("keydown", disableDevTools);
+    };
+  }, []);
   return (
     <Routes>
       <Route

@@ -177,14 +177,12 @@ const UserDashboard = () => {
       return;
     }
 
-    // Stop the timer and record the time when Check Out is clicked
     clearInterval(timerInterval);
     setStoppedTime(new Date().toISOString());
     setIsTimeStoppedForCheckout(true);
     setIsModalOpen(true);
   };
 
-  // Reset stopped time when modal closes
   useEffect(() => {
     if (!isModalOpen) {
       setIsTimeStoppedForCheckout(false);
@@ -221,6 +219,9 @@ const UserDashboard = () => {
   const [shiftDate, setShiftDate] = useState("");
   const [description, setDiscription] = useState("");
   const [selectmissingType, setSelectmissingType] = useState("");
+
+
+
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
       {modalOpen && missingAttendance.length > 0 && (
