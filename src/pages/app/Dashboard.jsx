@@ -33,7 +33,7 @@ const Dashboard = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      console.log(parsedUser, "roless");
+      
       if (parsedUser.role?.name !== "Admin") {
         navigate("/app/userdashboard");
       }

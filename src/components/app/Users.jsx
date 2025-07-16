@@ -47,7 +47,7 @@ const Users = () => {
       const res = await axios.get("/users", {
         params: { search, page, limit },
       });
-      console.log(res?.data?.pagination?.totalPages, "datacomes");
+
       setUsers(res.data.data);
       setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {

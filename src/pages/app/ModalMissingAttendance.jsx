@@ -16,7 +16,7 @@ const ModalMissingAttendance = ({
   setSelectmissingType,
   selectedReasons,
 }) => {
-  console.log("checkInTime -- ", checkOutTime, checkInTime);
+  
   const [formData, setFormData] = useState(
     missingAttendance?.map((item) => ({
       shiftDate: item?.shiftDate,
@@ -103,7 +103,7 @@ const ModalMissingAttendance = ({
       };
 
       const res = await axios.post("/attendance/missing", payload);
-      console.log("Success:", res?.data);
+
       SuccessToast("Submitted successfully");
       if (missingAttendance.length === 0) {
         setModalOpen(false);

@@ -220,8 +220,6 @@ const UserDashboard = () => {
   const [description, setDiscription] = useState("");
   const [selectmissingType, setSelectmissingType] = useState("");
 
-
-
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
       {modalOpen && missingAttendance.length > 0 && (
@@ -740,8 +738,6 @@ const ProjectList = ({
     return `${h} hour(s) ${m} minute(s) ${s} second(s)`;
   };
 
-  console.log(checkInTime, "checkInTimeForgot====>", checkInTime, "===>");
-
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
       {projectCount === null ? (
@@ -1065,7 +1061,6 @@ const ForgotProjectList = ({
   const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
-  console.log("entries --- ", entries);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -1092,7 +1087,6 @@ const ForgotProjectList = ({
   };
 
   const totalAvailableMinutes = availableMinutes();
-  console.log("totalAvailable", totalAvailableMinutes);
 
   const totalEnteredMinutes = entries.reduce((sum, entry) => {
     const hours = parseInt(entry.hoursWorked) || 0;
@@ -1189,7 +1183,7 @@ const ForgotProjectList = ({
   };
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    console.log("payload-- ", payload);
+
     const newErrors = {};
 
     entries.forEach((entry, index) => {
@@ -1253,7 +1247,7 @@ const ForgotProjectList = ({
 
     try {
       const res = await axios.post("/attendance/missing", payload);
-      console.log("Success:", res.data);
+
       SuccessToast("Submitted successfully");
       setIsUpdate((prev) => !prev);
       setForgotisModalOpen(false);
