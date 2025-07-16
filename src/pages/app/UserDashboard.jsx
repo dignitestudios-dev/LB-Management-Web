@@ -333,7 +333,7 @@ const UserDashboard = () => {
           {activeTab === "dashboard" && (
             <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-7xl">
               <h1 className="text-3xl font-bold text-center text-black mb-4">
-                Daily Reportng
+                Daily Reporting
               </h1>
 
               <div className="flex flex-col md:flex-row justify-between items-center bg-[#eaf1ff] p-6 rounded-xl shadow-md w-full">
