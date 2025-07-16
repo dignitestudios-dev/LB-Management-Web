@@ -29,7 +29,7 @@ const Summary = () => {
   const startRef = useRef(null);
   const endRef = useRef(null);
   const [summaryTriggered, setSummaryTriggered] = useState(false);
-
+  const [showAll, setShowAll] = useState(false);
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
   const [year, setYear] = useState(currentDate.getFullYear());
   const [data, setData] = useState([]);
@@ -505,43 +505,56 @@ const Summary = () => {
           ))}
         </div>
       ) : data.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((project) => (
-            <div
-              key={project?._id}
-              className="bg-white p-5 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition duration-300"
-            >
-              <h3 className="text-lg font-bold text-red-600 mb-2">
-                {project?.name || "Unnamed Project"}
-              </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data?.map((project) => {
+            const visibleDays = showAll
+              ? project?.dailyBreakdown
+              : project?.dailyBreakdown?.slice(0, 4);
 
-              <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
-                <div>
-                  <p className="font-semibold">
-                    Total Hours:{" "}
-                    <span className="text-gray-800">{project?.totalHours}</span>
+            return (
+              <div
+                key={project?._id}
+                className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition duration-300"
+              >
+                <h3 className="text-xl font-semibold text-red-600 mb-3">
+                  {project?.name || "Unnamed Project"}
+                </h3>
+
+                <div className="text-sm text-gray-700 space-y-1 mb-4">
+                  <p>
+                    <span className="font-semibold">Total Hours:</span>{" "}
+                    <span className="text-gray-900">{project?.totalHours}</span>
                   </p>
-                  <p className="font-semibold">
-                    Total Minutes:{" "}
-                    <span className="text-gray-800">
+                  <p>
+                    <span className="font-semibold">Total Minutes:</span>{" "}
+                    <span className="text-gray-900">
                       {project?.totalMinutes}
                     </span>
                   </p>
                 </div>
-              </div>
 
-              <div className="mt-3 border-t border-gray-100 pt-3 text-sm space-y-1 max-h-[200px] overflow-y-auto">
-                {project?.dailyBreakdown?.map((day, i) => (
-                  <div key={i} className="flex justify-between text-gray-700">
-                    <span className="text-gray-500">{day?.date}</span>
-                    <span className="font-medium">
-                      {day?.totalHours} hr / {day?.totalMinutes} min
-                    </span>
-                  </div>
-                ))}
+                <div className="border-t border-gray-100 pt-3 text-sm space-y-1">
+                  {visibleDays?.map((day, i) => (
+                    <div key={i} className="flex justify-between text-gray-700">
+                      <span className="text-gray-500">{day?.date}</span>
+                      <span className="font-medium">
+                        {day?.totalHours} hr / {day?.totalMinutes} min
+                      </span>
+                    </div>
+                  ))}
+
+                  {project?.dailyBreakdown?.length > 4 && (
+                    <button
+                      onClick={() => setShowAll(!showAll)}
+                      className="text-blue-600 text-sm mt-2 hover:underline"
+                    >
+                      {showAll ? "Show Less" : "Show More"}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <p className="text-gray-500">No data found for selected period.</p>
