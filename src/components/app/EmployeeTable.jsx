@@ -5,6 +5,7 @@ import { FaEye } from "react-icons/fa";
 import { PiFileText } from "react-icons/pi";
 import { SlCalender } from "react-icons/sl";
 import ProjectModal from "./ProjectModal";
+import { IoMdEyeOff } from "react-icons/io";
 
 const EmployeeTable = ({ attendance, loading }) => {
   const [selectedRow, setSelectedRow] = useState(null);
@@ -270,9 +271,10 @@ const EmployeeTable = ({ attendance, loading }) => {
                         setSelectedRow(item);
                         setShowModal(true);
                       }}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-red-600 hover:text-red-800"
                     >
-                      <FaEye />
+                      {showModal ? <FaEye /> : <IoMdEyeOff /> }
+                     
                     </button>
                   </td>
                 </tr>

@@ -19,7 +19,7 @@ const ProjectModal = ({ showModal, selectedRow, onClose }) => {
           </button>
 
           {/* Modal Header */}
-          <h2 className="text-2xl font-bold mb-6 text-indigo-700 flex items-center gap-2">
+          <h2 className="text-2xl font-bold mb-6 text-red-600 flex items-center gap-2">
             <PiFileText className="w-6 h-6" />
             Project Summary
           </h2>
@@ -30,14 +30,14 @@ const ProjectModal = ({ showModal, selectedRow, onClose }) => {
               {selectedRow?.projects?.map((proj, idx) => (
                 <div
                   key={idx}
-                  className="border border-indigo-200 bg-indigo-50 rounded-xl p-5 shadow-sm hover:shadow-md transition"
+                  className="border border-red-200 bg-red-50 rounded-xl p-5 shadow-sm hover:shadow-md transition"
                 >
                   {/* Project Name Heading */}
-                  <div className="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
+                  <div className="inline-block bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
                     Project {idx + 1}
                   </div>
 
-                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">
                     {proj.name}
                   </h3>
 
@@ -46,7 +46,7 @@ const ProjectModal = ({ showModal, selectedRow, onClose }) => {
                       <span className="font-medium text-gray-600">
                         Minutes Worked:
                       </span>{" "}
-                      <span className="text-indigo-700 font-semibold">
+                      <span className="text-red-700 font-semibold">
                         {proj.minutesWorked} minutes
                       </span>
                     </p>
