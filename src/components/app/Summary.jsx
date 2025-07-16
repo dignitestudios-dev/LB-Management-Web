@@ -20,23 +20,23 @@ const Summary = () => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    const start = firstDay.toISOString().split("T")[0];
-    const end = lastDay.toISOString().split("T")[0];
-
-    return { start, end };
+    return { start: firstDay, end: lastDay }; // ✅ return Date objects
   };
+
   const { start, end } = getMonthRange();
   const currentDate = new Date();
   const dropdownRef = useRef(null);
   const startRef = useRef(null);
   const endRef = useRef(null);
+  const [summaryTriggered, setSummaryTriggered] = useState(false);
 
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
   const [year, setYear] = useState(currentDate.getFullYear());
   const [data, setData] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(start);
+  const [startDate, setStartDate] = useState(new Date(start)); // ✅ convert string to Date
+
   const [endDate, setEndDate] = useState(new Date());
   const [department, setDepartment] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -156,7 +156,6 @@ const Summary = () => {
   }, [selectedUserId, selectedDepartmentId, projectId, clearTrigger]);
 
   const handleClear = async () => {
-    setStartDate(new Date());
     setEndDate(new Date());
     setSelectedDepartmentId("");
     setSelectedUser(null);
@@ -166,57 +165,59 @@ const Summary = () => {
     setShowDropdown(false);
     setShowDrawer(false);
     setClearTrigger(true);
+    setSummaryTriggered(false);
   };
+  const isoStart = startDate.toISOString().split("T")[0];
+  const isoEnd = endDate.toISOString().split("T")[0];
+
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
       <div className="flex justify-between mb-4">
-
         <div>
-        
-         {!showDrawer && (
-  <div className="space-y-1">
-    {/* User Name */}
-    {selectedUser && (
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500">Employee:</span>
-        <h2 className="text-md font-semibold text-gray-800">
-          {selectedUser?.name}
-        </h2>
-      </div>
-    )}
+          {summaryTriggered && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Date Range:</span>
+                <h2 className="text-md font-semibold text-gray-800">
+                  {isoStart} — {isoEnd}
+                </h2>
+              </div>
 
-    {/* Department Name */}
-    {selectedDepartmentId && (
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500">Department:</span>
-        <h2 className="text-md font-semibold text-gray-800">
-          {
-            department.find((d) => d._id === selectedDepartmentId)?.name || "—"
-          }
-        </h2>
-      </div>
-    )}
+              {selectedUser && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Employee:</span>
+                  <h2 className="text-md font-semibold text-gray-800">
+                    {selectedUser?.name}
+                  </h2>
+                </div>
+              )}
 
-    {/* Project Name */}
-    {projectId && (
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500">Project:</span>
-        <h2 className="text-md font-semibold text-gray-800">
-          {
-            projects?.find((p) => p._id === projectId)?.name || "—"
-          }
-        </h2>
-      </div>
-    )}
-  </div>
-)}
+              {selectedDepartmentId && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Department:</span>
+                  <h2 className="text-md font-semibold text-gray-800">
+                    {department.find((d) => d._id === selectedDepartmentId)
+                      ?.name || "—"}
+                  </h2>
+                </div>
+              )}
 
+              {projectId && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Project:</span>
+                  <h2 className="text-md font-semibold text-gray-800">
+                    {projects?.find((p) => p._id === projectId)?.name || "—"}
+                  </h2>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <button
           onClick={() => setShowDrawer(true)}
           className="bg-red-600 text-white px-4 py-2 rounded "
         >
-          Filter
+          Filters
         </button>
       </div>
 
@@ -461,6 +462,7 @@ const Summary = () => {
             <button
               onClick={() => {
                 fetchSummary();
+                setSummaryTriggered(true);
                 setShowDrawer(false);
               }}
               className="bg-[#f40e00] w-[200px] text-white h-[49px]  rounded-md hover:bg-red-700 transition"
@@ -478,24 +480,63 @@ const Summary = () => {
       </div>
 
       {loading ? (
-        <p className="text-gray-600">Loading summary...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, index) => (
+            <div
+              key={index}
+              className="bg-white p-5 rounded-2xl shadow-lg border border-gray-200 animate-pulse"
+            >
+              <div className="h-5 bg-gray-300 rounded w-3/4 mb-4"></div>
+
+              <div className="space-y-2 mb-4">
+                <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+              </div>
+
+              <div className="space-y-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex justify-between">
+                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : data.length > 0 ? (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data.map((project) => (
-            <div key={project._id} className="border p-4 rounded-md shadow-sm">
-              <h3 className="font-semibold text-[#f40e00]">{project.name}</h3>
-              <p>
-                Total Hours:{" "}
-                <span className="font-medium">{project.totalHours}</span>
-              </p>
-              <p>
-                Total Minutes:{" "}
-                <span className="font-medium">{project.totalMinutes}</span>
-              </p>
-              <div className="mt-2 text-sm text-gray-700">
-                {project.dailyBreakdown.map((day, i) => (
-                  <div key={i}>
-                    {day.date} — {day.totalHours} hr / {day.totalMinutes} min
+            <div
+              key={project?._id}
+              className="bg-white p-5 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition duration-300"
+            >
+              <h3 className="text-lg font-bold text-red-600 mb-2">
+                {project?.name || "Unnamed Project"}
+              </h3>
+
+              <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+                <div>
+                  <p className="font-semibold">
+                    Total Hours:{" "}
+                    <span className="text-gray-800">{project?.totalHours}</span>
+                  </p>
+                  <p className="font-semibold">
+                    Total Minutes:{" "}
+                    <span className="text-gray-800">
+                      {project?.totalMinutes}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 border-t border-gray-100 pt-3 text-sm space-y-1 max-h-[200px] overflow-y-auto">
+                {project?.dailyBreakdown?.map((day, i) => (
+                  <div key={i} className="flex justify-between text-gray-700">
+                    <span className="text-gray-500">{day?.date}</span>
+                    <span className="font-medium">
+                      {day?.totalHours} hr / {day?.totalMinutes} min
+                    </span>
                   </div>
                 ))}
               </div>
