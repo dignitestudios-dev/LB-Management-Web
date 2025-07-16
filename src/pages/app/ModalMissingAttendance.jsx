@@ -325,17 +325,19 @@ const ModalMissingAttendance = ({
         })}
 
         <div className="mt-4 flex justify-end gap-3">
-          {selectedReasons !== "forgot" && (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className={`px-5 py-2 rounded text-white ${
-                submitting ? "bg-red-300" : "bg-red-500 hover:bg-red-600"
-              }`}
-            >
-              {submitting ? "Submitting..." : "Submit"}
-            </button>
-          )}
+         {selectedReasons !== "forgot" &&
+  formData[formData.length - 1]?.type !== "checkout_missing" && (
+    <button
+      onClick={handleSubmit}
+      disabled={submitting}
+      className={`px-5 py-2 rounded text-white ${
+        submitting ? "bg-red-300" : "bg-red-500 hover:bg-red-600"
+      }`}
+    >
+      {submitting ? "Submitting..." : "Submit"}
+    </button>
+)}
+
         </div>
       </div>
     </div>

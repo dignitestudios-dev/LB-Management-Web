@@ -169,7 +169,49 @@ const Summary = () => {
   };
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between mb-4">
+
+        <div>
+        
+         {!showDrawer && (
+  <div className="space-y-1">
+    {/* User Name */}
+    {selectedUser && (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-500">Employee:</span>
+        <h2 className="text-md font-semibold text-gray-800">
+          {selectedUser?.name}
+        </h2>
+      </div>
+    )}
+
+    {/* Department Name */}
+    {selectedDepartmentId && (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-500">Department:</span>
+        <h2 className="text-md font-semibold text-gray-800">
+          {
+            department.find((d) => d._id === selectedDepartmentId)?.name || "—"
+          }
+        </h2>
+      </div>
+    )}
+
+    {/* Project Name */}
+    {projectId && (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-500">Project:</span>
+        <h2 className="text-md font-semibold text-gray-800">
+          {
+            projects?.find((p) => p._id === projectId)?.name || "—"
+          }
+        </h2>
+      </div>
+    )}
+  </div>
+)}
+
+        </div>
         <button
           onClick={() => setShowDrawer(true)}
           className="bg-red-600 text-white px-4 py-2 rounded "
@@ -248,7 +290,7 @@ const Summary = () => {
                     <option value="">Select Department</option>
                     {department.map((depart) => (
                       <option key={depart._id} value={depart._id}>
-                        {depart.name}
+                        {depart?.name}
                       </option>
                     ))}
                   </select>
