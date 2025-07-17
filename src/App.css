@@ -11,7 +11,7 @@
 .badge {
   @apply inline-block px-3 py-1 text-xs font-semibold rounded-full;
 }/* Custom scrollbar style */
-.custom-scrollbar::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar { 
   width: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
