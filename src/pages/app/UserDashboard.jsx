@@ -365,6 +365,7 @@ const UserDashboard = () => {
                           hour: "numeric",
                           minute: "2-digit",
                           hour12: true,
+                          timeZone: "Asia/Karachi",
                         }
                       )}
                     </p>
@@ -390,11 +391,12 @@ const UserDashboard = () => {
                     </p>
                     <p className="text-lg font-bold">
                       {new Date(
-                        todayAttendance.checkOutTime
+                        todayAttendance?.checkOutTime
                       ).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true,
+                        timeZone: "Asia/Karachi",
                       })}
                     </p>
                   </div>
@@ -602,6 +604,7 @@ const ProjectList = ({
       0
     );
   };
+  
 
   const totalAvailableMinutes = availableMinutes();
 
@@ -1068,23 +1071,27 @@ const ForgotProjectList = ({
   const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
   const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
 
-  const availableMinutes = () => {
-    if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
+ const availableMinutes = () => {
+  if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
 
-    const createDateTime = (timeStr) => {
-      const [hours, minutes] = timeStr.trim().split(":").map(Number);
-      const date = new Date(shiftDate);
-      date.setUTCHours(hours, minutes, 0, 0); // Set time in UTC
-      return date;
-    };
-
-    const checkInDate = createDateTime(checkInTimeForgot);
-    const checkOutDate = createDateTime(checkOutTimeForgot);
-
-    const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
-
-    return Math.max(diffInMinutes - BREAK_MINUTES, 0);
+  const createDateTime = (timeStr) => {
+    const [hours, minutes] = timeStr.trim().split(":").map(Number);
+    const date = new Date(shiftDate);
+    date.setUTCHours(hours, minutes, 0, 0); // Use UTC to prevent timezone bugs
+    return date;
   };
+
+  const checkInDate = createDateTime(checkInTimeForgot);
+  const checkOutDate = createDateTime(checkOutTimeForgot);
+
+  if (checkOutDate <= checkInDate) {
+    checkOutDate.setDate(checkOutDate.getDate() + 1); // Fix for night shifts
+  }
+
+  const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
+
+  return Math.max(diffInMinutes - BREAK_MINUTES, 0);
+};
 
   const totalAvailableMinutes = availableMinutes();
 
@@ -1328,14 +1335,14 @@ const ForgotProjectList = ({
                 {Math.floor(BREAK_MINUTES / 60)} hour
               </span>
             </p>
-            <p>
               <p>
-                <strong>Time Remaining:</strong>{" "}
-                <span className="text-red-600 font-medium">
-                  {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
-                </span>
+                <p>
+                  <strong>Time Remaining:</strong>{" "}
+                  <span className="text-red-600 font-medium">
+                    {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
+                  </span>
+                </p>
               </p>
-            </p>
           </div>
 
           {loading ? (

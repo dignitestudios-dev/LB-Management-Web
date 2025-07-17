@@ -97,7 +97,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="-mt-4 text-end text-blue-500">
-              <NavLink to={"/auth/forget-password"}>Forget Password? </NavLink>
+              <NavLink to={"/auth/forget-password"}>Forgot Password? </NavLink>
             </div>
             {/* Submit */}
             <button

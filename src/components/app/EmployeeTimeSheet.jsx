@@ -9,7 +9,7 @@ import { Nodata } from "../../assets/export";
 const EmployeeTimeSheet = () => {
   const today = new Date().toISOString().split("T")[0];
 
-  const getMonthRange = () => {
+   const getMonthRange = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -17,13 +17,10 @@ const EmployeeTimeSheet = () => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    const start = firstDay.toISOString().split("T")[0];
-    const end = lastDay.toISOString().split("T")[0];
-
-    return { start, end };
+    return { start: firstDay, end: lastDay }; // ✅ return Date objects
   };
   const { start, end } = getMonthRange();
-  const [fromDate, setFromDate] = useState(start);
+  const [fromDate, setFromDate] = useState(new Date(start));
   const [toDate, setToDate] = useState(today);
   const [isOpen, setIsOpen] = useState(true);
   const [error, setError] = useState("");
@@ -39,6 +36,14 @@ const EmployeeTimeSheet = () => {
     currentPage: 1,
     totalPages: 1,
   });
+const formatDateLocal = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${year}-${month}-${day}`;
+};
 
   const fetchUsers = async (searchTerm = "", page = 1) => {
     setLoading(true);
@@ -130,6 +135,8 @@ const EmployeeTimeSheet = () => {
     setTableShow(false);
     setIsOpen(true);
   };
+
+  
   return (
     <div>
       <div
@@ -275,7 +282,7 @@ const EmployeeTimeSheet = () => {
               </label>
               <input
                 type="date"
-                value={fromDate}
+                value={formatDateLocal(fromDate)}
                 onChange={(e) => setFromDate(e.target.value)}
                 className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
               />
