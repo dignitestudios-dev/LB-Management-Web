@@ -36,7 +36,7 @@ const Summary = () => {
   const [userLoading, setUserLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(new Date(start)); // ✅ convert string to Date
-
+  const [activeIndex, setActiveIndex] = useState(null);
   const [endDate, setEndDate] = useState(new Date());
   const [department, setDepartment] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -53,12 +53,18 @@ const Summary = () => {
   });
   const [showDrawer, setShowDrawer] = useState(false);
   const [clearTrigger, setClearTrigger] = useState(false);
+  const formatDateLocal = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
+  const isoStart = formatDateLocal(startDate);
+  const isoEnd = formatDateLocal(endDate);
   const fetchSummary = async () => {
     try {
       setLoading(true);
-      const isoStart = startDate.toISOString().split("T")[0];
-      const isoEnd = endDate.toISOString().split("T")[0];
 
       const res = await axios.get(
         `/projects/summary?startDate=${isoStart}&endDate=${isoEnd}&user=${selectedUserId}&department=${selectedDepartmentId}&project=${projectId}`
@@ -156,6 +162,7 @@ const Summary = () => {
   }, [selectedUserId, selectedDepartmentId, projectId, clearTrigger]);
 
   const handleClear = async () => {
+    setStartDate(start)
     setEndDate(new Date());
     setSelectedDepartmentId("");
     setSelectedUser(null);
@@ -167,9 +174,6 @@ const Summary = () => {
     setClearTrigger(true);
     setSummaryTriggered(false);
   };
-  const isoStart = startDate.toISOString().split("T")[0];
-  const isoEnd = endDate.toISOString().split("T")[0];
-  const [activeIndex, setActiveIndex] = useState(null);
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
       <div className="flex justify-between mb-4">
@@ -505,61 +509,58 @@ const Summary = () => {
           ))}
         </div>
       ) : data.length > 0 ? (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {data?.map((project, index) => {
-        const isExpanded = activeIndex === index; // 👈 true if this card is open
-        const visibleDays = isExpanded
-          ? project?.dailyBreakdown
-          : project?.dailyBreakdown?.slice(0, 4);
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data?.map((project, index) => {
+            const isExpanded = activeIndex === index; // 👈 true if this card is open
+            const visibleDays = isExpanded
+              ? project?.dailyBreakdown
+              : project?.dailyBreakdown?.slice(0, 4);
 
-        return (
-          <div
-            key={project?._id}
-            className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition duration-300"
-          >
-            <h3 className="text-xl font-semibold text-red-600 mb-3">
-              {project?.name || "Unnamed Project"}
-            </h3>
+            return (
+              <div
+                key={project?._id}
+                className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition duration-300"
+              >
+                <h3 className="text-xl font-semibold text-red-600 mb-3">
+                  {project?.name || "Unnamed Project"}
+                </h3>
 
-            <div className="text-sm text-gray-700 space-y-1 mb-4">
-              <p>
-                <span className="font-semibold">Total Hours:</span>{" "}
-                <span className="text-gray-900">{project?.totalHours}</span>
-              </p>
-              <p>
-                <span className="font-semibold">Total Minutes:</span>{" "}
-                <span className="text-gray-900">{project?.totalMinutes}</span>
-              </p>
-            </div>
-
-            <div className="border-t border-gray-100 pt-3 text-sm space-y-1">
-              {visibleDays?.map((day, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between text-gray-700"
-                >
-                  <span className="text-gray-500">{day?.date}</span>
-                  <span className="font-medium">
-                    {day?.totalHours} hr / {day?.totalMinutes} min
-                  </span>
+                <div className="text-sm text-gray-700 space-y-1 mb-4">
+                  <p>
+                    <span className="font-semibold">Total Hours:</span>{" "}
+                    <span className="text-gray-900">{project?.totalHours}</span>
+                  </p>
+                  <p>
+                    <span className="font-semibold">Total Minutes:</span>{" "}
+                    <span className="text-gray-900">
+                      {project?.totalMinutes}
+                    </span>
+                  </p>
                 </div>
-              ))}
 
-              {project?.dailyBreakdown?.length > 4 && (
-                <button
-                  onClick={() =>
-                    setActiveIndex(isExpanded ? null : index)
-                  }
-                  className="text-red-600 text-sm mt-2 hover:underline"
-                >
-                  {isExpanded ? "Show Less" : "Show More"}
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+                <div className="border-t border-gray-100 pt-3 text-sm space-y-1">
+                  {visibleDays?.map((day, i) => (
+                    <div key={i} className="flex justify-between text-gray-700">
+                      <span className="text-gray-500">{day?.date}</span>
+                      <span className="font-medium">
+                        {day?.totalHours} hr / {day?.totalMinutes} min
+                      </span>
+                    </div>
+                  ))}
+
+                  {project?.dailyBreakdown?.length > 4 && (
+                    <button
+                      onClick={() => setActiveIndex(isExpanded ? null : index)}
+                      className="text-red-600 text-sm mt-2 hover:underline"
+                    >
+                      {isExpanded ? "Show Less" : "Show More"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <p className="text-gray-500">No data found for selected period.</p>
       )}

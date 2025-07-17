@@ -9,6 +9,7 @@ import { CiClock2, CiUser } from "react-icons/ci";
 import { SiCalendly } from "react-icons/si";
 import { FaEye } from "react-icons/fa";
 import ProjectModal from "../../components/app/ProjectModal";
+import { IoMdEyeOff } from "react-icons/io";
 
 const TimesheetTable = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -263,10 +264,7 @@ const TimesheetTable = () => {
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-
-                  Action
-                </div>
+                <div className="flex items-center gap-2">Action</div>
               </th>
             </tr>
           </thead>
@@ -484,26 +482,26 @@ const TimesheetTable = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 relative">
-                    <button
-                      onClick={() => {
-                        setSelectedRow(item);
-                        setShowModal(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <FaEye />
-                    </button>
-                  </td>
+                      <button
+                        onClick={() => {
+                          setSelectedRow(item);
+                          setShowModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        {showModal ? <FaEye /> : <IoMdEyeOff />}
+                      </button>
+                    </td>
                   </tr>
                 ))}
           </tbody>
         </table>
-          <ProjectModal
-        showModal={showModal}
-        selectedRow={selectedRow}
-        setShowModal={setShowModal}
-        onClose={() => setShowModal(false)}
-      />
+        <ProjectModal
+          showModal={showModal}
+          selectedRow={selectedRow}
+          setShowModal={setShowModal}
+          onClose={() => setShowModal(false)}
+        />
       </div>
     </div>
   );
