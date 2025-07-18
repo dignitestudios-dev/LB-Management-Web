@@ -277,19 +277,20 @@ const Summary = () => {
           )}
         </div>
         <div className="flex gap-8">
-         <button
+        <button
   onClick={handleExport}
-  className="bg-red-600 h-[49px] w-[100px] text-white px-4 py-2 rounded hover:bg-red-700 transition"
+  className="bg-gray-700 hover:bg-gray-800 h-[39px] w-[100px] text-white  rounded transition"
 >
   Export
 </button>
 
-          <button
-            onClick={() => setShowDrawer(true)}
-            className="bg-red-600 h-[49px] w-[100px] text-white px-4 py-2 rounded "
-          >
-            Filters
-          </button>
+<button
+  onClick={() => setShowDrawer(true)}
+  className="bg-red-600 hover:bg-red-700 h-[39px] w-[100px] text-white  rounded transition"
+>
+  Filters
+</button>
+
         </div>
       </div>
 
