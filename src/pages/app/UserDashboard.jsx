@@ -3,7 +3,7 @@ import { useCheckin, useLogin } from "../../hooks/api/Post";
 import { useUsers } from "../../hooks/api/Get";
 import { baseUrl } from "../../axios";
 import Cookies from "js-cookie";
-import { IoLogOut } from "react-icons/io5";
+import { IoFingerPrintOutline, IoLogOut, IoLogOutOutline } from "react-icons/io5";
 import { useNavigate } from "react-router";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImCross, ImSpinner3 } from "react-icons/im";
@@ -13,6 +13,7 @@ import { PiArticleNyTimes } from "react-icons/pi";
 import TimesheetTable from "./TimeSheet";
 import ModalMissingAttendance from "./ModalMissingAttendance";
 import axios from "../../axios";
+import { BiLogInCircle, BiLogOutCircle } from "react-icons/bi";
 const UserDashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -222,7 +223,7 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
-      {modalOpen && missingAttendance.length > 0 && (
+      {false && missingAttendance.length > 0 && (
         <ModalMissingAttendance
           setIsUpdate={setIsUpdate}
           setShiftDate={setShiftDate}
@@ -402,23 +403,30 @@ const UserDashboard = () => {
                   </div>
                 )}
               </div>
+              <div className="flex flex-wrap gap-4 justify-center mt-10">
+  {/* Check In Button */}
+  <button
+    onClick={handleCheckIn}
+    className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+    disabled={checkInloading}
+  >
+    <IoFingerPrintOutline className="text-xl text-white" />
+    <span className="text-sm sm:text-base">
+      {checkInloading ? "Checking In..." : "Check In"}
+    </span>
+  </button>
 
-              <div className="flex gap-4 justify-center mt-10">
-                <button
-                  onClick={handleCheckIn}
-                  className="px-6 py-2 rounded-full bg-black text-white font-semibold shadow transition-all duration-200"
-                  disabled={checkInloading}
-                >
-                  {checkInloading ? "Checking In..." : "Check In"}
-                </button>
-                <button
-                  onClick={handleCheckOut}
-                  className="px-6 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
-                  disabled={checkInloading}
-                >
-                  Check Out
-                </button>
-              </div>
+  {/* Check Out Button */}
+  <button
+    onClick={handleCheckOut}
+    className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+    disabled={checkInloading}
+  >
+    <IoLogOutOutline className="text-xl text-white" />
+    <span className="text-sm sm:text-base">Check Out</span>
+  </button>
+</div>
+
             </div>
           )}
 
@@ -604,7 +612,6 @@ const ProjectList = ({
       0
     );
   };
-  
 
   const totalAvailableMinutes = availableMinutes();
 
@@ -1071,27 +1078,27 @@ const ForgotProjectList = ({
   const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
   const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
 
- const availableMinutes = () => {
-  if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
+  const availableMinutes = () => {
+    if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
 
-  const createDateTime = (timeStr) => {
-    const [hours, minutes] = timeStr.trim().split(":").map(Number);
-    const date = new Date(shiftDate);
-    date.setUTCHours(hours, minutes, 0, 0); // Use UTC to prevent timezone bugs
-    return date;
+    const createDateTime = (timeStr) => {
+      const [hours, minutes] = timeStr.trim().split(":").map(Number);
+      const date = new Date(shiftDate);
+      date.setUTCHours(hours, minutes, 0, 0); // Use UTC to prevent timezone bugs
+      return date;
+    };
+
+    const checkInDate = createDateTime(checkInTimeForgot);
+    const checkOutDate = createDateTime(checkOutTimeForgot);
+
+    if (checkOutDate <= checkInDate) {
+      checkOutDate.setDate(checkOutDate.getDate() + 1); // Fix for night shifts
+    }
+
+    const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
+
+    return Math.max(diffInMinutes - BREAK_MINUTES, 0);
   };
-
-  const checkInDate = createDateTime(checkInTimeForgot);
-  const checkOutDate = createDateTime(checkOutTimeForgot);
-
-  if (checkOutDate <= checkInDate) {
-    checkOutDate.setDate(checkOutDate.getDate() + 1); // Fix for night shifts
-  }
-
-  const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
-
-  return Math.max(diffInMinutes - BREAK_MINUTES, 0);
-};
 
   const totalAvailableMinutes = availableMinutes();
 
@@ -1335,14 +1342,14 @@ const ForgotProjectList = ({
                 {Math.floor(BREAK_MINUTES / 60)} hour
               </span>
             </p>
+            <p>
               <p>
-                <p>
-                  <strong>Time Remaining:</strong>{" "}
-                  <span className="text-red-600 font-medium">
-                    {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
-                  </span>
-                </p>
+                <strong>Time Remaining:</strong>{" "}
+                <span className="text-red-600 font-medium">
+                  {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
+                </span>
               </p>
+            </p>
           </div>
 
           {loading ? (
