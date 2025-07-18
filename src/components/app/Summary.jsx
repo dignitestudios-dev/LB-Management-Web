@@ -6,6 +6,16 @@ import { MdDateRange } from "react-icons/md";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { RxCross2 } from "react-icons/rx";
 import { useUsers } from "../../hooks/api/Get";
+import { FiClock } from "react-icons/fi";
+import { IoChevronDownSharp, IoChevronUpSharp } from "react-icons/io5";
+import { HiUser } from "react-icons/hi";
+import {
+  HiBuildingOffice2,
+  HiOutlineClipboardDocumentList,
+} from "react-icons/hi2";
+import { CSVLink } from "react-csv";
+import { saveAs } from "file-saver";
+import Papa from "papaparse";
 const Summary = () => {
   const { loading: projectloader, data: projects } = useUsers(
     "/projects",
@@ -162,7 +172,7 @@ const Summary = () => {
   }, [selectedUserId, selectedDepartmentId, projectId, clearTrigger]);
 
   const handleClear = async () => {
-    setStartDate(start)
+    setStartDate(start);
     setEndDate(new Date());
     setSelectedDepartmentId("");
     setSelectedUser(null);
@@ -174,55 +184,114 @@ const Summary = () => {
     setClearTrigger(true);
     setSummaryTriggered(false);
   };
+  const handleExport = () => {
+    if (!data.length) return;
+
+    const flattenedData = data.map((project) => {
+      return {
+        Project: project?.name || "Unnamed",
+        "Total Hours": project?.totalHours || 0,
+        "Total Minutes": project?.totalMinutes || 0,
+        ...(project?.dailyBreakdown || []).reduce((acc, day, index) => {
+          acc[`Day ${index + 1} - Date`] = day.date || "";
+          acc[`Day ${index + 1} - Hours`] = day.totalHours || 0;
+          acc[`Day ${index + 1} - Minutes`] = day.totalMinutes || 0;
+          return acc;
+        }, {}),
+      };
+    });
+
+    const csv = Papa.unparse(flattenedData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, `Project_Summary_${isoStart}_to_${isoEnd}.csv`);
+  };
+
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
       <div className="flex justify-between mb-4">
         <div>
-          {summaryTriggered && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Date Range:</span>
-                <h2 className="text-md font-semibold text-gray-800">
-                  {isoStart} — {isoEnd}
-                </h2>
-              </div>
+          <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+            <div className="flex items-center gap-2">
+              <MdDateRange className="text-red-500 text-2xl" />
+              <span className="text-gray-700 text-sm font-semibold">
+                Date Range
+              </span>
+            </div>
 
+            <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+              <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                {isoStart}
+              </span>
+              <span className="text-gray-400 text-sm font-semibold">to</span>
+              <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                {isoEnd}
+              </span>
+            </div>
+          </div>
+
+          {summaryTriggered && (
+            <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
               {selectedUser && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Employee:</span>
-                  <h2 className="text-md font-semibold text-gray-800">
-                    {selectedUser?.name}
-                  </h2>
+                <div className="flex items-center gap-3">
+                  <HiUser className="text-red-500 text-lg" />
+                  <div className="flex gap-1 items-baseline">
+                    <span className="text-sm text-gray-500 font-medium">
+                      Employee:
+                    </span>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {selectedUser?.name}
+                    </h2>
+                  </div>
                 </div>
               )}
 
               {selectedDepartmentId && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Department:</span>
-                  <h2 className="text-md font-semibold text-gray-800">
-                    {department.find((d) => d._id === selectedDepartmentId)
-                      ?.name || "—"}
-                  </h2>
+                <div className="flex items-center gap-3">
+                  <HiBuildingOffice2 className="text-red-500 text-lg" />
+                  <div className="flex gap-1 items-baseline">
+                    <span className="text-sm text-gray-500 font-medium">
+                      Department:
+                    </span>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {department.find((d) => d._id === selectedDepartmentId)
+                        ?.name || "—"}
+                    </h2>
+                  </div>
                 </div>
               )}
 
               {projectId && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Project:</span>
-                  <h2 className="text-md font-semibold text-gray-800">
-                    {projects?.find((p) => p._id === projectId)?.name || "—"}
-                  </h2>
+                <div className="flex items-center gap-3">
+                  <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
+                  <div className="flex gap-1 items-baseline">
+                    <span className="text-sm text-gray-500 font-medium">
+                      Project:
+                    </span>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {projects?.find((p) => p._id === projectId)?.name || "—"}
+                    </h2>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </div>
+        <div className="flex gap-8">
         <button
-          onClick={() => setShowDrawer(true)}
-          className="bg-red-600 text-white px-4 py-2 rounded "
-        >
-          Filters
-        </button>
+  onClick={handleExport}
+  className="bg-gray-700 hover:bg-gray-800 h-[39px] w-[100px] text-white  rounded transition"
+>
+  Export
+</button>
+
+<button
+  onClick={() => setShowDrawer(true)}
+  className="bg-red-600 hover:bg-red-700 h-[39px] w-[100px] text-white  rounded transition"
+>
+  Filters
+</button>
+
+        </div>
       </div>
 
       {showDrawer && (
@@ -287,7 +356,7 @@ const Summary = () => {
                 <label className="block text-sm mb-1">Department</label>
                 <div className="relative">
                   <select
-                    disabled={!!selectedUserId || !!projectId}
+                    disabled={!!selectedUserId}
                     value={selectedDepartmentId}
                     onChange={(e) => setSelectedDepartmentId(e.target.value)}
                     className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
@@ -309,7 +378,7 @@ const Summary = () => {
                 <label className="block text-sm mb-1">Projects</label>
                 <div className="relative">
                   <select
-                    disabled={!!selectedUserId || !!selectedDepartmentId}
+                    disabled={!!selectedUserId}
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
@@ -538,23 +607,51 @@ const Summary = () => {
                   </p>
                 </div>
 
-                <div className="border-t border-gray-100 pt-3 text-sm space-y-1">
+                <div className="border-t border-gray-100 pt-4 text-sm space-y-3">
                   {visibleDays?.map((day, i) => (
-                    <div key={i} className="flex justify-between text-gray-700">
-                      <span className="text-gray-500">{day?.date}</span>
-                      <span className="font-medium">
-                        {day?.totalHours} hr / {day?.totalMinutes} min
-                      </span>
+                    <div
+                      key={i}
+                      className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-xl px-4 py-3 transition"
+                    >
+                      {/* Left: Date with icon */}
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <MdDateRange className="text-red-500 text-lg" />
+                        <span className="font-medium">{day?.date}</span>
+                      </div>
+
+                      {/* Right: Time */}
+                      <div className="flex items-center gap-1 text-gray-800 font-semibold">
+                        <FiClock className="text-gray-500 text-base" />
+                        <span>{day?.totalHours}h</span>
+                        <span className="text-gray-400">/</span>
+                        <span>{day?.totalMinutes}m</span>
+                      </div>
                     </div>
                   ))}
 
                   {project?.dailyBreakdown?.length > 4 && (
-                    <button
-                      onClick={() => setActiveIndex(isExpanded ? null : index)}
-                      className="text-red-600 text-sm mt-2 hover:underline"
-                    >
-                      {isExpanded ? "Show Less" : "Show More"}
-                    </button>
+                    <div className="text-center pt-2">
+                      <div className="text-center pt-2">
+                        <button
+                          onClick={() =>
+                            setActiveIndex(isExpanded ? null : index)
+                          }
+                          className="text-red-600 text-sm font-medium hover:underline flex items-center justify-center gap-1"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <IoChevronUpSharp className="text-base" />
+                              <span>Show Less</span>
+                            </>
+                          ) : (
+                            <>
+                              <IoChevronDownSharp className="text-base" />
+                              <span>Show More</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
