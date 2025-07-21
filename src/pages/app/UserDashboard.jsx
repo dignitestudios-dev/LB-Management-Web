@@ -223,7 +223,7 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
-      {false && missingAttendance.length > 0 && (
+      {modalOpen && missingAttendance.length > 0 && (
         <ModalMissingAttendance
           setIsUpdate={setIsUpdate}
           setShiftDate={setShiftDate}
