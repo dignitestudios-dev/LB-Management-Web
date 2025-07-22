@@ -5,11 +5,12 @@ import { baseUrl } from "../../axios";
 import EmployeeTable from "./EmployeeTable";
 import { GrFilter } from "react-icons/gr";
 import { Nodata } from "../../assets/export";
+import { ErrorToast } from "../global/Toaster";
 
 const EmployeeTimeSheet = () => {
   const today = new Date().toISOString().split("T")[0];
 
-   const getMonthRange = () => {
+  const getMonthRange = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -36,14 +37,14 @@ const EmployeeTimeSheet = () => {
     currentPage: 1,
     totalPages: 1,
   });
-const formatDateLocal = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${year}-${month}-${day}`;
-};
+  const formatDateLocal = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
 
   const fetchUsers = async (searchTerm = "", page = 1) => {
     setLoading(true);
@@ -135,8 +136,7 @@ const formatDateLocal = (date) => {
     setTableShow(false);
     setIsOpen(true);
   };
-
-  
+ 
   return (
     <div>
       <div
@@ -332,7 +332,12 @@ const formatDateLocal = (date) => {
         </div>
       )}
       {tableShow ? (
-        <EmployeeTable attendance={attendance} loading={loading} />
+        <EmployeeTable
+          attendance={attendance}
+          loading={loading}
+          setAttendance={setAttendance}
+       fetchAttendance={fetchAttendance}
+        />
       ) : (
         <div className="flex flex-col justify-center items-center h-[60vh]">
           {/* <img src={Nodata} className="w-[160px] h-[160px] " alt="" /> */}

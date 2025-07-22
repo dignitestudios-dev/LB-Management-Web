@@ -6,10 +6,51 @@ import { PiFileText } from "react-icons/pi";
 import { SlCalender } from "react-icons/sl";
 import ProjectModal from "./ProjectModal";
 import { IoMdEyeOff } from "react-icons/io";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { ErrorToast, SuccessToast } from "../global/Toaster";
+import { baseUrl } from "../../axios";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 
-const EmployeeTable = ({ attendance, loading }) => {
+const EmployeeTable = ({
+  attendance,
+  loading,
+  setAttendance,
+  fetchAttendance,
+}) => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [loadingdelete, setloading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState();
+  const handleDeleteAttendance = async (id) => {
+    console.log(id, "id==>");
+    if (!id) return;
+    setloading(true);
+    try {
+      const response = await fetch(`${baseUrl}/attendance/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Remove the deleted record from the local state
+        setAttendance((prev) => prev.filter((a) => a._id !== id));
+        SuccessToast("Delete Successfully");
+        setDeleteModalOpen(false)
+        fetchAttendance();
+      } else {
+        ErrorToast(result.message || "Failed to delete attendance");
+      }
+    } catch (error) {
+      console.error("Error deleting attendance:", error);
+      ErrorToast("Error deleting attendance");
+    } finally {
+      setloading(false);
+    }
+  };
 
   return (
     <div className="bg-white shadow-sm border border-gray-200 ">
@@ -265,17 +306,34 @@ const EmployeeTable = ({ attendance, loading }) => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 relative">
+                  <td className="px-6 py-4 flex gap-4 items-center">
+                    {/* View Button */}
                     <button
                       onClick={() => {
                         setSelectedRow(item);
                         setShowModal(true);
                       }}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-indigo-600 hover:text-indigo-800"
+                      title="View Details"
                     >
-                      {showModal ? <FaEye /> : <IoMdEyeOff /> }
-                     
+                      <FaEye />
                     </button>
+
+                    {/* Delete Button */}
+                    {item?._id === null ? (
+                      <></>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setDeleteId(item?._id);
+                          setDeleteModalOpen(true);
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete Attendance"
+                      >
+                        <RiDeleteBin6Line />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -286,6 +344,15 @@ const EmployeeTable = ({ attendance, loading }) => {
         selectedRow={selectedRow}
         setShowModal={setShowModal}
         onClose={() => setShowModal(false)}
+      />
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeleteId(null);
+        }}
+        onConfirm={() => handleDeleteAttendance(deleteId)}
+        deleteLoading={loadingdelete}
       />
     </div>
   );

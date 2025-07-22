@@ -6,7 +6,6 @@ import { SlCalender } from "react-icons/sl";
 import { BsClockHistory } from "react-icons/bs";
 import { PiFileText } from "react-icons/pi";
 import { CiClock2, CiUser } from "react-icons/ci";
-import { SiCalendly } from "react-icons/si";
 import { FaEye } from "react-icons/fa";
 import ProjectModal from "../../components/app/ProjectModal";
 import { IoMdEyeOff } from "react-icons/io";
