@@ -39,7 +39,7 @@ const EmployeeTable = ({
         // Remove the deleted record from the local state
         setAttendance((prev) => prev.filter((a) => a._id !== id));
         SuccessToast("Delete Successfully");
-        setDeleteModalOpen(false)
+        setDeleteModalOpen(false);
         fetchAttendance();
       } else {
         ErrorToast(result.message || "Failed to delete attendance");
