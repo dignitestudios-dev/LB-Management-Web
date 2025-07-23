@@ -14,6 +14,7 @@ import {
   FaSignOutAlt,
   FaBusinessTime,
   FaTasks,
+  FaSpinner,
 } from "react-icons/fa";
 import Shift from "../../components/app/Shifts";
 import { useLogin } from "../../hooks/api/Post";
@@ -25,6 +26,7 @@ import { PiArticleNyTimes } from "react-icons/pi";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("summary");
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const navigate = useNavigate();
   const { postData, loading } = useLogin();
   const { data: user, loading: userLoading } = useUsers("/users/me");
@@ -33,7 +35,7 @@ const Dashboard = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      
+
       if (parsedUser.role?.name !== "Admin") {
         navigate("/app/userdashboard");
       }
@@ -80,6 +82,7 @@ const Dashboard = () => {
   }, [isProfileOpen]);
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     await postData("/auth/logout", false, null, null, (res) => {
       Cookies.remove("token");
       localStorage.removeItem("token");
@@ -87,6 +90,7 @@ const Dashboard = () => {
       SuccessToast("Logged out successfully.");
       navigate("/auth/login");
     });
+    setLogoutLoading(false);
   };
 
   return (
@@ -137,9 +141,24 @@ const Dashboard = () => {
                 <hr className="my-2" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
+                  disabled={logoutLoading}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
+                    logoutLoading
+                      ? "bg-red-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  } text-white`}
                 >
-                  <IoLogOut className="text-lg" /> Logout
+                  {logoutLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin text-sm" />
+                      Logging out...
+                    </>
+                  ) : (
+                    <>
+                      <IoLogOut className="text-lg" />
+                      Logout
+                    </>
+                  )}
                 </button>
               </div>
             )}
