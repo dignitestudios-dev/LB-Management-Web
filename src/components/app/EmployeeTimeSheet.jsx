@@ -21,8 +21,9 @@ const EmployeeTimeSheet = () => {
     return { start: firstDay, end: lastDay }; // ✅ return Date objects
   };
   const { start, end } = getMonthRange();
-  const [fromDate, setFromDate] = useState(new Date(start));
-  const [toDate, setToDate] = useState(today);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   const [isOpen, setIsOpen] = useState(true);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
@@ -33,6 +34,7 @@ const EmployeeTimeSheet = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [attendance, setAttendance] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [summaryTriggered, setSummaryTriggered] = useState({});
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -116,6 +118,7 @@ const EmployeeTimeSheet = () => {
         setAttendance(result?.data);
         setIsOpen(false);
         setTableShow(true);
+         setSummaryTriggered({ selectedUser });
       }
     } catch (error) {
       console.error("Error fetching filtered attendance", error);
@@ -127,36 +130,37 @@ const EmployeeTimeSheet = () => {
     fetchUsers();
   }, []);
   const handleClear = () => {
-    const { start, end } = getMonthRange();
     setSelectedUser(null);
     setQuery("");
-    setFromDate(start);
-    setToDate(today);
+    setFromDate("");
+    setToDate("");
     setAttendance([]);
     setTableShow(false);
     setIsOpen(true);
+    setError("");
+
+    setSummaryTriggered({});
   };
- 
+
   return (
     <div>
       <div
         className="flex justify-between p-4"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {tableShow && (
-          <div>
-            {selectedUser && (
-              <div className="flex items-center">
-                <span className="text-sm text-gray-500">
-                  Showing Attendance For :
-                </span>
-                <h2 className="text-xl mx-2 font-bold text-gray-800">
-                  {selectedUser?.name}
-                </h2>
-              </div>
-            )}
-          </div>
-        )}
+        <div>
+          {summaryTriggered?.selectedUser && (
+            <div className="flex items-center">
+              <span className="text-sm text-gray-500">
+                Showing Attendance For :
+              </span>
+              <h2 className="text-xl mx-2 font-bold text-gray-800">
+                {summaryTriggered?.selectedUser?.name}
+              </h2>
+            </div>
+          )}
+        </div>
+
         <button className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-md shadow-sm transition">
           <GrFilter className="text-lg" />
           <span className="text-sm font-semibold">Filter</span>
@@ -282,7 +286,7 @@ const EmployeeTimeSheet = () => {
               </label>
               <input
                 type="date"
-                value={formatDateLocal(fromDate)}
+                value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
               />
@@ -303,7 +307,10 @@ const EmployeeTimeSheet = () => {
 
             <div className="flex items-center justify-between mt-4 gap-4">
               <button
-                onClick={fetchAttendance}
+                onClick={() => {
+                  fetchAttendance();
+                 
+                }}
                 disabled={loadingAttendance}
                 className={`w-[200px] px-4 py-2 rounded-md text-md font-[500] flex items-center justify-center gap-2 ${
                   loadingAttendance
@@ -336,7 +343,7 @@ const EmployeeTimeSheet = () => {
           attendance={attendance}
           loading={loading}
           setAttendance={setAttendance}
-       fetchAttendance={fetchAttendance}
+          fetchAttendance={fetchAttendance}
         />
       ) : (
         <div className="flex flex-col justify-center items-center h-[60vh]">

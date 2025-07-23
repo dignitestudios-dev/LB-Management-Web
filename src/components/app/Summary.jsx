@@ -38,16 +38,16 @@ const Summary = () => {
   const dropdownRef = useRef(null);
   const startRef = useRef(null);
   const endRef = useRef(null);
-  const [summaryTriggered, setSummaryTriggered] = useState(false);
+  const [summaryTriggered, setSummaryTriggered] = useState({});
   const [showAll, setShowAll] = useState(false);
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
   const [year, setYear] = useState(currentDate.getFullYear());
   const [data, setData] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(new Date(start)); // ✅ convert string to Date
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
-  const [endDate, setEndDate] = useState(new Date());
   const [department, setDepartment] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
@@ -70,14 +70,12 @@ const Summary = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const isoStart = formatDateLocal(startDate);
-  const isoEnd = formatDateLocal(endDate);
   const fetchSummary = async () => {
     try {
       setLoading(true);
 
       const res = await axios.get(
-        `/projects/summary?startDate=${isoStart}&endDate=${isoEnd}&user=${selectedUserId}&department=${selectedDepartmentId}&project=${projectId}`
+        `/projects/summary?startDate=${startDate}&endDate=${endDate}&user=${selectedUserId}&department=${selectedDepartmentId}&project=${projectId}`
       );
       setData(res.data?.data || []);
     } catch (error) {
@@ -172,8 +170,8 @@ const Summary = () => {
   }, [selectedUserId, selectedDepartmentId, projectId, clearTrigger]);
 
   const handleClear = async () => {
-    setStartDate(start);
-    setEndDate(new Date());
+    setStartDate("");
+    setEndDate("");
     setSelectedDepartmentId("");
     setSelectedUser(null);
     setSelectedUserId("");
@@ -182,7 +180,7 @@ const Summary = () => {
     setShowDropdown(false);
     setShowDrawer(false);
     setClearTrigger(true);
-    setSummaryTriggered(false);
+   setSummaryTriggered({}); 
   };
   const handleExport = () => {
     if (!data.length) return;
@@ -203,94 +201,93 @@ const Summary = () => {
 
     const csv = Papa.unparse(flattenedData);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, `Project_Summary_${isoStart}_to_${isoEnd}.csv`);
+    saveAs(blob, `Project_Summary_${startDate}_to_${endDate}.csv`);
   };
 
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
       <div className="flex justify-between mb-4">
         <div>
-          <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
-            <div className="flex items-center gap-2">
-              <MdDateRange className="text-red-500 text-2xl" />
-              <span className="text-gray-700 text-sm font-semibold">
-                Date Range
-              </span>
-            </div>
+        {(summaryTriggered?.startDate && summaryTriggered?.endDate) ||
+ summaryTriggered?.selectedUser ||
+ summaryTriggered?.selectedDepartmentId ||
+ summaryTriggered?.projectId ?  (
+  <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
+    {/* Date Range */}
+    <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+      <div className="flex items-center gap-2">
+        <MdDateRange className="text-red-500 text-2xl" />
+        <span className="text-gray-700 text-sm font-semibold">
+          Date Range
+        </span>
+      </div>
+      <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+        <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+          {summaryTriggered?.startDate}
+        </span>
+        <span className="text-gray-400 text-sm font-semibold">to</span>
+        <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+          {summaryTriggered?.endDate}
+        </span>
+      </div>
+    </div>
 
-            <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
-              <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
-                {isoStart}
-              </span>
-              <span className="text-gray-400 text-sm font-semibold">to</span>
-              <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
-                {isoEnd}
-              </span>
-            </div>
-          </div>
+    {/* Employee */}
+    {summaryTriggered?.selectedUser?.name && (
+      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+        <HiUser className="text-red-500 text-lg" />
+        <div className="flex gap-1 items-baseline">
+          <span className="text-sm text-gray-500 font-medium">Employee:</span>
+          <h2 className="text-sm font-semibold text-gray-800">
+            {summaryTriggered?.selectedUser?.name}
+          </h2>
+        </div>
+      </div>
+    )}
 
-          {summaryTriggered && (
-            <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
-              {selectedUser && (
-                <div className="flex items-center gap-3">
-                  <HiUser className="text-red-500 text-lg" />
-                  <div className="flex gap-1 items-baseline">
-                    <span className="text-sm text-gray-500 font-medium">
-                      Employee:
-                    </span>
-                    <h2 className="text-sm font-semibold text-gray-800">
-                      {selectedUser?.name}
-                    </h2>
-                  </div>
-                </div>
-              )}
+    {/* Department */}
+    {summaryTriggered?.selectedDepartmentId && (
+      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+        <HiBuildingOffice2 className="text-red-500 text-lg" />
+        <div className="flex gap-1 items-baseline">
+          <span className="text-sm text-gray-500 font-medium">Department:</span>
+          <h2 className="text-sm font-semibold text-gray-800">
+            {department.find((d) => d._id === summaryTriggered.selectedDepartmentId)?.name || "—"}
+          </h2>
+        </div>
+      </div>
+    )}
 
-              {selectedDepartmentId && (
-                <div className="flex items-center gap-3">
-                  <HiBuildingOffice2 className="text-red-500 text-lg" />
-                  <div className="flex gap-1 items-baseline">
-                    <span className="text-sm text-gray-500 font-medium">
-                      Department:
-                    </span>
-                    <h2 className="text-sm font-semibold text-gray-800">
-                      {department.find((d) => d._id === selectedDepartmentId)
-                        ?.name || "—"}
-                    </h2>
-                  </div>
-                </div>
-              )}
+    {/* Project */}
+    {summaryTriggered?.projectId && (
+      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+        <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
+        <div className="flex gap-1 items-baseline">
+          <span className="text-sm text-gray-500 font-medium">Project:</span>
+          <h2 className="text-sm font-semibold text-gray-800">
+            {projects?.find((p) => p._id === summaryTriggered.projectId)?.name || "—"}
+          </h2>
+        </div>
+      </div>
+    )}
+  </div>
+):null}
 
-              {projectId && (
-                <div className="flex items-center gap-3">
-                  <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
-                  <div className="flex gap-1 items-baseline">
-                    <span className="text-sm text-gray-500 font-medium">
-                      Project:
-                    </span>
-                    <h2 className="text-sm font-semibold text-gray-800">
-                      {projects?.find((p) => p._id === projectId)?.name || "—"}
-                    </h2>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
         <div className="flex gap-8">
-        <button
-  onClick={handleExport}
-  className="bg-gray-700 hover:bg-gray-800 h-[39px] w-[100px] text-white  rounded transition"
->
-  Export
-</button>
+          <button
+            onClick={handleExport}
+            className="bg-gray-700 hover:bg-gray-800 h-[39px] w-[100px] text-white  rounded transition"
+          >
+            Export
+          </button>
 
-<button
-  onClick={() => setShowDrawer(true)}
-  className="bg-red-600 hover:bg-red-700 h-[39px] w-[100px] text-white  rounded transition"
->
-  Filters
-</button>
-
+          <button
+            onClick={() => setShowDrawer(true)}
+            className="bg-red-600 hover:bg-red-700 h-[39px] w-[100px] text-white  rounded transition"
+          >
+            Filters
+          </button>
         </div>
       </div>
 
@@ -314,45 +311,31 @@ const Summary = () => {
                 <RxCross2 className="text-xl text-gray-500 hover:text-red-600" />
               </button>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                From <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                To <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
             <div className="space-y-4">
-              <div className="relative">
-                <label className="block text-sm mb-1">Start Date</label>
-                <div className="flex items-center">
-                  <DatePicker
-                    selected={startDate}
-                    onChange={(date) => setStartDate(date)}
-                    ref={startRef}
-                    className="w-full border px-2 py-1 rounded"
-                  />
-                  <div
-                    className="absolute right-9 cursor-pointer"
-                    onClick={() => startRef.current.setFocus()}
-                  >
-                    <MdDateRange />
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative">
-                <label className="block text-sm mb-1">End Date</label>
-                <div className="flex items-center">
-                  <DatePicker
-                    selected={endDate}
-                    onChange={(date) => setEndDate(date)}
-                    ref={endRef}
-                    className="w-full border px-2 py-1 rounded"
-                  />
-                  <div
-                    className="absolute right-9 cursor-pointer"
-                    onClick={() => endRef.current.setFocus()}
-                  >
-                    <MdDateRange />
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full relative">
+              <div className="w-full relative mt-2">
                 <label className="block text-sm mb-1">Department</label>
                 <div className="relative">
                   <select
@@ -378,7 +361,6 @@ const Summary = () => {
                 <label className="block text-sm mb-1">Projects</label>
                 <div className="relative">
                   <select
-                    disabled={!!selectedUserId}
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
@@ -406,11 +388,10 @@ const Summary = () => {
                 <div className="relative">
                   <div
                     onClick={() => {
-                      if (!selectedDepartmentId || !projectId)
-                        setShowDropdown(!showDropdown);
+                      if (!selectedDepartmentId) setShowDropdown(!showDropdown);
                     }}
                     className={`w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm transition duration-150 ${
-                      selectedDepartmentId || projectId
+                      selectedDepartmentId
                         ? "opacity-50 cursor-not-allowed pointer-events-none"
                         : "cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     }`}
@@ -532,22 +513,60 @@ const Summary = () => {
 
           {/* Summary Button */}
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={() => {
-                fetchSummary();
-                setSummaryTriggered(true);
-                setShowDrawer(false);
-              }}
-              className="bg-[#f40e00] w-[200px] text-white h-[49px]  rounded-md hover:bg-red-700 transition"
-            >
-              Get Summary
-            </button>
-            <button
-              onClick={handleClear}
-              className="bg-gray-300 text-gray-800  w-[200px] h-[49px] rounded-md hover:bg-gray-400 transition"
-            >
-              Clear Filters
-            </button>
+           <button
+  onClick={() => {
+    fetchSummary();
+    setSummaryTriggered({
+      selectedUser,
+      selectedDepartmentId,
+      projectId,
+      startDate,
+      endDate,
+    });
+    setShowDrawer(false);
+  }}
+  disabled={
+    !selectedUser &&
+    !selectedDepartmentId &&
+    !projectId &&
+    !startDate &&
+    !endDate
+  }
+  className={`w-[200px] h-[49px] rounded-md transition text-white ${
+    !selectedUser &&
+    !selectedDepartmentId &&
+    !projectId &&
+    !startDate &&
+    !endDate
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-[#f40e00] hover:bg-red-700"
+  }`}
+>
+  Get Summary
+</button>
+
+         <button
+  onClick={handleClear}
+  disabled={
+    !selectedUser &&
+    !selectedDepartmentId &&
+    !projectId &&
+    !startDate &&
+    !endDate
+  }
+  className={`w-[200px] h-[49px] rounded-md transition ${
+    !selectedUser &&
+    !selectedDepartmentId &&
+    !projectId &&
+    !startDate &&
+    !endDate
+      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+      : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+  }`}
+>
+  Clear Filters
+</button>
+
           </div>
         </div>
       </div>
@@ -605,54 +624,6 @@ const Summary = () => {
                       {project?.totalMinutes}
                     </span>
                   </p>
-                </div>
-
-                <div className="border-t border-gray-100 pt-4 text-sm space-y-3">
-                  {visibleDays?.map((day, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-xl px-4 py-3 transition"
-                    >
-                      {/* Left: Date with icon */}
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <MdDateRange className="text-red-500 text-lg" />
-                        <span className="font-medium">{day?.date}</span>
-                      </div>
-
-                      {/* Right: Time */}
-                      <div className="flex items-center gap-1 text-gray-800 font-semibold">
-                        <FiClock className="text-gray-500 text-base" />
-                        <span>{day?.totalHours}h</span>
-                        <span className="text-gray-400">/</span>
-                        <span>{day?.totalMinutes}m</span>
-                      </div>
-                    </div>
-                  ))}
-
-                  {project?.dailyBreakdown?.length > 4 && (
-                    <div className="text-center pt-2">
-                      <div className="text-center pt-2">
-                        <button
-                          onClick={() =>
-                            setActiveIndex(isExpanded ? null : index)
-                          }
-                          className="text-red-600 text-sm font-medium hover:underline flex items-center justify-center gap-1"
-                        >
-                          {isExpanded ? (
-                            <>
-                              <IoChevronUpSharp className="text-base" />
-                              <span>Show Less</span>
-                            </>
-                          ) : (
-                            <>
-                              <IoChevronDownSharp className="text-base" />
-                              <span>Show More</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             );
