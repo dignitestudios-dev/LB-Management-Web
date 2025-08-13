@@ -23,8 +23,9 @@ import { SuccessToast } from "../../components/global/Toaster";
 import { IoLogOut } from "react-icons/io5";
 import EmployeeTimeSheet from "../../components/app/EmployeeTimeSheet";
 import { PiArticleNyTimes } from "react-icons/pi";
+import Divisions from "../../components/app/Divisions";
 
-const Dashboard = () => {
+const   Dashboard = () => {
   const [activeTab, setActiveTab] = useState("summary");
   const [logoutLoading, setLogoutLoading] = useState(false);
   const navigate = useNavigate();
@@ -50,6 +51,8 @@ const Dashboard = () => {
         return <Users />;
       case "departments":
         return <Departments />;
+      case "divisions":
+        return <Divisions />;
       case "summary":
         return <Summary />;
       case "roles":
@@ -188,6 +191,12 @@ const Dashboard = () => {
               label="All Departments"
               active={activeTab === "departments"}
               onClick={() => setActiveTab("departments")}
+            />
+            <SidebarItem
+              icon={<FaBuilding />}
+              label="All Divisions"
+              active={activeTab === "divisions"}
+              onClick={() => setActiveTab("divisions")}
             />
             <SidebarItem
               icon={<FaBusinessTime />}
