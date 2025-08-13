@@ -162,7 +162,7 @@ const Divisions = () => {
                         >
                           Edit
                         </button>
-                        <button
+                        {/* <button
                           onClick={async () => {
                             try {
                               setLoading(true);
@@ -177,7 +177,7 @@ const Divisions = () => {
                           className="bg-red-500 py-1 px-3 rounded-md text-white hover:bg-red-600"
                         >
                           Delete
-                        </button>
+                        </button> */}
                       </td>
                     </tr>
                   ))
