@@ -182,27 +182,52 @@ const Summary = () => {
     setClearTrigger(true);
     setSummaryTriggered({});
   };
-  const handleExport = () => {
-    if (!data.length) return;
+const handleExport = () => {
+  if (!data || data.length === 0) return;
 
-    const flattenedData = data.map((project) => {
-      return {
-        Project: project?.name || "Unnamed",
-        "Total Hours": project?.totalHours || 0,
-        "Total Minutes": project?.totalMinutes || 0,
-        ...(project?.dailyBreakdown || []).reduce((acc, day, index) => {
-          acc[`Day ${index + 1} - Date`] = day.date || "";
-          acc[`Day ${index + 1} - Hours`] = day.totalHours || 0;
-          acc[`Day ${index + 1} - Minutes`] = day.totalMinutes || 0;
-          return acc;
-        }, {}),
-      };
-    });
+  // Collect all unique department names from all projects
+  const allDepartments = Array.from(
+    new Set(
+      data.flatMap((project) =>
+        (project.departments || []).map((dept) => dept.name)
+      )
+    )
+  );
 
-    const csv = Papa.unparse(flattenedData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, `Project_Summary_${startDate}_to_${endDate}.csv`);
-  };
+  const flattenedData = data.map((project) => {
+    const dailyData = (project?.dailyBreakdown || []).reduce((acc, day, index) => {
+      acc[`Day ${index + 1} Date`] = day?.date || "";
+      acc[`Day ${index + 1} Hours`] = day?.totalHours || 0;
+      acc[`Day ${index + 1} Minutes`] = day?.totalMinutes || 0;
+      return acc;
+    }, {} );
+
+    // Map department hours into their own columns
+    const departmentHours = allDepartments.reduce((acc, deptName) => {
+      const dept = (project.departments || []).find((d) => d.name === deptName);
+      acc[`${deptName} Hours`] = dept ? dept.hours : 0;
+      return acc;
+    }, {} );
+
+    return {
+      "Project Name": project?.name || "Unnamed",
+      "Project Type": project?.projectType || "",
+      "Division Name": project?.projectDivision || "",
+      "Total Hours": project?.totalHours || 0,
+      "Total Minutes": project?.totalMinutes || 0,
+      ...departmentHours,
+      ...dailyData,
+    };
+  });
+
+  const csv = Papa.unparse(flattenedData);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const fileName = `Project_Summary_${startDate || "Start"}_to_${endDate || "End"}.csv`;
+  saveAs(blob, fileName);
+};
+
+
+
 
   return (
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
@@ -627,8 +652,16 @@ const Summary = () => {
 
                 <div className="text-sm text-gray-700 space-y-1 mb-4">
                   <p>
-                    <span className="font-semibold">Total Hours:</span>{" "}
+                    <span className="font-bold">Total Hours:</span>{" "}
                     <span className="text-gray-900">{project?.totalHours}</span>
+                  </p>
+                  <p>
+                    <span className="font-bold">Project Type:</span>{" "}
+                    <span className="text-gray-900 capitalize">{project?.projectType}</span>
+                  </p>
+                  <p>
+                    <span className="font-bold">Division:</span>{" "}
+                    <span className="text-gray-900">{project?.projectDivision}</span>
                   </p>
                 </div>
 
