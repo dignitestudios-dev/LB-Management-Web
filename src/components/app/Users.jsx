@@ -275,6 +275,7 @@ const Users = () => {
                   <th className="px-4 py-3 border">Employee Code</th>
                   <th className="px-4 py-3 border">Department</th>
                   <th className="px-4 py-3 border">Role</th>
+                  <th className="px-4 py-3 border">Shift</th>
                   <th className="px-4 py-3 border">Actions</th>
                 </tr>
               </thead>
@@ -297,6 +298,14 @@ const Users = () => {
                     <td className="border text-center px-4 py-2">
                       {user.role?.name || "—"}
                     </td>
+                    <td className="border text-center px-4 py-2">
+                      {user.shift
+                        ? `${user.shift.name} (${formatHour(
+                            user.shift.startHour
+                          )} - ${formatHour(user.shift.endHour)})`
+                        : "—"}
+                    </td>
+
                     <td className="px-4 py-2 text-center border">
                       <button
                         onClick={() => openEditModal(user)}
