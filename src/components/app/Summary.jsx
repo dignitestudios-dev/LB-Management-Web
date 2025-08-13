@@ -180,7 +180,7 @@ const Summary = () => {
     setShowDropdown(false);
     setShowDrawer(false);
     setClearTrigger(true);
-   setSummaryTriggered({}); 
+    setSummaryTriggered({});
   };
   const handleExport = () => {
     if (!data.length) return;
@@ -208,71 +208,82 @@ const Summary = () => {
     <div className="bg-[rgb(237 237 237)] p-6 rounded-xl shadow-md w-full">
       <div className="flex justify-between mb-4">
         <div>
-        {(summaryTriggered?.startDate && summaryTriggered?.endDate) ||
- summaryTriggered?.selectedUser ||
- summaryTriggered?.selectedDepartmentId ||
- summaryTriggered?.projectId ?  (
-  <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
-    {/* Date Range */}
-    <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
-      <div className="flex items-center gap-2">
-        <MdDateRange className="text-red-500 text-2xl" />
-        <span className="text-gray-700 text-sm font-semibold">
-          Date Range
-        </span>
-      </div>
-      <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
-        <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
-          {summaryTriggered?.startDate}
-        </span>
-        <span className="text-gray-400 text-sm font-semibold">to</span>
-        <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
-          {summaryTriggered?.endDate}
-        </span>
-      </div>
-    </div>
+          {(summaryTriggered?.startDate && summaryTriggered?.endDate) ||
+          summaryTriggered?.selectedUser ||
+          summaryTriggered?.selectedDepartmentId ||
+          summaryTriggered?.projectId ? (
+            <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
+              {/* Date Range */}
+              <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                <div className="flex items-center gap-2">
+                  <MdDateRange className="text-red-500 text-2xl" />
+                  <span className="text-gray-700 text-sm font-semibold">
+                    Date Range
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                  <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                    {summaryTriggered?.startDate}
+                  </span>
+                  <span className="text-gray-400 text-sm font-semibold">
+                    to
+                  </span>
+                  <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                    {summaryTriggered?.endDate}
+                  </span>
+                </div>
+              </div>
 
-    {/* Employee */}
-    {summaryTriggered?.selectedUser?.name && (
-      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
-        <HiUser className="text-red-500 text-lg" />
-        <div className="flex gap-1 items-baseline">
-          <span className="text-sm text-gray-500 font-medium">Employee:</span>
-          <h2 className="text-sm font-semibold text-gray-800">
-            {summaryTriggered?.selectedUser?.name}
-          </h2>
-        </div>
-      </div>
-    )}
+              {/* Employee */}
+              {summaryTriggered?.selectedUser?.name && (
+                <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                  <HiUser className="text-red-500 text-lg" />
+                  <div className="flex gap-1 items-baseline">
+                    <span className="text-sm text-gray-500 font-medium">
+                      Employee:
+                    </span>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {summaryTriggered?.selectedUser?.name}
+                    </h2>
+                  </div>
+                </div>
+              )}
 
-    {/* Department */}
-    {summaryTriggered?.selectedDepartmentId && (
-      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
-        <HiBuildingOffice2 className="text-red-500 text-lg" />
-        <div className="flex gap-1 items-baseline">
-          <span className="text-sm text-gray-500 font-medium">Department:</span>
-          <h2 className="text-sm font-semibold text-gray-800">
-            {department.find((d) => d._id === summaryTriggered.selectedDepartmentId)?.name || "—"}
-          </h2>
-        </div>
-      </div>
-    )}
+              {/* Department */}
+              {summaryTriggered?.selectedDepartmentId && (
+                <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                  <HiBuildingOffice2 className="text-red-500 text-lg" />
+                  <div className="flex gap-1 items-baseline">
+                    <span className="text-sm text-gray-500 font-medium">
+                      Department:
+                    </span>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {department.find(
+                        (d) => d._id === summaryTriggered.selectedDepartmentId
+                      )?.name || "—"}
+                    </h2>
+                  </div>
+                </div>
+              )}
 
-    {/* Project */}
-    {summaryTriggered?.projectId && (
-      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
-        <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
-        <div className="flex gap-1 items-baseline">
-          <span className="text-sm text-gray-500 font-medium">Project:</span>
-          <h2 className="text-sm font-semibold text-gray-800">
-            {projects?.find((p) => p._id === summaryTriggered.projectId)?.name || "—"}
-          </h2>
-        </div>
-      </div>
-    )}
-  </div>
-):null}
-
+              {/* Project */}
+              {summaryTriggered?.projectId && (
+                <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                  <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
+                  <div className="flex gap-1 items-baseline">
+                    <span className="text-sm text-gray-500 font-medium">
+                      Project:
+                    </span>
+                    <h2 className="text-sm font-semibold text-gray-800">
+                      {projects?.find(
+                        (p) => p._id === summaryTriggered.projectId
+                      )?.name || "—"}
+                    </h2>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
         <div className="flex gap-8">
           <button
@@ -513,60 +524,59 @@ const Summary = () => {
 
           {/* Summary Button */}
           <div className="flex gap-3 mt-4">
-           <button
-  onClick={() => {
-    fetchSummary();
-    setSummaryTriggered({
-      selectedUser,
-      selectedDepartmentId,
-      projectId,
-      startDate,
-      endDate,
-    });
-    setShowDrawer(false);
-  }}
-  disabled={
-    !selectedUser &&
-    !selectedDepartmentId &&
-    !projectId &&
-    !startDate &&
-    !endDate
-  }
-  className={`w-[200px] h-[49px] rounded-md transition text-white ${
-    !selectedUser &&
-    !selectedDepartmentId &&
-    !projectId &&
-    !startDate &&
-    !endDate
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-[#f40e00] hover:bg-red-700"
-  }`}
->
-  Get Summary
-</button>
+            <button
+              onClick={() => {
+                fetchSummary();
+                setSummaryTriggered({
+                  selectedUser,
+                  selectedDepartmentId,
+                  projectId,
+                  startDate,
+                  endDate,
+                });
+                setShowDrawer(false);
+              }}
+              disabled={
+                !selectedUser &&
+                !selectedDepartmentId &&
+                !projectId &&
+                !startDate &&
+                !endDate
+              }
+              className={`w-[200px] h-[49px] rounded-md transition text-white ${
+                !selectedUser &&
+                !selectedDepartmentId &&
+                !projectId &&
+                !startDate &&
+                !endDate
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#f40e00] hover:bg-red-700"
+              }`}
+            >
+              Get Summary
+            </button>
 
-         <button
-  onClick={handleClear}
-  disabled={
-    !selectedUser &&
-    !selectedDepartmentId &&
-    !projectId &&
-    !startDate &&
-    !endDate
-  }
-  className={`w-[200px] h-[49px] rounded-md transition ${
-    !selectedUser &&
-    !selectedDepartmentId &&
-    !projectId &&
-    !startDate &&
-    !endDate
-      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-      : "bg-gray-300 text-gray-800 hover:bg-gray-400"
-  }`}
->
-  Clear Filters
-</button>
-
+            <button
+              onClick={handleClear}
+              disabled={
+                !selectedUser &&
+                !selectedDepartmentId &&
+                !projectId &&
+                !startDate &&
+                !endDate
+              }
+              className={`w-[200px] h-[49px] rounded-md transition ${
+                !selectedUser &&
+                !selectedDepartmentId &&
+                !projectId &&
+                !startDate &&
+                !endDate
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+              }`}
+            >
+              Clear Filters
+            </button>
           </div>
         </div>
       </div>
@@ -599,14 +609,16 @@ const Summary = () => {
       ) : data.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data?.map((project, index) => {
-            const isExpanded = activeIndex === index; // 👈 true if this card is open
-            const visibleDays = isExpanded
-              ? project?.dailyBreakdown
-              : project?.dailyBreakdown?.slice(0, 4);
+            const isExpanded = activeIndex === index;
+
+            // Show either all departments or the first 4
+            // const visibleDepartments = isExpanded
+            //   ? project?.departments
+            //   : project?.departments?.slice(0, 4);
 
             return (
               <div
-                key={project?._id}
+                key={index}
                 className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition duration-300"
               >
                 <h3 className="text-xl font-semibold text-red-600 mb-3">
@@ -618,13 +630,29 @@ const Summary = () => {
                     <span className="font-semibold">Total Hours:</span>{" "}
                     <span className="text-gray-900">{project?.totalHours}</span>
                   </p>
-                  <p>
-                    <span className="font-semibold">Total Minutes:</span>{" "}
-                    <span className="text-gray-900">
-                      {project?.totalMinutes}
-                    </span>
-                  </p>
                 </div>
+
+                <div className="space-y-2">
+                  {project?.departments?.map((dept, deptIndex) => (
+                    <div
+                      key={deptIndex}
+                      className="flex justify-between text-sm text-gray-600"
+                    >
+                      <span className="font-medium">{dept?.name}</span>
+                      <span className="text-gray-900">{dept?.hours} hrs</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Toggle button for showing more */}
+                {/* {project?.departments?.length > 4 && (
+                  <button
+                    onClick={() => setActiveIndex(isExpanded ? null : index)}
+                    className="mt-4 text-blue-600 text-sm font-medium hover:underline"
+                  >
+                    {isExpanded ? "Show Less" : "Show More"}
+                  </button>
+                )} */}
               </div>
             );
           })}
