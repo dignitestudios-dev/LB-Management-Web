@@ -5,6 +5,7 @@ function MultiSelectFilter({
   options,
   selected,
   setSelected,
+  bgColor
 }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -33,7 +34,7 @@ function MultiSelectFilter({
       {/* Button */}
       <button
         onClick={() => setOpen(!open)}
-        className="bg-white border rounded px-4 py-2 shadow-sm hover:bg-gray-50 flex items-center gap-2"
+        className={` border rounded px-4 py-2 shadow-sm hover:bg-gray-50 flex items-center gap-2 ${bgColor ? bgColor: "bg-transparent"} `}
       >
         {title}
         {selected.length > 0 && (

@@ -146,6 +146,7 @@ function Reports() {
           />
         </div>
         <MultiSelectFilter
+        bgColor={"bg-white"}
           title="Departments"
           options={departments.map((d) => ({ value: d._id, label: d.name }))}
           selected={selectedDepartments}

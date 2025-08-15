@@ -297,99 +297,122 @@ useEffect(() => {
         }}
       />
          <div className="flex gap-4 mb-4">
-  <MultiSelectFilter
+  {/* <MultiSelectFilter
     title="Departments"
     options={departments.map((d) => ({ value: d._id, label: d.name }))}
     selected={selectedDepartments}
     setSelected={setSelectedDepartments}
-  />
-  <MultiSelectFilter
+  /> */}
+  {/* <MultiSelectFilter
     title="Roles"
     options={roles.map((r) => ({ value: r._id, label: r.name }))}
     selected={selectedRoles}
     setSelected={setSelectedRoles}
-  />
-  <MultiSelectFilter
+  /> */}
+  {/* <MultiSelectFilter
     title="Shifts"
     options={shifts.map((s) => ({ value: s._id, label: s.name }))}
     selected={selectedShifts}
     setSelected={setSelectedShifts}
-  />
+  /> */}
 </div>
 
       {/* Users Table */}
-      {loading ? (
-        <p className="text-center text-gray-500">Loading users...</p>
-      ) : users.length > 0 ? (
-        <>
-      
-
-
-          <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
-            <table className="min-w-full border ">
-              <thead className="bg-red-100 text-gray-800">
-                <tr>
-                  <th className="px-4 py-3 border">#</th>
-                  <th className="px-4 py-3 border">Name</th>
-                  <th className="px-4 py-3 border">Email</th>
-                  <th className="px-4 py-3 border">Employee Code</th>
-                  <th className="px-4 py-3 border">Department</th>
-                  <th className="px-4 py-3 border">Role</th>
-                  <th className="px-4 py-3 border">Shift</th>
-                  <th className="px-4 py-3 border">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user, i) => (
-                  <tr key={user._id} className="hover:bg-blue-50">
-                    <td className="border text-center px-4 py-2">{i + 1}</td>
-                    <td className="border text-center px-4 py-2">
-                      {user.name}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.email}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.employeeCode}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.department?.name || "—"}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.role?.name || "—"}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.shift
-                        ? `${user.shift.name} (${formatHour(
-                            user.shift.startHour
-                          )} - ${formatHour(user.shift.endHour)})`
-                        : "—"}
-                    </td>
-
-                    <td className="px-4 py-2 text-center border">
-                      <button
-                        onClick={() => openEditModal(user)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Pagination */}
-          {/* Pagination */}
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
+     <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
+  <table className="min-w-full border">
+    <thead className="bg-red-100 text-gray-800">
+      <tr>
+        <th className="px-4 py-3 border">#</th>
+        <th className="px-4 py-3 border">Name</th>
+        <th className="px-4 py-3 border">Email</th>
+        <th className="px-4 py-3 border">Employee Code</th>
+        <th className="px-4 py-3 border">
+          <MultiSelectFilter
+            title="Departments"
+            options={departments.map((d) => ({ value: d._id, label: d.name }))}
+            selected={selectedDepartments}
+            setSelected={setSelectedDepartments}
           />
-        </>
-      ) : (
-        <p className="text-center text-gray-600">No users found.</p>
-      )}
+        </th>
+        <th className="px-4 py-3 border">
+          <MultiSelectFilter
+            title="Roles"
+            options={roles.map((r) => ({ value: r._id, label: r.name }))}
+            selected={selectedRoles}
+            setSelected={setSelectedRoles}
+          />
+        </th>
+        <th className="px-4 py-3 border">
+          <MultiSelectFilter
+            title="Shifts"
+            options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+            selected={selectedShifts}
+            setSelected={setSelectedShifts}
+          />
+        </th>
+        <th className="px-4 py-3 border">Actions</th>
+      </tr>
+    </thead>
+
+    {loading ? (
+      <tbody>
+        <tr>
+          <td colSpan="8" className="text-center p-4 text-gray-500">
+            Loading users...
+          </td>
+        </tr>
+      </tbody>
+    ) : users.length > 0 ? (
+      <tbody>
+        {users.map((user, i) => (
+          <tr key={user._id} className="hover:bg-blue-50">
+            <td className="border text-center px-4 py-2">{i + 1}</td>
+            <td className="border text-center px-4 py-2">{user.name}</td>
+            <td className="border text-center px-4 py-2">{user.email}</td>
+            <td className="border text-center px-4 py-2">{user.employeeCode}</td>
+            <td className="border text-center px-4 py-2">
+              {user.department?.name || "—"}
+            </td>
+            <td className="border text-center px-4 py-2">
+              {user.role?.name || "—"}
+            </td>
+            <td className="border text-center px-4 py-2">
+              {user.shift
+                ? `${user.shift.name} (${formatHour(user.shift.startHour)} - ${formatHour(user.shift.endHour)})`
+                : "—"}
+            </td>
+            <td className="px-4 py-2 text-center border">
+              <button
+                onClick={() => openEditModal(user)}
+                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              >
+                Edit
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    ) : (
+      <tbody>
+        <tr>
+          <td colSpan="8" className="text-center p-4 text-gray-600">
+            No users found.
+          </td>
+        </tr>
+      </tbody>
+    )}
+  </table>
+</div>
+
+{/* Pagination */}
+{users.length > 0 && (
+  <Pagination
+    currentPage={page}
+    totalPages={totalPages}
+    onPageChange={(p) => setPage(p)}
+  />
+)}
+
 
       {/* Edit Modal */}
       {editModalOpen && (
