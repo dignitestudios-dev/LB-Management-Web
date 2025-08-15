@@ -7,7 +7,7 @@ function MultiSelectFilter({
   setSelected,
 }) {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef(null);
 
   const toggleValue = (value) => {
     setSelected(
