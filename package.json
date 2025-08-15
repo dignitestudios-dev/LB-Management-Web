@@ -18,6 +18,7 @@
     "file-saver": "^2.0.5",
     "formik": "^2.4.6",
     "js-cookie": "^3.0.5",
+    "lucide-react": "^0.539.0",
     "moment-timezone": "^0.6.0",
     "papaparse": "^5.5.3",
     "react": "^19.0.0",

@@ -4,6 +4,7 @@ import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
 import SearchBar from "../global/SearchBar";
 import Pagination from "../global/Pagination";
+import MultiSelectFilter from "../ui/MultipleFilterSelector";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +15,9 @@ const Users = () => {
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedShifts, setSelectedShifts] = useState([]);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -33,6 +37,7 @@ const Users = () => {
     department: "",
     shift: "",
     employeeCode: "",
+    joiningDate: "",
   });
 
   // Pagination & Search
@@ -42,24 +47,45 @@ const Users = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get("/users", {
-        params: { search, page, limit },
-      });
+  try {
+    setLoading(true);
 
-      setUsers(res.data.data);
-      setTotalPages(res?.data?.pagination?.totalPages);
-    } catch (err) {
-      ErrorToast("Failed to fetch users");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const params= {
+      search,
+      page,
+      limit,
+    };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [search, page]);
+    // Add departments
+    selectedDepartments.forEach((id, idx) => {
+      params[`departmentId[${idx}]`] = id;
+    });
+
+    // Add roles
+    selectedRoles.forEach((id, idx) => {
+      params[`roleId[${idx}]`] = id;
+    });
+
+    // Add shifts
+    selectedShifts.forEach((id, idx) => {
+      params[`shiftId[${idx}]`] = id;
+    });
+
+    const res = await axios.get("/users", { params });
+
+    setUsers(res.data.data);
+    setTotalPages(res?.data?.pagination?.totalPages);
+  } catch (err) {
+    ErrorToast("Failed to fetch users");
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchUsers();
+}, [search, page, selectedDepartments, selectedRoles, selectedShifts]);
+
 
   const fetchFormOptions = async () => {
     try {
@@ -96,6 +122,7 @@ const Users = () => {
       "department",
       "shift",
       "employeeCode",
+      "joiningDate",
     ];
     if (required.some((key) => !form[key])) {
       ErrorToast("Please fill all fields");
@@ -114,6 +141,7 @@ const Users = () => {
         department: "",
         shift: "",
         employeeCode: "",
+        joiningDate: "",
       });
       fetchUsers();
     } catch (err) {
@@ -243,6 +271,15 @@ const Users = () => {
               </option>
             ))}
           </select>
+               <input
+       
+              name={"joiningDate"}
+              type={"date"}
+              placeholder={"Joining Date"}
+              value={form["joiningDate"]}
+              onChange={handleChange}
+              className="p-2 border rounded w-full"
+            />
         </div>
 
         <button
@@ -259,12 +296,35 @@ const Users = () => {
           setPage(1); // Reset to page 1 on new search
         }}
       />
+         <div className="flex gap-4 mb-4">
+  <MultiSelectFilter
+    title="Departments"
+    options={departments.map((d) => ({ value: d._id, label: d.name }))}
+    selected={selectedDepartments}
+    setSelected={setSelectedDepartments}
+  />
+  <MultiSelectFilter
+    title="Roles"
+    options={roles.map((r) => ({ value: r._id, label: r.name }))}
+    selected={selectedRoles}
+    setSelected={setSelectedRoles}
+  />
+  <MultiSelectFilter
+    title="Shifts"
+    options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+    selected={selectedShifts}
+    setSelected={setSelectedShifts}
+  />
+</div>
 
       {/* Users Table */}
       {loading ? (
         <p className="text-center text-gray-500">Loading users...</p>
       ) : users.length > 0 ? (
         <>
+      
+
+
           <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
             <table className="min-w-full border ">
               <thead className="bg-red-100 text-gray-800">
