@@ -8,7 +8,7 @@ import ProjectModal from "./ProjectModal";
 import { IoMdEyeOff } from "react-icons/io";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { ErrorToast, SuccessToast } from "../global/Toaster";
-import { baseUrl } from "../../axios";
+import instance, { baseUrl } from "../../axios";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import InfoCard from "../ui/InfoCard";
 
@@ -28,17 +28,12 @@ const EmployeeTable = ({
     if (!id) return;
     setloading(true);
     try {
-      const response = await fetch(`${baseUrl}/attendance/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await instance.delete(`${baseUrl}/attendance/${id}`);
 
-      const result = await response.json();
-      if (result.success) {
-        // Remove the deleted record from the local state
-        setAttendance((prev) => prev.filter((a) => a._id !== id));
+
+      if (response.data.success) {
+        // // Remove the deleted record from the local state
+        // setAttendance((prev) => prev.filter((a) => a._id !== id));
         SuccessToast("Delete Successfully");
         setDeleteModalOpen(false);
         fetchAttendance();
