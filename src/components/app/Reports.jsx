@@ -159,7 +159,7 @@ function Reports() {
       {!loading && reports && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {renderList(
-            "Top Employees",
+            "Top Contributors",
             reports.topEmployees?.map((e) => ({
               ...e,
               totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
@@ -170,7 +170,7 @@ function Reports() {
           )}
 
           {renderList(
-            "Bottom Employees",
+            "Least Contributors",
             reports.bottomEmployees?.map((e) => ({
               ...e,
               totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
@@ -181,7 +181,7 @@ function Reports() {
           )}
 
           {renderList(
-            "Top Projects",
+            "Top Contributed Projects",
             reports.topProjects?.map((p) => ({
               ...p,
               totalWorkedHours: `${Math.floor(p.totalWorkedMinutes / 60)}h ${
@@ -192,7 +192,7 @@ function Reports() {
           )}
 
           {renderList(
-            "Bottom Projects",
+            "Least Contributed Projects",
             reports.bottomProjects?.map((p) => ({
               ...p,
               totalWorkedHours: `${Math.floor(p.totalWorkedMinutes / 60)}h ${
