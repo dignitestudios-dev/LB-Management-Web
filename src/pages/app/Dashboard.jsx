@@ -182,7 +182,12 @@ const   Dashboard = () => {
               active={activeTab === "summary"}
               onClick={() => setActiveTab("summary")}
             />
-
+     <SidebarItem
+              icon={<PiArticleNyTimes />}
+              label="Reports"
+              active={activeTab === "reports"}
+              onClick={() => setActiveTab("reports")}
+            />
             <SidebarItem
               icon={<FaUsers />}
               label="All Users"
@@ -225,12 +230,7 @@ const   Dashboard = () => {
               active={activeTab === "timeSheet"}
               onClick={() => setActiveTab("timeSheet")}
             />
-            <SidebarItem
-              icon={<PiArticleNyTimes />}
-              label="Reports"
-              active={activeTab === "reports"}
-              onClick={() => setActiveTab("reports")}
-            />
+       
           </ul>
         </div>
 

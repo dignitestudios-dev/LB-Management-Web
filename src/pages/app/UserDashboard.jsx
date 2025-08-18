@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useCheckin, useLogin } from "../../hooks/api/Post";
 import { useUsers } from "../../hooks/api/Get";
-import { baseUrl } from "../../axios";
+import instance, { baseUrl } from "../../axios";
 import Cookies from "js-cookie";
-import { IoFingerPrintOutline, IoLogOut, IoLogOutOutline } from "react-icons/io5";
+import {
+  IoFingerPrintOutline,
+  IoLogOut,
+  IoLogOutOutline,
+} from "react-icons/io5";
 import { useNavigate } from "react-router";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImCross, ImSpinner3 } from "react-icons/im";
@@ -25,15 +29,10 @@ const UserDashboard = () => {
 
   const fetchAttendance = async () => {
     try {
-      const response = await fetch(`${baseUrl}/attendance/missing`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await instance.get(`/attendance/missing`);
 
-      const result = await response.json();
-      if (result.success) {
-        setMissingAttendance(result.data);
+      if (response.data.success) {
+        setMissingAttendance(response.data.data);
         setModalOpen(true);
       }
     } catch (error) {
@@ -77,7 +76,7 @@ const UserDashboard = () => {
   const { checkInData, checkInloading } = useCheckin();
 
   const { data: user, loading: userLoading } = useUsers("/users/me");
-const [logoutLoading, setLogoutLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [timerInterval, setTimerInterval] = useState(null); // To store the timer interval
   const [checkOutTimeForgot, setcheckOutTimeForgot] = useState(null);
   const [checkInTimeForgot, setcheckInTimeForgot] = useState(null);
@@ -87,7 +86,7 @@ const [logoutLoading, setLogoutLoading] = useState(false);
   const [stoppedTime, setStoppedTime] = useState(null);
 
   const handleLogout = async () => {
-    setLogoutLoading(true)
+    setLogoutLoading(true);
     await postData("/auth/logout", false, null, null, (res) => {
       Cookies.remove("token");
 
@@ -99,8 +98,7 @@ const [logoutLoading, setLogoutLoading] = useState(false);
 
       navigate("/auth/login");
     });
-    setLogoutLoading(false)
-
+    setLogoutLoading(false);
   };
 
   useEffect(() => {
@@ -141,16 +139,9 @@ const [logoutLoading, setLogoutLoading] = useState(false);
   useEffect(() => {
     const fetchToday = async () => {
       try {
-        const response = await fetch(`${baseUrl}/attendance/today`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setTodayAttendance(result.data);
+        const response = await instance.get(`/attendance/today`);
+        if (response.data.success) {
+          setTodayAttendance(response.data.data);
         }
       } catch (error) {
         console.error("Error fetching today's attendance", error);
@@ -292,27 +283,27 @@ const [logoutLoading, setLogoutLoading] = useState(false);
                   </p>
                 </div>
                 <hr className="my-2" />
-                    <button
-  onClick={handleLogout}
-  disabled={logoutLoading}
-  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
-    logoutLoading
-      ? "bg-red-400 cursor-not-allowed"
-      : "bg-red-600 hover:bg-red-700"
-  } text-white`}
->
-  {logoutLoading ? (
-    <>
-      <FaSpinner className="animate-spin text-sm" />
-      Logging out...
-    </>
-  ) : (
-    <>
-      <IoLogOut className="text-lg" />
-      Logout
-    </>
-  )}
-</button>
+                <button
+                  onClick={handleLogout}
+                  disabled={logoutLoading}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
+                    logoutLoading
+                      ? "bg-red-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  } text-white`}
+                >
+                  {logoutLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin text-sm" />
+                      Logging out...
+                    </>
+                  ) : (
+                    <>
+                      <IoLogOut className="text-lg" />
+                      Logout
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>
@@ -423,29 +414,28 @@ const [logoutLoading, setLogoutLoading] = useState(false);
                 )}
               </div>
               <div className="flex flex-wrap gap-4 justify-center mt-10">
-  {/* Check In Button */}
-  <button
-    onClick={handleCheckIn}
-    className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
-    disabled={checkInloading}
-  >
-    <IoFingerPrintOutline className="text-xl text-white" />
-    <span className="text-sm sm:text-base">
-      {checkInloading ? "Checking In..." : "Check In"}
-    </span>
-  </button>
+                {/* Check In Button */}
+                <button
+                  onClick={handleCheckIn}
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+                  disabled={checkInloading}
+                >
+                  <IoFingerPrintOutline className="text-xl text-white" />
+                  <span className="text-sm sm:text-base">
+                    {checkInloading ? "Checking In..." : "Check In"}
+                  </span>
+                </button>
 
-  {/* Check Out Button */}
-  <button
-    onClick={handleCheckOut}
-    className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
-    disabled={checkInloading}
-  >
-    <IoLogOutOutline className="text-xl text-white" />
-    <span className="text-sm sm:text-base">Check Out</span>
-  </button>
-</div>
-
+                {/* Check Out Button */}
+                <button
+                  onClick={handleCheckOut}
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+                  disabled={checkInloading}
+                >
+                  <IoLogOutOutline className="text-xl text-white" />
+                  <span className="text-sm sm:text-base">Check Out</span>
+                </button>
+              </div>
             </div>
           )}
 

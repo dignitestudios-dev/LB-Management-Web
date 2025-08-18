@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { baseUrl } from "../../axios";
+import instance, { baseUrl } from "../../axios";
 import { GrFilter } from "react-icons/gr";
 import { RxCross2 } from "react-icons/rx";
 import { SlCalender } from "react-icons/sl";
@@ -41,15 +41,10 @@ const TimesheetTable = () => {
   const fetchAttendance = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${baseUrl}/attendance`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setAttendance(result.data);
+      const response = await instance.get(`${baseUrl}/attendance`);
+console.log(response.data.data)
+      if (response.data.success) {
+        setAttendance(response.data.data);
       }
     } catch (error) {
       console.error("Error fetching initial attendance", error);
@@ -70,18 +65,12 @@ const TimesheetTable = () => {
     // if (checkOutTimeEnd) params.append("checkOutEnd", checkOutTimeEnd);
 
     try {
-      const response = await fetch(
-        `${baseUrl}/attendance?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+      const response = await instance.get(
+        `/attendance?${params.toString()}`
       );
 
-      const result = await response.json();
-      if (result.success) {
-        setAttendance(result.data);
+      if (response.data.success) {
+        setAttendance(response.data.data);
         setFilterDropdown(false);
       }
     } catch (error) {
@@ -228,51 +217,7 @@ const TimesheetTable = () => {
       )}
 
       <div className="bg-white shadow-sm border border-gray-200 ">
-          <div
-                // key={index}
-                className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition duration-300"
-              >
-                <h3 className="text-xl font-semibold text-red-600 mb-3">
-                  {project?.name || "Unnamed Project"}
-                </h3>
-
-                <div className="text-sm text-gray-700 space-y-1 mb-4">
-                  <p>
-                    <span className="font-bold">Total Hours:</span>{" "}
-                    <span className="text-gray-900">{project?.totalHours}</span>
-                  </p>
-                  <p>
-                    <span className="font-bold">Project Type:</span>{" "}
-                    <span className="text-gray-900 capitalize">{project?.projectType}</span>
-                  </p>
-                  <p>
-                    <span className="font-bold">Division:</span>{" "}
-                    <span className="text-gray-900">{project?.projectDivision}</span>
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  {project?.departments?.map((dept, deptIndex) => (
-                    <div
-                      key={deptIndex}
-                      className="flex justify-between text-sm text-gray-600"
-                    >
-                      <span className="font-medium">{dept?.name}</span>
-                      <span className="text-gray-900">{dept?.hours} hrs</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Toggle button for showing more */}
-                {/* {project?.departments?.length > 4 && (
-                  <button
-                    onClick={() => setActiveIndex(isExpanded ? null : index)}
-                    className="mt-4 text-blue-600 text-sm font-medium hover:underline"
-                  >
-                    {isExpanded ? "Show Less" : "Show More"}
-                  </button>
-                )} */}
-              </div>
+        
         <table className="min-w-full divide-y  divide-gray-200">
           <thead className="bg-gradient-to-r  from-slate-50 to-blue-50">
             <tr className=" text-red-600 text-xs md:text-sm uppercase font-semibold tracking-wider">
@@ -337,7 +282,7 @@ const TimesheetTable = () => {
                     </td>
                   </tr>
                 ))
-              : attendance.attendances?.map((item, index) => (
+              : attendance?.attendances?.map((item, index) => (
                   <tr
                     key={index}
                     className=" cursor-pointer  hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
