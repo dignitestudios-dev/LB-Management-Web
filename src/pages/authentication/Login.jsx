@@ -48,7 +48,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       {/* Left Section - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#f4f8ff] px-6 py-12">
-        <div className="w-full max-w-md bg-[rgb(237 237 237)] rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
+        <div className="w-full max-w-md bg-white border rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
           {/* Logo / Heading */}
           <div className="text-center mb-8">
             <h2 className="text-4xl font-bold text-black">Welcome Back</h2>
