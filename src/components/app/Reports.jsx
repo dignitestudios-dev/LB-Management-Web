@@ -12,38 +12,38 @@ function Reports() {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
 
   const fetchReports = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const params= {
-      startDate,
-      endDate
-    };
+      const params = {
+        startDate,
+        endDate,
+      };
 
-    // Add departments
-    selectedDepartments.forEach((id, idx) => {
-      params[`departmentId[${idx}]`] = id;
-    });
+      // Add departments
+      selectedDepartments.forEach((id, idx) => {
+        params[`departmentId[${idx}]`] = id;
+      });
 
-    // // Add roles
-    // selectedRoles.forEach((id, idx) => {
-    //   params[`roleId[${idx}]`] = id;
-    // });
+      // // Add roles
+      // selectedRoles.forEach((id, idx) => {
+      //   params[`roleId[${idx}]`] = id;
+      // });
 
-    // // Add shifts
-    // selectedShifts.forEach((id, idx) => {
-    //   params[`shiftId[${idx}]`] = id;
-    // });
+      // // Add shifts
+      // selectedShifts.forEach((id, idx) => {
+      //   params[`shiftId[${idx}]`] = id;
+      // });
 
-    const res = await axios.get("/departments/getReports", { params });
-     setReports(res.data);
-    // setTotalPages(res?.data?.pagination?.totalPages);
-  } catch (err) {
-    ErrorToast("Failed to fetch reports");
-  } finally {
-    setLoading(false);
-  }
-};
+      const res = await axios.get("/departments/getReports", { params });
+      setReports(res.data);
+      // setTotalPages(res?.data?.pagination?.totalPages);
+    } catch (err) {
+      ErrorToast("Failed to fetch reports");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchFormOptions = async () => {
     try {
@@ -65,16 +65,14 @@ function Reports() {
   }, []);
 
   useEffect(() => {
- 
-      fetchReports();
-    
-  }, [startDate, endDate , selectedDepartments]);
+    fetchReports();
+  }, [startDate, endDate, selectedDepartments]);
 
   useEffect(() => {
     fetchReports();
   }, []);
 
-  const renderList = (title, list, rightLabelKey) => (
+  const renderList = (title, list, rightLabelKey, rightLabelKey1) => (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col">
       <h2 className="font-semibold text-lg mb-2">{title}</h2>
       <hr className="border-dashed mb-3" />
@@ -112,8 +110,17 @@ function Reports() {
                 </div>
               </div>
               {rightLabelKey && (
-                <span className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full">
-                  {item[rightLabelKey]}
+                <span className="bg-gray-100 flex flex-col items-center text-gray-600 text-sm px-3 py-1 rounded-full">
+                  <label className="font-semibold">Worked Time</label>
+                 <h4 className="text-xs" >{item[rightLabelKey]}</h4>
+                
+                </span>
+              )}
+              {rightLabelKey1 && (
+                <span className="bg-gray-100 text-gray-600  flex flex-col items-center text-sm px-3 py-1 rounded-full">
+                    <label className="font-semibold" >Expected Time</label>
+                 <h4 className="text-xs" >{item[rightLabelKey1]}</h4> 
+                
                 </span>
               )}
             </div>
@@ -128,7 +135,6 @@ function Reports() {
       {/* Date Range Picker UI */}
       <div className="flex gap-4 mb-6 items-center bg-white p-4 rounded-lg shadow">
         <div>
-   
           <input
             type="date"
             className="border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
@@ -137,7 +143,6 @@ function Reports() {
           />
         </div>
         <div>
-     
           <input
             type="date"
             className="border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
@@ -146,7 +151,7 @@ function Reports() {
           />
         </div>
         <MultiSelectFilter
-        bgColor={"bg-white"}
+          bgColor={"bg-white"}
           title="Departments"
           options={departments.map((d) => ({ value: d._id, label: d.name }))}
           selected={selectedDepartments}
@@ -165,8 +170,12 @@ function Reports() {
               totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
                 e.totalWorkedMinutes % 60
               }m`,
+              totalExpectedMinutes: `${Math.floor(e.totalExpectedMinutes / 60)}h ${
+                e.totalExpectedMinutes % 60
+              }m`,
             })),
-            "totalWorkedHours"
+            "totalWorkedHours",
+            "totalExpectedMinutes"
           )}
 
           {renderList(
@@ -176,8 +185,12 @@ function Reports() {
               totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
                 e.totalWorkedMinutes % 60
               }m`,
+               totalExpectedMinutes: `${Math.floor(e.totalExpectedMinutes / 60)}h ${
+                e.totalExpectedMinutes % 60
+              }m`,
             })),
-            "totalWorkedHours"
+            "totalWorkedHours",
+            "totalExpectedMinutes"
           )}
 
           {renderList(
@@ -187,8 +200,12 @@ function Reports() {
               totalWorkedHours: `${Math.floor(p.totalWorkedMinutes / 60)}h ${
                 p.totalWorkedMinutes % 60
               }m`,
+               totalExpectedMinutes: `${Math.floor(p.totalExpectedMinutes / 60)}h ${
+                p.totalExpectedMinutes % 60
+              }m`,
             })),
-            "totalWorkedHours"
+            "totalWorkedHours",
+            // "totalExpectedMinutes"
           )}
 
           {renderList(
@@ -198,8 +215,12 @@ function Reports() {
               totalWorkedHours: `${Math.floor(p.totalWorkedMinutes / 60)}h ${
                 p.totalWorkedMinutes % 60
               }m`,
+               totalExpectedMinutes: `${Math.floor(p.totalExpectedMinutes / 60)}h ${
+                p.totalExpectedMinutes % 60
+              }m`,
             })),
-            "totalWorkedHours"
+            "totalWorkedHours",
+            // "totalExpectedMinutes"
           )}
         </div>
       )}
