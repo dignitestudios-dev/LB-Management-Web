@@ -80,7 +80,7 @@ function Reports() {
     fetchReports();
   }, []);
 
- const exportToCSV = () => {
+const exportToCSV = () => {
   if (!reports) return;
 
   // Map IDs to Names
@@ -109,66 +109,95 @@ function Reports() {
     data.push([
       `Projects: ${getNames(summaryTriggered.selectedProjects, projects)}`,
     ]);
-  if (summaryTriggered?.projectsType)
+  if (summaryTriggered?.projectsType?.length)
     data.push([`Project Type: ${summaryTriggered.projectsType}`]);
   data.push([""]); // Empty line for separation
 
   // ==========================
-  // Employee Data Header
-  // ==========================
-  data.push(["Name", "Department", "Worked Time", "Expected Time"]);
-
   // Helper: Convert Minutes to H:M
+  // ==========================
   const formatTime = (minutes) => {
     const hrs = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hrs}h ${mins}m`;
   };
 
-  let totalWorked = 0;
-  let totalExpected = 0;
+  let hasEmployees = reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
+  let hasProjects = reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
 
-  // Top Employees
-  if (reports.topEmployees.length > 0) {
-    data.push(["--- Top Employees ---"]);
-    reports.topEmployees.forEach((e) => {
-      totalWorked += e.totalWorkedMinutes || 0;
-      totalExpected += e.totalExpectedMinutes || 0;
-      data.push([
-        e.name,
-        e.departmentName || "",
-        formatTime(e.totalWorkedMinutes || 0),
-        formatTime(e.totalExpectedMinutes || 0),
-      ]);
-    });
+  // ==========================
+  // Employee Data Section
+  // ==========================
+  if (hasEmployees) {
+    data.push(["Name", "Department", "Worked Time", "Expected Time"]);
+
+    if (reports.topEmployees?.length > 0) {
+      data.push(["--- Top Employees ---"]);
+      reports.topEmployees.forEach((e) => {
+        data.push([
+          e.name,
+          e.departmentName || "",
+          formatTime(e.totalWorkedMinutes || 0),
+          formatTime(e.totalExpectedMinutes || 0),
+        ]);
+      });
+    }
+
+    if (reports.bottomEmployees?.length > 0) {
+      data.push(["--- Bottom Employees ---"]);
+      reports.bottomEmployees.forEach((e) => {
+        data.push([
+          e.name,
+          e.departmentName || "",
+          formatTime(e.totalWorkedMinutes || 0),
+          formatTime(e.totalExpectedMinutes || 0),
+        ]);
+      });
+    }
+
+    data.push([""]);
   }
 
-  // Bottom Employees
-  if (reports.bottomEmployees.length >0) {
-    data.push(["--- Bottom Employees ---"]);
-    reports.bottomEmployees.forEach((e) => {
-      totalWorked += e.totalWorkedMinutes || 0;
-      totalExpected += e.totalExpectedMinutes || 0;
-      data.push([
-        e.name,
-        e.departmentName || "",
-        formatTime(e.totalWorkedMinutes || 0),
-        formatTime(e.totalExpectedMinutes || 0),
-      ]);
-    });
+  // ==========================
+  // Project Data Section
+  // ==========================
+  if (hasProjects) {
+    data.push(["Project Name", "Worked Time"]);
+
+    if (reports.topProjects?.length > 0) {
+      data.push(["--- Top Projects ---"]);
+      reports.topProjects.forEach((p) => {
+        data.push([p.name, formatTime(p.workedMinutes || 0)]);
+      });
+    }
+
+    if (reports.bottomProjects?.length > 0) {
+      data.push(["--- Least Projects ---"]);
+      reports.bottomProjects.forEach((p) => {
+        data.push([p.name, formatTime(p.workedMinutes || 0)]);
+      });
+    }
+
+    data.push([""]);
   }
 
   // ==========================
   // Summary Row
   // ==========================
-  data.push([""]);
-  data.push([
-    "TOTAL",
-    "Worked Time",
-    formatTime(reports.totalSummary.sumTotalWorkedMinutes),
-       "Expected Time",
-    formatTime(reports.totalSummary.sumTotalExpectedMinutes),
-  ]);
+  if (hasEmployees || hasProjects) {
+    data.push([
+      "TOTAL WORKED",
+      formatTime(reports.totalSummary?.sumTotalWorkedMinutes || 0),
+      "TOTAL EXPECTED",
+      formatTime(reports.totalSummary?.sumTotalExpectedMinutes || 0),
+    ]);
+  } else {
+    // If no employees/projects, only show filters and summary
+    data.push([
+      "TOTAL WORKED",
+      formatTime(reports.totalSummary?.sumTotalWorkedMinutes || 0),
+    ]);
+  }
 
   // ==========================
   // Convert to CSV & Download
@@ -183,6 +212,7 @@ function Reports() {
   link.click();
   document.body.removeChild(link);
 };
+
 
 
   const formatMinutes = (mins) => {
