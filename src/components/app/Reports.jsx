@@ -80,62 +80,99 @@ function Reports() {
     fetchReports();
   }, []);
 
-  const exportToCSV = () => {
-    if (!reports) return;
+ const exportToCSV = (filters) => {
+  if (!reports) return;
 
-    let data = [["Name", "Department", "Worked Minutes", "Expected Minutes"]];
+  let filteredTopEmployees = reports.topEmployees || [];
+  let filteredBottomEmployees = reports.bottomEmployees || [];
 
-    // Add Top Employees
-    if (reports.topEmployees?.length) {
-      data.push(["--- Top Employees ---"]);
-      reports.topEmployees.forEach((e) => {
-        data.push([
-          e.name,
-          e.departmentName || "",
-          e.totalWorkedMinutes?.toString() || "0",
-          e.totalExpectedMinutes?.toString() || "0",
-        ]);
-      });
-    }
+  // Apply Filters
+  if (filters.selectedDepartments?.length) {
+    filteredTopEmployees = filteredTopEmployees.filter(e => 
+      filters.selectedDepartments.includes(e.departmentId)
+    );
+    filteredBottomEmployees = filteredBottomEmployees.filter(e => 
+      filters.selectedDepartments.includes(e.departmentId)
+    );
+  }
 
-    // Add Bottom Employees
-    if (reports.bottomEmployees?.length) {
-      data.push(["--- Bottom Employees ---"]);
-      reports.bottomEmployees.forEach((e) => {
-        data.push([
-          e.name,
-          e.departmentName || "",
-          e.totalWorkedMinutes?.toString() || "0",
-          e.totalExpectedMinutes?.toString() || "0",
-        ]);
-      });
-    }
+  if (filters.selectedProjects?.length) {
+    filteredTopEmployees = filteredTopEmployees.filter(e =>
+      filters.selectedProjects.includes(e.projectId)
+    );
+    filteredBottomEmployees = filteredBottomEmployees.filter(e =>
+      filters.selectedProjects.includes(e.projectId)
+    );
+  }
 
-    // Add Summary Row (Totals)
-    if (reports.summary) {
-      data.push([]);
-      data.push(["--- Report Summary ---"]);
+  // Add other filters (divisions, user, project type, date range)
+  // ...
+
+  let data = [];
+
+  // --- FILTER SUMMARY SECTION ---
+  data.push(["Applied Filters"]);
+  if (filters.startDate && filters.endDate)
+    data.push([`Date Range: ${filters.startDate} to ${filters.endDate}`]);
+  if (filters.selectedUser?.name)
+    data.push([`Employee: ${filters.selectedUser.name}`]);
+  if (filters.selectedDepartments?.length)
+    data.push([`Departments: ${filters.selectedDepartments.join(", ")}`]);
+  if (filters.selectedDivisions?.length)
+    data.push([`Divisions: ${filters.selectedDivisions.join(", ")}`]);
+  if (filters.selectedProjects?.length)
+    data.push([`Projects: ${filters.selectedProjects.join(", ")}`]);
+  if (filters.projectsType)
+    data.push([`Project Type: ${filters.projectsType}`]);
+
+  data.push([]); // Blank row for separation
+
+  // --- EMPLOYEE DATA SECTION ---
+  data.push(["Name", "Department", "Worked Minutes", "Expected Minutes"]);
+
+  if (filteredTopEmployees.length) {
+    data.push(["--- Top Employees ---"]);
+    filteredTopEmployees.forEach((e) => {
       data.push([
-        "TOTAL",
-        "",
-        reports.totalSummary.sumTotalWorkedMinutes?.toString() || "0",
-        reports.totalSummary.sumTotalExpectedMinutes?.toString() || "0",
+        e.name,
+        e.departmentName || "",
+        formatMinutes(e.totalWorkedMinutes),
+        formatMinutes(e.totalExpectedMinutes),
       ]);
-    }
+    });
+  }
 
-    // Convert to CSV string
-    const csvContent = data.map((row) => row.join(",")).join("\n");
+  if (filteredBottomEmployees.length) {
+    data.push(["--- Bottom Employees ---"]);
+    filteredBottomEmployees.forEach((e) => {
+      data.push([
+        e.name,
+        e.departmentName || "",
+        formatMinutes(e.totalWorkedMinutes),
+        formatMinutes(e.totalExpectedMinutes),
+      ]);
+    });
+  }
 
-    // Create Blob and download
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `reports_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  // Convert to CSV string
+  const csvContent = data.map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", `reports_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const formatMinutes = (mins) => {
+  if (!mins) return "0h 0m";
+  const hours = Math.floor(mins / 60);
+  const minutes = mins % 60;
+  return `${hours}h ${minutes}m`;
+};
+
 
   const renderList = (title, list, rightLabelKey, rightLabelKey1) => (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col">
@@ -291,11 +328,7 @@ function Reports() {
   return (
     <div>
       {/* Action Buttons */}
-      {appliedFilters.length > 0 && (
-        <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
-          {appliedFilters}
-        </div>
-      )}
+   
       <div className="flex justify-end gap-8 mb-6">
         <button
           onClick={exportToCSV}
@@ -315,7 +348,11 @@ function Reports() {
           Filters
         </button>
       </div>
-
+   {appliedFilters.length > 0 && (
+        <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
+          {appliedFilters}
+        </div>
+      )}
       {loading && <div className="p-6 text-center">Loading...</div>}
       {!loading && (
         <div className="flex gap-4 py-4">
@@ -323,14 +360,14 @@ function Reports() {
             !selectedDivisions.length > 0 &&
             !selectedProjects.length > 0 && (
               <InfoCard
-                title="Expected Minutes"
+                title="Expected Hours"
                 value={convertToHoursAndMinutes(
                   reports?.totalSummary.sumTotalExpectedMinutes
                 )}
               />
             )}
           <InfoCard
-            title="Worked Minutes"
+            title="Worked Hours"
             value={convertToHoursAndMinutes(
               reports?.totalSummary.sumTotalWorkedMinutes
             )}
