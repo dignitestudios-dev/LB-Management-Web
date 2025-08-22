@@ -167,14 +167,14 @@ const exportToCSV = () => {
     if (reports.topProjects?.length > 0) {
       data.push(["--- Top Projects ---"]);
       reports.topProjects.forEach((p) => {
-        data.push([p.name, formatTime(p.workedMinutes || 0)]);
+        data.push([p.name, formatTime(p.totalWorkedMinutes || 0)]);
       });
     }
 
     if (reports.bottomProjects?.length > 0) {
       data.push(["--- Least Projects ---"]);
       reports.bottomProjects.forEach((p) => {
-        data.push([p.name, formatTime(p.workedMinutes || 0)]);
+        data.push([p.name, formatTime(p.totalWorkedMinutes || 0)]);
       });
     }
 
@@ -365,7 +365,7 @@ const exportToCSV = () => {
         <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
         <div className="flex gap-1 items-baseline">
           <span className="text-sm text-gray-500 font-medium">Projects:</span>
-          <h2 className="text-sm font-semibold text-gray-800">
+          <h2 className="text-sm font-semibold text-gray-800 capitalize">
             {summaryTriggered.projectsType.join(", ")}
           </h2>
         </div>
