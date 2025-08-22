@@ -374,9 +374,7 @@ function Reports() {
       {loading && <div className="p-6 text-center">Loading...</div>}
       {!loading && (
         <div className="flex gap-4 py-4">
-          {!projectsType.length > 0 &&
-            !selectedDivisions.length > 0 &&
-            !selectedProjects.length > 0 && (
+          {reports?.topEmployees?.length > 0 &&(
               <InfoCard
                 title="Expected Hours"
                 value={convertToHoursAndMinutes(
@@ -394,9 +392,8 @@ function Reports() {
       )}
       {!loading &&
         reports &&
-        !draftDivisions.length > 0 &&
-        !projectsType.length > 0 &&
-        !selectedProjects.length > 0 && (
+        reports.topEmployees.length > 0 &&
+       reports.bottomEmployees.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {renderList(
               "Top Contributors",
