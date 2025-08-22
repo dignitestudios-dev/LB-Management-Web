@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../axios";
-import MultiSelectFilter from "../ui/MultipleFilterSelector";
 import { ErrorToast } from "../global/Toaster";
+import { RxCross2 } from "react-icons/rx";
+import InfoCard from "../ui/InfoCard";
+import { FaChevronDown } from "react-icons/fa";
 
 function Reports() {
   const [loading, setLoading] = useState(false);
@@ -9,35 +11,35 @@ function Reports() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [departments, setDepartments] = useState([]);
+  const [divisions, setDivisions] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
-
+  const [selectedDivisions, setSelectedDivisions] = useState([]);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [draftDepartments, setDraftDepartments] = useState([]);
+  const [draftDivisions, setDraftDivisions] = useState([]);
+    const [projectId, setProjectId] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [projectsType, setProjectsType] = useState([]);
   const fetchReports = async () => {
     try {
       setLoading(true);
+      const params = { startDate, endDate };
+      if(projectId){
+         params[`projectId[${0}]`] = projectId;
+      }
 
-      const params = {
-        startDate,
-        endDate,
-      };
-
-      // Add departments
-      selectedDepartments.forEach((id, idx) => {
+       projectsType.forEach((id, idx) => {
+        params[`projectTypes[${idx}]`] = id;
+      });
+      draftDepartments.forEach((id, idx) => {
         params[`departmentId[${idx}]`] = id;
       });
-
-      // // Add roles
-      // selectedRoles.forEach((id, idx) => {
-      //   params[`roleId[${idx}]`] = id;
-      // });
-
-      // // Add shifts
-      // selectedShifts.forEach((id, idx) => {
-      //   params[`shiftId[${idx}]`] = id;
-      // });
+      draftDivisions.forEach((id, idx) => {
+        params[`divisionIds[${idx}]`] = id;
+      });
 
       const res = await axios.get("/departments/getReports", { params });
       setReports(res.data);
-      // setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
       ErrorToast("Failed to fetch reports");
     } finally {
@@ -47,14 +49,12 @@ function Reports() {
 
   const fetchFormOptions = async () => {
     try {
-      const [deptRes] = await Promise.all([
-        //   axios.get("/roles/"),
-        axios.get("/departments/"),
-        //   axios.get("/shifts/"),
-      ]);
-      // setRoles(roleRes.data.data);
+      const deptRes = await axios.get("/departments/");
+      const divRes = await axios.get("/division");
+      const projectRes = await axios.get("/projects?page=1&limit=1000");
       setDepartments(deptRes.data.data);
-      // setShifts(shiftRes.data.data);
+      setDivisions(divRes.data.data)
+      setProjects(projectRes.data.data)
     } catch (err) {
       ErrorToast("Failed to load form data");
     }
@@ -63,10 +63,6 @@ function Reports() {
   useEffect(() => {
     fetchFormOptions();
   }, []);
-
-  useEffect(() => {
-    fetchReports();
-  }, [startDate, endDate, selectedDepartments]);
 
   useEffect(() => {
     fetchReports();
@@ -112,15 +108,13 @@ function Reports() {
               {rightLabelKey && (
                 <span className="bg-gray-100 flex flex-col items-center text-gray-600 text-sm px-3 py-1 rounded-full">
                   <label className="font-semibold">Worked Time</label>
-                 <h4 className="text-xs" >{item[rightLabelKey]}</h4>
-                
+                  <h4 className="text-xs">{item[rightLabelKey]}</h4>
                 </span>
               )}
               {rightLabelKey1 && (
                 <span className="bg-gray-100 text-gray-600  flex flex-col items-center text-sm px-3 py-1 rounded-full">
-                    <label className="font-semibold" >Expected Time</label>
-                 <h4 className="text-xs" >{item[rightLabelKey1]}</h4> 
-                
+                  <label className="font-semibold">Expected Time</label>
+                  <h4 className="text-xs">{item[rightLabelKey1]}</h4>
                 </span>
               )}
             </div>
@@ -132,35 +126,40 @@ function Reports() {
 
   return (
     <div>
-      {/* Date Range Picker UI */}
-      <div className="flex gap-4 mb-6 items-center bg-white p-4 rounded-lg shadow">
-        <div>
-          <input
-            type="date"
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <input
-            type="date"
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200 outline-none"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <MultiSelectFilter
-          bgColor={"bg-white"}
-          title="Departments"
-          options={departments.map((d) => ({ value: d._id, label: d.name }))}
-          selected={selectedDepartments}
-          setSelected={setSelectedDepartments}
-        />
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-8 mb-6">
+        <button
+          onClick={() => console.log("Export Logic")}
+          className="bg-gray-700 hover:bg-gray-800 h-[39px] w-[100px] text-white rounded transition"
+        >
+          Export
+        </button>
+
+        <button
+          onClick={() => {
+            setDraftDepartments(selectedDepartments);
+            setDraftDivisions(selectedDivisions);
+            setShowDrawer(true);
+          }}
+          className="bg-red-600 hover:bg-red-700 h-[39px] w-[100px] text-white rounded transition"
+        >
+          Filters
+        </button>
       </div>
 
       {loading && <div className="p-6 text-center">Loading...</div>}
-
+      {!loading && (
+        <div className="flex gap-4 py-4">
+          <InfoCard
+            title="Expected Minutes"
+            value={reports?.totalSummary.sumTotalExpectedMinutes}
+          />
+          <InfoCard
+            title="Worked Minutes"
+            value={reports?.totalSummary.sumTotalWorkedMinutes}
+          />
+        </div>
+      )}
       {!loading && reports && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {renderList(
@@ -170,9 +169,9 @@ function Reports() {
               totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
                 e.totalWorkedMinutes % 60
               }m`,
-              totalExpectedMinutes: `${Math.floor(e.totalExpectedMinutes / 60)}h ${
-                e.totalExpectedMinutes % 60
-              }m`,
+              totalExpectedMinutes: `${Math.floor(
+                e.totalExpectedMinutes / 60
+              )}h ${e.totalExpectedMinutes % 60}m`,
             })),
             "totalWorkedHours",
             "totalExpectedMinutes"
@@ -185,45 +184,212 @@ function Reports() {
               totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
                 e.totalWorkedMinutes % 60
               }m`,
-               totalExpectedMinutes: `${Math.floor(e.totalExpectedMinutes / 60)}h ${
-                e.totalExpectedMinutes % 60
-              }m`,
+              totalExpectedMinutes: `${Math.floor(
+                e.totalExpectedMinutes / 60
+              )}h ${e.totalExpectedMinutes % 60}m`,
             })),
             "totalWorkedHours",
             "totalExpectedMinutes"
           )}
-
-          {renderList(
-            "Top Contributed Projects",
-            reports.topProjects?.map((p) => ({
-              ...p,
-              totalWorkedHours: `${Math.floor(p.totalWorkedMinutes / 60)}h ${
-                p.totalWorkedMinutes % 60
-              }m`,
-               totalExpectedMinutes: `${Math.floor(p.totalExpectedMinutes / 60)}h ${
-                p.totalExpectedMinutes % 60
-              }m`,
-            })),
-            "totalWorkedHours",
-            // "totalExpectedMinutes"
-          )}
-
-          {renderList(
-            "Least Contributed Projects",
-            reports.bottomProjects?.map((p) => ({
-              ...p,
-              totalWorkedHours: `${Math.floor(p.totalWorkedMinutes / 60)}h ${
-                p.totalWorkedMinutes % 60
-              }m`,
-               totalExpectedMinutes: `${Math.floor(p.totalExpectedMinutes / 60)}h ${
-                p.totalExpectedMinutes % 60
-              }m`,
-            })),
-            "totalWorkedHours",
-            // "totalExpectedMinutes"
-          )}
         </div>
       )}
+
+      {/* Overlay */}
+      {showDrawer && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-40"
+          onClick={() => setShowDrawer(false)}
+        ></div>
+      )}
+      <div
+        className={`fixed top-0 right-0 h-full w-[300px] bg-white z-50 shadow-lg transform transition-transform duration-300 ${
+          showDrawer ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="p-4 h-full flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Filters</h3>
+              <button onClick={() => setShowDrawer(false)}>
+                <RxCross2 className="text-xl text-gray-500 hover:text-red-600" />
+              </button>
+            </div>
+
+            {/* Date Filters */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                From
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                To
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+     <div className="w-full relative">
+                <label className="block text-sm mb-1">Projects</label>
+                <div className="relative">
+                  <select
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                    className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  >
+                    <option value="">Select Project</option>
+                    {projects?.map((project) => (
+                      <option key={project._id} value={project._id}>
+                        {project?.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <FaChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                    size={14}
+                  />
+                </div>
+              </div>
+            <div className="mt-4">
+              <label className="block text-sm font-semibold mb-1">
+                Departments
+              </label>
+              <div className="space-y-2">
+                {departments.map((d) => (
+                  <label key={d._id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={d._id}
+                      checked={draftDepartments.includes(d._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDraftDepartments([...draftDepartments, d._id]);
+                        } else {
+                          setDraftDepartments(
+                            draftDepartments.filter((id) => id !== d._id)
+                          );
+                        }
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">{d.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-semibold mb-1">
+                Divisions
+              </label>
+              <div className="space-y-2">
+                {divisions.map((d) => (
+                  <label key={d._id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={d._id}
+                      checked={draftDivisions.includes(d._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDraftDivisions([...draftDivisions, d._id]);
+                        } else {
+                          setDraftDivisions(
+                            draftDivisions.filter((id) => id !== d._id)
+                          );
+                        }
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">{d.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-semibold mb-1">
+                Project Type
+              </label>
+              <div className="space-y-2">
+              
+                  <label  className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={"internal"}
+                      checked={projectsType.includes("internal")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setProjectsType([...projectsType, "internal"]);
+                        } else {
+                          setProjectsType(
+                            projectsType.filter((id) => id !== "internal")
+                          );
+                        }
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">Internal</span>
+                  </label>
+                  <label  className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={"external"}
+                      checked={projectsType.includes("external")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setProjectsType([...projectsType, "external"]);
+                        } else {
+                          setProjectsType(
+                            projectsType.filter((id) => id !== "external")
+                          );
+                        }
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">External</span>
+                  </label>
+              
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => {
+                setSelectedDepartments(draftDepartments);
+                fetchReports();
+                setShowDrawer(false);
+              }}
+              className="w-1/2 h-[45px] rounded-md bg-red-600 hover:bg-red-700 text-white"
+            >
+              Apply
+            </button>
+            <button
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+                setSelectedDepartments([]);
+                setDraftDepartments([])
+                fetchReports();
+                setShowDrawer(false);
+              }}
+              className="w-1/2 h-[45px] rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
