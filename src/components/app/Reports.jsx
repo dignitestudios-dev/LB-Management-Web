@@ -218,26 +218,26 @@ function Reports() {
                   {initials}
                 </div>
                 <div>
-                  <div className="font-medium">{item.name}</div>
+                  <div className="font-medium text-sm">{item.name}</div>
                   {item.departmentName && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500">
                       {item.departmentName}
                     </div>
                   )}
                   {item.email && (
-                    <div className="text-sm text-gray-400">{item.email}</div>
+                    <div className="text-xs text-gray-400">{item.email}</div>
                   )}
                 </div>
               </div>
               {rightLabelKey && (
                 <span className="bg-gray-100 flex flex-col items-center text-gray-600 text-sm px-3 py-1 rounded-full">
-                  <label className="font-semibold">Worked Time</label>
+                  <label className="font-semibold text-nowrap">Worked Time</label>
                   <h4 className="text-xs">{item[rightLabelKey]}</h4>
                 </span>
               )}
               {rightLabelKey1 && (
                 <span className="bg-gray-100 text-gray-600  flex flex-col items-center text-sm px-3 py-1 rounded-full">
-                  <label className="font-semibold">Expected Time</label>
+                  <label className="font-semibold text-nowrap">Expected Time</label>
                   <h4 className="text-xs">{item[rightLabelKey1]}</h4>
                 </span>
               )}
