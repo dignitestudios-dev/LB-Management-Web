@@ -8,6 +8,7 @@ import { HiUser } from "react-icons/hi";
 import { MdDateRange } from "react-icons/md";
 import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { HiBuildingOffice2 } from "react-icons/hi2";
+import { convertToHoursAndMinutes } from "../../lib/helpers";
 // import { RxCross2 } from "react-icons/rx";
 
 function Reports() {
@@ -54,6 +55,7 @@ function Reports() {
     }
   };
 
+ 
   const fetchFormOptions = async () => {
     try {
       const deptRes = await axios.get("/departments/");
@@ -191,7 +193,82 @@ function Reports() {
   return (
     <div>
       {/* Action Buttons */}
-     
+      <div>
+        {(summaryTriggered?.startDate && summaryTriggered?.endDate) ||
+        summaryTriggered?.selectedDepartments ||
+        summaryTriggered?.selectedDivisions ||
+        summaryTriggered?.selectedProjects ||
+        summaryTriggered?.projectsType ? (
+          <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
+            {/* Date Range */}
+            <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+              <div className="flex items-center gap-2">
+                <MdDateRange className="text-red-500 text-2xl" />
+                <span className="text-gray-700 text-sm font-semibold">
+                  Date Range
+                </span>
+              </div>
+              <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                  {summaryTriggered?.startDate}
+                </span>
+                <span className="text-gray-400 text-sm font-semibold">to</span>
+                <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                  {summaryTriggered?.endDate}
+                </span>
+              </div>
+            </div>
+
+            {/* Employee */}
+            {summaryTriggered?.selectedUser?.name && (
+              <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                <HiUser className="text-red-500 text-lg" />
+                <div className="flex gap-1 items-baseline">
+                  <span className="text-sm text-gray-500 font-medium">
+                    Employee:
+                  </span>
+                  <h2 className="text-sm font-semibold text-gray-800">
+                    {summaryTriggered?.selectedUser?.name}
+                  </h2>
+                </div>
+              </div>
+            )}
+
+            {/* Department */}
+            {summaryTriggered?.selectedDepartments && (
+              <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                <HiBuildingOffice2 className="text-red-500 text-lg" />
+                <div className="flex gap-1 items-baseline">
+                  <span className="text-sm text-gray-500 font-medium">
+                    Department:
+                  </span>
+                  <h2 className="text-sm font-semibold text-gray-800">
+                    {departments.find(
+                      (d) => d._id === summaryTriggered.selectedDepartmentId
+                    )?.name || "—"}
+                  </h2>
+                </div>
+              </div>
+            )}
+
+            {/* Project */}
+            {summaryTriggered?.projectId && (
+              <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
+                <div className="flex gap-1 items-baseline">
+                  <span className="text-sm text-gray-500 font-medium">
+                    Project:
+                  </span>
+                  <h2 className="text-sm font-semibold text-gray-800">
+                    {projects?.find((p) => p._id === summaryTriggered.projectId)
+                      ?.name || "—"}
+                  </h2>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
       <div className="flex justify-end gap-8 mb-6">
         <button
           onClick={exportToCSV}
@@ -215,16 +292,17 @@ function Reports() {
       {loading && <div className="p-6 text-center">Loading...</div>}
       {!loading && (
         <div className="flex gap-4 py-4">
-          {!projectsType.length > 0 && !selectedDivisions.length > 0 && !selectedProjects.length>0 && 
-          
-          <InfoCard
-            title="Expected Minutes"
-            value={reports?.totalSummary.sumTotalExpectedMinutes}
-          />
-          }
+          {!projectsType.length > 0 &&
+            !selectedDivisions.length > 0 &&
+            !selectedProjects.length > 0 && (
+              <InfoCard
+                title="Expected Minutes"
+                value={convertToHoursAndMinutes( reports?.totalSummary.sumTotalExpectedMinutes)}
+              />
+            )}
           <InfoCard
             title="Worked Minutes"
-            value={reports?.totalSummary.sumTotalWorkedMinutes}
+            value={convertToHoursAndMinutes(reports?.totalSummary.sumTotalWorkedMinutes)}
           />
         </div>
       )}
@@ -487,9 +565,9 @@ function Reports() {
                 setSelectedDivisions([]);
                 setDraftDivisions([]);
                 setSelectedProjects([]);
+                setProjectsType([])
                 setDraftDepartments([]);
-                fetchReports();
-                setShowDrawer(false);
+          
               }}
               className="w-1/2 h-[45px] rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800"
             >
