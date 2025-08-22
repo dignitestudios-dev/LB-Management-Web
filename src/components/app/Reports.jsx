@@ -3,7 +3,12 @@ import axios from "../../axios";
 import { ErrorToast } from "../global/Toaster";
 import { RxCross2 } from "react-icons/rx";
 import InfoCard from "../ui/InfoCard";
-import { FaChevronDown } from "react-icons/fa";
+// import { FaChevronDown } from "react-icons/fa";
+import { HiUser } from "react-icons/hi";
+import { MdDateRange } from "react-icons/md";
+import { FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
+import { HiBuildingOffice2 } from "react-icons/hi2";
+// import { RxCross2 } from "react-icons/rx";
 
 function Reports() {
   const [loading, setLoading] = useState(false);
@@ -17,18 +22,20 @@ function Reports() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [draftDepartments, setDraftDepartments] = useState([]);
   const [draftDivisions, setDraftDivisions] = useState([]);
-    const [projectId, setProjectId] = useState("");
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const [openProjectDropdown, setOpenProjectDropdown] = useState(false);
+  const [summaryTriggered, setSummaryTriggered] = useState({});
   const [projects, setProjects] = useState([]);
   const [projectsType, setProjectsType] = useState([]);
   const fetchReports = async () => {
     try {
       setLoading(true);
       const params = { startDate, endDate };
-      if(projectId){
-         params[`projectId[${0}]`] = projectId;
-      }
+      selectedProjects.forEach((id, idx) => {
+        params[`projectId[${idx}]`] = id;
+      });
 
-       projectsType.forEach((id, idx) => {
+      projectsType.forEach((id, idx) => {
         params[`projectTypes[${idx}]`] = id;
       });
       draftDepartments.forEach((id, idx) => {
@@ -53,8 +60,8 @@ function Reports() {
       const divRes = await axios.get("/division");
       const projectRes = await axios.get("/projects?page=1&limit=1000");
       setDepartments(deptRes.data.data);
-      setDivisions(divRes.data.data)
-      setProjects(projectRes.data.data)
+      setDivisions(divRes.data.data);
+      setProjects(projectRes.data.data);
     } catch (err) {
       ErrorToast("Failed to load form data");
     }
@@ -127,6 +134,85 @@ function Reports() {
   return (
     <div>
       {/* Action Buttons */}
+          <div>
+                {(summaryTriggered?.startDate && summaryTriggered?.endDate) ||
+                summaryTriggered?.selectedDepartments ||
+                summaryTriggered?.selectedDivisions ||
+                summaryTriggered?.selectedProjects ||
+                summaryTriggered?.projectsType ? (
+                  <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
+                    {/* Date Range */}
+                    <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                      <div className="flex items-center gap-2">
+                        <MdDateRange className="text-red-500 text-2xl" />
+                        <span className="text-gray-700 text-sm font-semibold">
+                          Date Range
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                        <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                          {summaryTriggered?.startDate}
+                        </span>
+                        <span className="text-gray-400 text-sm font-semibold">
+                          to
+                        </span>
+                        <span className="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-1 rounded-md">
+                          {summaryTriggered?.endDate}
+                        </span>
+                      </div>
+                    </div>
+      
+                    {/* Employee */}
+                    {summaryTriggered?.selectedUser?.name && (
+                      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                        <HiUser className="text-red-500 text-lg" />
+                        <div className="flex gap-1 items-baseline">
+                          <span className="text-sm text-gray-500 font-medium">
+                            Employee:
+                          </span>
+                          <h2 className="text-sm font-semibold text-gray-800">
+                            {summaryTriggered?.selectedUser?.name}
+                          </h2>
+                        </div>
+                      </div>
+                    )}
+      
+                    {/* Department */}
+                    {summaryTriggered?.selectedDepartments && (
+                      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                        <HiBuildingOffice2 className="text-red-500 text-lg" />
+                        <div className="flex gap-1 items-baseline">
+                          <span className="text-sm text-gray-500 font-medium">
+                            Department:
+                          </span>
+                          <h2 className="text-sm font-semibold text-gray-800">
+                            {departments.find(
+                              (d) => d._id === summaryTriggered.selectedDepartmentId
+                            )?.name || "—"}
+                          </h2>
+                        </div>
+                      </div>
+                    )}
+      
+                    {/* Project */}
+                    {summaryTriggered?.projectId && (
+                      <div className="flex items-center gap-3 bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm w-fit">
+                        <HiOutlineClipboardDocumentList className="text-red-500 text-lg" />
+                        <div className="flex gap-1 items-baseline">
+                          <span className="text-sm text-gray-500 font-medium">
+                            Project:
+                          </span>
+                          <h2 className="text-sm font-semibold text-gray-800">
+                            {projects?.find(
+                              (p) => p._id === summaryTriggered.projectId
+                            )?.name || "—"}
+                          </h2>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
       <div className="flex justify-end gap-8 mb-6">
         <button
           onClick={() => console.log("Export Logic")}
@@ -138,7 +224,7 @@ function Reports() {
         <button
           onClick={() => {
             setDraftDepartments(selectedDepartments);
-            setDraftDivisions(selectedDivisions);
+            // setDraftDivisions(selectedDivisions);
             setShowDrawer(true);
           }}
           className="bg-red-600 hover:bg-red-700 h-[39px] w-[100px] text-white rounded transition"
@@ -160,7 +246,7 @@ function Reports() {
           />
         </div>
       )}
-      {!loading && reports && (
+      {!loading && reports && !draftDivisions.length > 0 && !projectsType.length > 0 && !selectedProjects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {renderList(
             "Top Contributors",
@@ -239,28 +325,55 @@ function Reports() {
                 className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
               />
             </div>
-     <div className="w-full relative">
-                <label className="block text-sm mb-1">Projects</label>
-                <div className="relative">
-                  <select
-                    value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                    className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  >
-                    <option value="">Select Project</option>
-                    {projects?.map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project?.name}
-                      </option>
-                    ))}
-                  </select>
+            <div className="w-full relative">
+              <label className="block text-sm mb-1">Projects</label>
 
-                  <FaChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                    size={14}
-                  />
-                </div>
+              <div
+                className="border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer flex justify-between items-center"
+                onClick={() => setOpenProjectDropdown(!openProjectDropdown)}
+              >
+                <span>
+                  {selectedProjects.length > 0
+                    ? `${selectedProjects.length} Selected`
+                    : "Select Projects"}
+                </span>
+                <FaChevronDown className="text-gray-400" size={14} />
               </div>
+
+              {openProjectDropdown && (
+                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md max-h-48 overflow-y-auto">
+                  {projects?.map((project) => (
+                    <label
+                      key={project._id}
+                      className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        value={project._id}
+                        checked={selectedProjects.includes(project._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedProjects([
+                              ...selectedProjects,
+                              project._id,
+                            ]);
+                          } else {
+                            setSelectedProjects(
+                              selectedProjects.filter(
+                                (id) => id !== project._id
+                              )
+                            );
+                          }
+                        }}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm">{project.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="mt-4">
               <label className="block text-sm font-semibold mb-1">
                 Departments
@@ -320,44 +433,42 @@ function Reports() {
                 Project Type
               </label>
               <div className="space-y-2">
-              
-                  <label  className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      value={"internal"}
-                      checked={projectsType.includes("internal")}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setProjectsType([...projectsType, "internal"]);
-                        } else {
-                          setProjectsType(
-                            projectsType.filter((id) => id !== "internal")
-                          );
-                        }
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">Internal</span>
-                  </label>
-                  <label  className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      value={"external"}
-                      checked={projectsType.includes("external")}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setProjectsType([...projectsType, "external"]);
-                        } else {
-                          setProjectsType(
-                            projectsType.filter((id) => id !== "external")
-                          );
-                        }
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">External</span>
-                  </label>
-              
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={"internal"}
+                    checked={projectsType.includes("internal")}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setProjectsType([...projectsType, "internal"]);
+                      } else {
+                        setProjectsType(
+                          projectsType.filter((id) => id !== "internal")
+                        );
+                      }
+                    }}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">Internal</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={"external"}
+                    checked={projectsType.includes("external")}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setProjectsType([...projectsType, "external"]);
+                      } else {
+                        setProjectsType(
+                          projectsType.filter((id) => id !== "external")
+                        );
+                      }
+                    }}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">External</span>
+                </label>
               </div>
             </div>
           </div>
@@ -367,6 +478,14 @@ function Reports() {
             <button
               onClick={() => {
                 setSelectedDepartments(draftDepartments);
+                    setSummaryTriggered({
+                  selectedDepartments,
+                  selectedDivisions,
+                  selectedProjects,
+                  projectsType,
+                  startDate,
+                  endDate,
+                });
                 fetchReports();
                 setShowDrawer(false);
               }}
@@ -379,7 +498,10 @@ function Reports() {
                 setStartDate("");
                 setEndDate("");
                 setSelectedDepartments([]);
-                setDraftDepartments([])
+                setSelectedDivisions([]);
+                setDraftDivisions([]);
+                setSelectedProjects([]);
+                setDraftDepartments([]);
                 fetchReports();
                 setShowDrawer(false);
               }}
