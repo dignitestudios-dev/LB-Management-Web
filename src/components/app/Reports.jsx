@@ -80,81 +80,99 @@ function Reports() {
     fetchReports();
   }, []);
 
- const exportToCSV = (filters) => {
+ const exportToCSV = () => {
   if (!reports) return;
 
-  let filteredTopEmployees = reports.topEmployees || [];
-  let filteredBottomEmployees = reports.bottomEmployees || [];
-
-  // Apply Filters
-  if (filters.selectedDepartments?.length) {
-    filteredTopEmployees = filteredTopEmployees.filter(e => 
-      filters.selectedDepartments.includes(e.departmentId)
-    );
-    filteredBottomEmployees = filteredBottomEmployees.filter(e => 
-      filters.selectedDepartments.includes(e.departmentId)
-    );
-  }
-
-  if (filters.selectedProjects?.length) {
-    filteredTopEmployees = filteredTopEmployees.filter(e =>
-      filters.selectedProjects.includes(e.projectId)
-    );
-    filteredBottomEmployees = filteredBottomEmployees.filter(e =>
-      filters.selectedProjects.includes(e.projectId)
-    );
-  }
-
-  // Add other filters (divisions, user, project type, date range)
-  // ...
+  // Map IDs to Names
+  const getNames = (ids, list) =>
+    ids?.map((id) => list.find((item) => item._id === id)?.name || id).join(", ") || "";
 
   let data = [];
 
-  // --- FILTER SUMMARY SECTION ---
+  // ==========================
+  // Applied Filters Section
+  // ==========================
   data.push(["Applied Filters"]);
-  if (filters.startDate && filters.endDate)
-    data.push([`Date Range: ${filters.startDate} to ${filters.endDate}`]);
-  if (filters.selectedUser?.name)
-    data.push([`Employee: ${filters.selectedUser.name}`]);
-  if (filters.selectedDepartments?.length)
-    data.push([`Departments: ${filters.selectedDepartments.join(", ")}`]);
-  if (filters.selectedDivisions?.length)
-    data.push([`Divisions: ${filters.selectedDivisions.join(", ")}`]);
-  if (filters.selectedProjects?.length)
-    data.push([`Projects: ${filters.selectedProjects.join(", ")}`]);
-  if (filters.projectsType)
-    data.push([`Project Type: ${filters.projectsType}`]);
+  if (summaryTriggered?.startDate && summaryTriggered?.endDate)
+    data.push([`Date Range: ${summaryTriggered.startDate} to ${summaryTriggered.endDate}`]);
+  if (summaryTriggered?.selectedUser?.name)
+    data.push([`Employee: ${summaryTriggered.selectedUser.name}`]);
+  if (summaryTriggered?.selectedDepartments?.length)
+    data.push([
+      `Departments: ${getNames(summaryTriggered.selectedDepartments, departments)}`,
+    ]);
+  if (summaryTriggered?.selectedDivisions?.length)
+    data.push([
+      `Divisions: ${getNames(summaryTriggered.selectedDivisions, divisions)}`,
+    ]);
+  if (summaryTriggered?.selectedProjects?.length)
+    data.push([
+      `Projects: ${getNames(summaryTriggered.selectedProjects, projects)}`,
+    ]);
+  if (summaryTriggered?.projectsType)
+    data.push([`Project Type: ${summaryTriggered.projectsType}`]);
+  data.push([""]); // Empty line for separation
 
-  data.push([]); // Blank row for separation
+  // ==========================
+  // Employee Data Header
+  // ==========================
+  data.push(["Name", "Department", "Worked Time", "Expected Time"]);
 
-  // --- EMPLOYEE DATA SECTION ---
-  data.push(["Name", "Department", "Worked Minutes", "Expected Minutes"]);
+  // Helper: Convert Minutes to H:M
+  const formatTime = (minutes) => {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hrs}h ${mins}m`;
+  };
 
-  if (filteredTopEmployees.length) {
+  let totalWorked = 0;
+  let totalExpected = 0;
+
+  // Top Employees
+  if (reports.topEmployees.length > 0) {
     data.push(["--- Top Employees ---"]);
-    filteredTopEmployees.forEach((e) => {
+    reports.topEmployees.forEach((e) => {
+      totalWorked += e.totalWorkedMinutes || 0;
+      totalExpected += e.totalExpectedMinutes || 0;
       data.push([
         e.name,
         e.departmentName || "",
-        formatMinutes(e.totalWorkedMinutes),
-        formatMinutes(e.totalExpectedMinutes),
+        formatTime(e.totalWorkedMinutes || 0),
+        formatTime(e.totalExpectedMinutes || 0),
       ]);
     });
   }
 
-  if (filteredBottomEmployees.length) {
+  // Bottom Employees
+  if (reports.bottomEmployees.length >0) {
     data.push(["--- Bottom Employees ---"]);
-    filteredBottomEmployees.forEach((e) => {
+    reports.bottomEmployees.forEach((e) => {
+      totalWorked += e.totalWorkedMinutes || 0;
+      totalExpected += e.totalExpectedMinutes || 0;
       data.push([
         e.name,
         e.departmentName || "",
-        formatMinutes(e.totalWorkedMinutes),
-        formatMinutes(e.totalExpectedMinutes),
+        formatTime(e.totalWorkedMinutes || 0),
+        formatTime(e.totalExpectedMinutes || 0),
       ]);
     });
   }
 
-  // Convert to CSV string
+  // ==========================
+  // Summary Row
+  // ==========================
+  data.push([""]);
+  data.push([
+    "TOTAL",
+    "Worked Time",
+    formatTime(reports.totalSummary.sumTotalWorkedMinutes),
+       "Expected Time",
+    formatTime(reports.totalSummary.sumTotalExpectedMinutes),
+  ]);
+
+  // ==========================
+  // Convert to CSV & Download
+  // ==========================
   const csvContent = data.map((row) => row.join(",")).join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -166,13 +184,13 @@ function Reports() {
   document.body.removeChild(link);
 };
 
-const formatMinutes = (mins) => {
-  if (!mins) return "0h 0m";
-  const hours = Math.floor(mins / 60);
-  const minutes = mins % 60;
-  return `${hours}h ${minutes}m`;
-};
 
+  const formatMinutes = (mins) => {
+    if (!mins) return "0h 0m";
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    return `${hours}h ${minutes}m`;
+  };
 
   const renderList = (title, list, rightLabelKey, rightLabelKey1) => (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col">
@@ -328,7 +346,7 @@ const formatMinutes = (mins) => {
   return (
     <div>
       {/* Action Buttons */}
-   
+
       <div className="flex justify-end gap-8 mb-6">
         <button
           onClick={exportToCSV}
@@ -348,7 +366,7 @@ const formatMinutes = (mins) => {
           Filters
         </button>
       </div>
-   {appliedFilters.length > 0 && (
+      {appliedFilters.length > 0 && (
         <div className="space-y-2 bg-white border mt-3 border-gray-200 rounded-2xl p-4 shadow-sm w-fit">
           {appliedFilters}
         </div>
@@ -409,6 +427,34 @@ const formatMinutes = (mins) => {
               "totalWorkedHours",
               "totalExpectedMinutes"
             )}
+            {renderList(
+              "Top Contributed Projects",
+              reports.topProjects?.map((e) => ({
+                ...e,
+                totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
+                  e.totalWorkedMinutes % 60
+                }m`,
+                totalExpectedMinutes: `${Math.floor(
+                  e.totalExpectedMinutes / 60
+                )}h ${e.totalExpectedMinutes % 60}m`,
+              })),
+              "totalWorkedHours",
+              // "totalExpectedMinutes"
+            )}
+            {renderList(
+              "Least Contributed Projects",
+              reports.bottomProjects?.map((e) => ({
+                ...e,
+                totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
+                  e.totalWorkedMinutes % 60
+                }m`,
+                totalExpectedMinutes: `${Math.floor(
+                  e.totalExpectedMinutes / 60
+                )}h ${e.totalExpectedMinutes % 60}m`,
+              })),
+              "totalWorkedHours",
+              // "totalExpectedMinutes"
+            )}
           </div>
         )}
 
@@ -416,7 +462,10 @@ const formatMinutes = (mins) => {
       {showDrawer && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 z-40"
-          onClick={() => setShowDrawer(false)}
+          onClick={() => {
+            setShowDrawer(false);
+            setOpenProjectDropdown(false);
+          }}
         ></div>
       )}
       <div
@@ -611,7 +660,7 @@ const formatMinutes = (mins) => {
               onClick={() => {
                 const updatedDepartments = draftDepartments;
                 const updatedDivisions = draftDivisions;
-
+                setOpenProjectDropdown(false);
                 setSelectedDepartments(updatedDepartments);
                 setSelectedDivisions(updatedDivisions);
 
@@ -641,6 +690,7 @@ const formatMinutes = (mins) => {
                 setSelectedProjects([]);
                 setProjectsType([]);
                 setDraftDepartments([]);
+                setOpenProjectDropdown(false);
               }}
               className="w-1/2 h-[45px] rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800"
             >
