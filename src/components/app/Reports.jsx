@@ -75,6 +75,66 @@ function Reports() {
     fetchReports();
   }, []);
 
+const exportToCSV = () => {
+  if (!reports) return;
+
+  let data = [
+    ["Name", "Department", "Worked Minutes", "Expected Minutes"],
+  ];
+
+  // Add Top Employees
+  if (reports.topEmployees?.length) {
+    data.push(["--- Top Employees ---"]);
+    reports.topEmployees.forEach((e) => {
+      data.push([
+        e.name,
+        e.departmentName || "",
+        e.totalWorkedMinutes?.toString() || "0",
+        e.totalExpectedMinutes?.toString() || "0",
+      ]);
+    });
+  }
+
+  // Add Bottom Employees
+  if (reports.bottomEmployees?.length) {
+    data.push(["--- Bottom Employees ---"]);
+    reports.bottomEmployees.forEach((e) => {
+      data.push([
+        e.name,
+        e.departmentName || "",
+        e.totalWorkedMinutes?.toString() || "0",
+        e.totalExpectedMinutes?.toString() || "0",
+      ]);
+    });
+  }
+
+  // Add Summary Row (Totals)
+  if (reports.summary) {
+    data.push([]);
+    data.push(["--- Report Summary ---"]);
+    data.push([
+      "TOTAL",
+      "",
+      reports.totalSummary.sumTotalWorkedMinutes?.toString() || "0",
+      reports.totalSummary.sumTotalExpectedMinutes?.toString() || "0",
+    ]);
+  }
+
+  // Convert to CSV string
+  const csvContent = data.map((row) => row.join(",")).join("\n");
+
+  // Create Blob and download
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", `reports_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+
   const renderList = (title, list, rightLabelKey, rightLabelKey1) => (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col">
       <h2 className="font-semibold text-lg mb-2">{title}</h2>
@@ -215,7 +275,7 @@ function Reports() {
               </div>
       <div className="flex justify-end gap-8 mb-6">
         <button
-          onClick={() => console.log("Export Logic")}
+            onClick={exportToCSV}
           className="bg-gray-700 hover:bg-gray-800 h-[39px] w-[100px] text-white rounded transition"
         >
           Export
