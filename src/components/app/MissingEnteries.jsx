@@ -16,27 +16,52 @@ const MissingEnteries = () => {
   const [loading, setLoading] = useState(false);
   const [tableShow, setTableShow] = useState(false);
 
-  const fetchAttendance = async () => {
-    setLoadingAttendance(true);
-    try {
-      const queryParams = new URLSearchParams({
-        startDate: fromDate,
-        endDate: toDate,
-      }).toString();
+ const fetchAttendance = async (departmentIds, roleIds, shiftIds) => {
+  setLoadingAttendance(true);
+  try {
+    // Start with base query params
+    const queryParams = new URLSearchParams({
+      startDate: fromDate,
+      endDate: toDate,
+    });
 
-      const response = await instance.get(`/attendance/getTotalMissingAttendance?${queryParams}`);
-
-      if (response.data.success) {
-        setAttendance(response?.data.data);
-        setIsOpen(false);
-        setTableShow(true);
-      }
-    } catch (error) {
-      console.error("Error fetching filtered attendance", error);
-    } finally {
-      setLoadingAttendance(false);
+    // Append department IDs if provided
+    if (Array.isArray(departmentIds)) {
+      departmentIds.forEach((id, index) => {
+        queryParams.append(`departmentIds[${index}]`, id);
+      });
     }
-  };
+
+    // Append role IDs if provided
+    if (Array.isArray(roleIds)) {
+      roleIds.forEach((id, index) => {
+        queryParams.append(`roleIds[${index}]`, id);
+      });
+    }
+
+    // Append shift IDs if provided
+    if (Array.isArray(shiftIds)) {
+      shiftIds.forEach((id, index) => {
+        queryParams.append(`shiftIds[${index}]`, id);
+      });
+    }
+
+    const response = await instance.get(
+      `/attendance/getTotalMissingAttendance?${queryParams.toString()}`
+    );
+
+    if (response.data.success) {
+      setAttendance(response?.data.data);
+      setIsOpen(false);
+      setTableShow(true);
+    }
+  } catch (error) {
+    console.error("Error fetching filtered attendance", error);
+  } finally {
+    setLoadingAttendance(false);
+  }
+};
+
 
   const handleClear = () => {
     setFromDate("");

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsClockHistory } from "react-icons/bs";
 import { SlCalender } from "react-icons/sl";
 import { FaEye } from "react-icons/fa";
@@ -7,6 +7,7 @@ import { ErrorToast, SuccessToast } from "../global/Toaster";
 import instance, { baseUrl } from "../../axios";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import { X } from "lucide-react";
+import MultiSelectFilter from "../ui/MultipleFilterSelector";
 
 const EmployeeMissingEntryTable = ({
   attendance,
@@ -19,7 +20,12 @@ const EmployeeMissingEntryTable = ({
   const [loadingdelete, setloading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState();
-
+   const [departments, setDepartments] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [shifts, setShifts] = useState([]);
+const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedShifts, setSelectedShifts] = useState([]);
   // New State for Eye Modal
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -44,7 +50,29 @@ const EmployeeMissingEntryTable = ({
       setloading(false);
     }
   };
+  const fetchFormOptions = async () => {
+    try {
+      const [roleRes, deptRes, shiftRes] = await Promise.all([
+        instance.get("/roles/"),
+        instance.get("/departments/"),
+        instance.get("/shifts/"),
+      ]);
+      setRoles(roleRes.data.data);
+      setDepartments(deptRes.data.data);
+      setShifts(shiftRes.data.data);
+    } catch (err) {
+      ErrorToast("Failed to load form data");
+    }
+  };
 
+  useEffect(() => {
+    fetchFormOptions();
+  }, []);
+
+
+  useEffect(()=>{
+    fetchAttendance(selectedDepartments , selectedRoles , selectedShifts)
+  },[selectedDepartments , selectedRoles , selectedShifts])
   return (
     <div>
       <div className="bg-white shadow-sm border border-gray-200">
@@ -67,6 +95,39 @@ const EmployeeMissingEntryTable = ({
                 <div className="flex items-center gap-2">
                   <BsClockHistory className="w-4 h-4" />
                   Missing Entries
+                </div>
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <BsClockHistory className="w-4 h-4" />
+                    <MultiSelectFilter
+            title="Departments"
+            options={departments.map((d) => ({ value: d._id, label: d.name }))}
+            selected={selectedDepartments}
+            setSelected={setSelectedDepartments}
+          />
+                </div>
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <BsClockHistory className="w-4 h-4" />
+                      <MultiSelectFilter
+            title="Roles"
+            options={roles.map((r) => ({ value: r._id, label: r.name }))}
+            selected={selectedRoles}
+            setSelected={setSelectedRoles}
+          />
+                </div>
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <BsClockHistory className="w-4 h-4" />
+                      <MultiSelectFilter
+            title="Shifts"
+            options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+            selected={selectedShifts}
+            setSelected={setSelectedShifts}
+          />
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -101,6 +162,9 @@ const EmployeeMissingEntryTable = ({
                     </td>
                     <td className="px-6 py-4">{item.email}</td>
                     <td className="px-6 py-4">{item.totalMissingEntries}</td>
+                    <td className="px-6 py-4">{item.departmentName}</td>
+                    <td className="px-6 py-4">{item.roleName}</td>
+                    <td className="px-6 py-4">{item.shift?.startHour+ "-" +item.shift?.endHour}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => {

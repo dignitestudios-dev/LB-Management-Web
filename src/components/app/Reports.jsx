@@ -31,6 +31,10 @@ function Reports() {
   const [summaryTriggered, setSummaryTriggered] = useState({});
   const [projects, setProjects] = useState([]);
   const [projectsType, setProjectsType] = useState([]);
+  const [openDepartmentDropdown, setOpenDepartmentDropdown] = useState(false);
+  const [openDivisionDropdown, setOpenDivisionDropdown] = useState(false);
+  const [openProjectTypeDropdown, setOpenProjectTypeDropdown] = useState(false);
+
   const appliedFilters = [];
   const fetchReports = async () => {
     try {
@@ -129,12 +133,11 @@ function Reports() {
       return `${hrs}h ${mins}m`;
     };
 
-    let hasEmployees =
-      reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
-    let hasDepartmentEmployees =
-      reports.departmentEmployees?.length > 0 
-    let hasProjects =
-      reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
+    let hasEmployees = false;
+      // reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
+    let hasDepartmentEmployees = reports.departmentEmployees?.length > 0;
+    let hasProjects = false
+      // reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
 
     // ==========================
     // Employee Data Section
@@ -153,7 +156,6 @@ function Reports() {
           ]);
         });
       }
-
 
       data.push([""]);
     }
@@ -455,7 +457,7 @@ function Reports() {
         reports &&
         reports.topEmployees.length > 0 &&
         reports.bottomEmployees.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
             {reports.departmentEmployees.length > 0 &&
               renderList(
                 "Department Employees",
@@ -468,67 +470,68 @@ function Reports() {
                     e.totalExpectedMinutes / 60
                   )}h ${e.totalExpectedMinutes % 60}m`,
                 })),
+                "totalWorkedHours",
+                "totalExpectedMinutes"
+              )}
+            <div className="grid grid-cols-1 mt-4 md:grid-cols-2 gap-6">
+              {renderList(
+                "Top Contributors",
+                reports.topEmployees?.map((e) => ({
+                  ...e,
+                  totalWorkedHours: `${Math.floor(
+                    e.totalWorkedMinutes / 60
+                  )}h ${e.totalWorkedMinutes % 60}m`,
+                  totalExpectedMinutes: `${Math.floor(
+                    e.totalExpectedMinutes / 60
+                  )}h ${e.totalExpectedMinutes % 60}m`,
+                })),
+                "totalWorkedHours",
+                "totalExpectedMinutes"
+              )}
+
+              {renderList(
+                "Least Contributors",
+                reports.bottomEmployees?.map((e) => ({
+                  ...e,
+                  totalWorkedHours: `${Math.floor(
+                    e.totalWorkedMinutes / 60
+                  )}h ${e.totalWorkedMinutes % 60}m`,
+                  totalExpectedMinutes: `${Math.floor(
+                    e.totalExpectedMinutes / 60
+                  )}h ${e.totalExpectedMinutes % 60}m`,
+                })),
+                "totalWorkedHours",
+                "totalExpectedMinutes"
+              )}
+              {renderList(
+                "Top Contributed Projects",
+                reports.topProjects?.map((e) => ({
+                  ...e,
+                  totalWorkedHours: `${Math.floor(
+                    e.totalWorkedMinutes / 60
+                  )}h ${e.totalWorkedMinutes % 60}m`,
+                  totalExpectedMinutes: `${Math.floor(
+                    e.totalExpectedMinutes / 60
+                  )}h ${e.totalExpectedMinutes % 60}m`,
+                })),
                 "totalWorkedHours"
                 // "totalExpectedMinutes"
               )}
-
-            {renderList(
-              "Top Contributors",
-              reports.topEmployees?.map((e) => ({
-                ...e,
-                totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
-                  e.totalWorkedMinutes % 60
-                }m`,
-                totalExpectedMinutes: `${Math.floor(
-                  e.totalExpectedMinutes / 60
-                )}h ${e.totalExpectedMinutes % 60}m`,
-              })),
-              "totalWorkedHours",
-              "totalExpectedMinutes"
-            )}
-
-            {renderList(
-              "Least Contributors",
-              reports.bottomEmployees?.map((e) => ({
-                ...e,
-                totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
-                  e.totalWorkedMinutes % 60
-                }m`,
-                totalExpectedMinutes: `${Math.floor(
-                  e.totalExpectedMinutes / 60
-                )}h ${e.totalExpectedMinutes % 60}m`,
-              })),
-              "totalWorkedHours",
-              "totalExpectedMinutes"
-            )}
-            {renderList(
-              "Top Contributed Projects",
-              reports.topProjects?.map((e) => ({
-                ...e,
-                totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
-                  e.totalWorkedMinutes % 60
-                }m`,
-                totalExpectedMinutes: `${Math.floor(
-                  e.totalExpectedMinutes / 60
-                )}h ${e.totalExpectedMinutes % 60}m`,
-              })),
-              "totalWorkedHours"
-              // "totalExpectedMinutes"
-            )}
-            {renderList(
-              "Least Contributed Projects",
-              reports.bottomProjects?.map((e) => ({
-                ...e,
-                totalWorkedHours: `${Math.floor(e.totalWorkedMinutes / 60)}h ${
-                  e.totalWorkedMinutes % 60
-                }m`,
-                totalExpectedMinutes: `${Math.floor(
-                  e.totalExpectedMinutes / 60
-                )}h ${e.totalExpectedMinutes % 60}m`,
-              })),
-              "totalWorkedHours"
-              // "totalExpectedMinutes"
-            )}
+              {renderList(
+                "Least Contributed Projects",
+                reports.bottomProjects?.map((e) => ({
+                  ...e,
+                  totalWorkedHours: `${Math.floor(
+                    e.totalWorkedMinutes / 60
+                  )}h ${e.totalWorkedMinutes % 60}m`,
+                  totalExpectedMinutes: `${Math.floor(
+                    e.totalExpectedMinutes / 60
+                  )}h ${e.totalExpectedMinutes % 60}m`,
+                })),
+                "totalWorkedHours"
+                // "totalExpectedMinutes"
+              )}
+            </div>
           </div>
         )}
 
@@ -549,6 +552,7 @@ function Reports() {
       >
         <div className="p-4 h-full flex flex-col justify-between">
           <div>
+            {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">Filters</h3>
               <button onClick={() => setShowDrawer(false)}>
@@ -568,7 +572,6 @@ function Reports() {
                 className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
               />
             </div>
-
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 To
@@ -580,151 +583,123 @@ function Reports() {
                 className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
               />
             </div>
-            <div className="w-full relative">
-              <label className="block text-sm mb-1">Projects</label>
 
+            {/* Dropdown Component */}
+            {[
+              {
+                label: "Projects",
+                open: openProjectDropdown,
+                setOpen: setOpenProjectDropdown,
+                items: projects,
+                selected: selectedProjects,
+                setSelected: setSelectedProjects,
+              },
+              {
+                label: "Departments",
+                open: openDepartmentDropdown,
+                setOpen: setOpenDepartmentDropdown,
+                items: departments,
+                selected: selectedDepartments,
+                setSelected: setSelectedDepartments,
+              },
+              {
+                label: "Divisions",
+                open: openDivisionDropdown,
+                setOpen: setOpenDivisionDropdown,
+                items: divisions,
+                selected: selectedDivisions,
+                setSelected: setSelectedDivisions,
+              },
+            ].map(({ label, open, setOpen, items, selected, setSelected }) => (
+              <div className="w-full relative mt-4" key={label}>
+                <label className="block text-sm mb-1">{label}</label>
+                <div
+                  className="border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer flex justify-between items-center"
+                  onClick={() => setOpen(!open)}
+                >
+                  <span>
+                    {selected.length > 0
+                      ? `${selected.length} Selected`
+                      : `Select ${label}`}
+                  </span>
+                  <FaChevronDown className="text-gray-400" size={14} />
+                </div>
+                {open && (
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md max-h-48 overflow-y-auto">
+                    {items?.map((item) => (
+                      <label
+                        key={item._id}
+                        className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          value={item._id}
+                          checked={selected.includes(item._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelected([...selected, item._id]);
+                            } else {
+                              setSelected(
+                                selected.filter((id) => id !== item._id)
+                              );
+                            }
+                          }}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 text-sm">{item.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Project Type Dropdown */}
+            <div className="w-full relative mt-4">
+              <label className="block text-sm mb-1">Project Type</label>
               <div
                 className="border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer flex justify-between items-center"
-                onClick={() => setOpenProjectDropdown(!openProjectDropdown)}
+                onClick={() =>{
+                  setOpenProjectTypeDropdown(!openProjectTypeDropdown)
+                   setOpenDepartmentDropdown(false)
+                setOpenDivisionDropdown(false)
+                setOpenProjectDropdown(false)
+               } }
               >
                 <span>
-                  {selectedProjects.length > 0
-                    ? `${selectedProjects.length} Selected`
-                    : "Select Projects"}
+                  {projectsType.length > 0
+                    ? `${projectsType.length} Selected`
+                    : "Select Project Type"}
                 </span>
                 <FaChevronDown className="text-gray-400" size={14} />
               </div>
-
-              {openProjectDropdown && (
+              {openProjectTypeDropdown && (
                 <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md max-h-48 overflow-y-auto">
-                  {projects?.map((project) => (
+                  {["internal", "external"].map((type) => (
                     <label
-                      key={project._id}
+                      key={type}
                       className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
-                        value={project._id}
-                        checked={selectedProjects.includes(project._id)}
+                        value={type}
+                        checked={projectsType.includes(type)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedProjects([
-                              ...selectedProjects,
-                              project._id,
-                            ]);
+                            setProjectsType([...projectsType, type]);
                           } else {
-                            setSelectedProjects(
-                              selectedProjects.filter(
-                                (id) => id !== project._id
-                              )
+                            setProjectsType(
+                              projectsType.filter((t) => t !== type)
                             );
                           }
                         }}
                         className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                       />
-                      <span className="ml-2 text-sm">{project.name}</span>
+                      <span className="ml-2 text-sm capitalize">{type}</span>
                     </label>
                   ))}
                 </div>
               )}
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-semibold mb-1">
-                Departments
-              </label>
-              <div className="space-y-2">
-                {departments.map((d) => (
-                  <label key={d._id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      value={d._id}
-                      checked={draftDepartments.includes(d._id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setDraftDepartments([...draftDepartments, d._id]);
-                        } else {
-                          setDraftDepartments(
-                            draftDepartments.filter((id) => id !== d._id)
-                          );
-                        }
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">{d.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-semibold mb-1">
-                Divisions
-              </label>
-              <div className="space-y-2">
-                {divisions.map((d) => (
-                  <label key={d._id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      value={d._id}
-                      checked={draftDivisions.includes(d._id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setDraftDivisions([...draftDivisions, d._id]);
-                        } else {
-                          setDraftDivisions(
-                            draftDivisions.filter((id) => id !== d._id)
-                          );
-                        }
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">{d.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-semibold mb-1">
-                Project Type
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={"internal"}
-                    checked={projectsType.includes("internal")}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setProjectsType([...projectsType, "internal"]);
-                      } else {
-                        setProjectsType(
-                          projectsType.filter((id) => id !== "internal")
-                        );
-                      }
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm">Internal</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={"external"}
-                    checked={projectsType.includes("external")}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setProjectsType([...projectsType, "external"]);
-                      } else {
-                        setProjectsType(
-                          projectsType.filter((id) => id !== "external")
-                        );
-                      }
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm">External</span>
-                </label>
-              </div>
             </div>
           </div>
 
@@ -732,21 +707,20 @@ function Reports() {
           <div className="flex gap-3 mt-4">
             <button
               onClick={() => {
-                const updatedDepartments = draftDepartments;
-                const updatedDivisions = draftDivisions;
-                setOpenProjectDropdown(false);
-                setSelectedDepartments(updatedDepartments);
-                setSelectedDivisions(updatedDivisions);
-
+                setDraftDepartments(selectedDepartments);
+                setDraftDivisions(selectedDivisions);
                 setSummaryTriggered({
-                  selectedDepartments: updatedDepartments,
-                  selectedDivisions: updatedDivisions,
-                  selectedProjects,
-                  projectsType,
                   startDate,
                   endDate,
+                  selectedDepartments,
+                  selectedDivisions,
+                  selectedProjects,
+                  projectsType,
                 });
-
+                setOpenDepartmentDropdown(false)
+                setOpenProjectTypeDropdown(false)
+                setOpenDivisionDropdown(false)
+                setOpenProjectDropdown(false)
                 fetchReports();
                 setShowDrawer(false);
               }}
@@ -758,13 +732,14 @@ function Reports() {
               onClick={() => {
                 setStartDate("");
                 setEndDate("");
+                setSelectedProjects([]);
                 setSelectedDepartments([]);
                 setSelectedDivisions([]);
-                setDraftDivisions([]);
-                setSelectedProjects([]);
                 setProjectsType([]);
-                setDraftDepartments([]);
-                setOpenProjectDropdown(false);
+                 setOpenDepartmentDropdown(false)
+                setOpenProjectTypeDropdown(false)
+                setOpenDivisionDropdown(false)
+                setOpenProjectDropdown(false)
               }}
               className="w-1/2 h-[45px] rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800"
             >
