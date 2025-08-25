@@ -72,36 +72,48 @@ const MissingEnteries = () => {
   };
 
   /** EXPORT TO CSV **/
-  const handleExportCSV = () => {
-    if (!attendance || attendance.length === 0) {
-      ErrorToast("No data to export");
-      return;
-    }
+const handleExportCSV = () => {
+  if (!attendance || attendance.length === 0) {
+    ErrorToast("No data to export");
+    return;
+  }
 
-    // Prepare CSV headers
-    const headers = ["Name", "Email", "Missing Entries"];
-    const rows = attendance.map(item => [
-      item.name,
-      item.email,
-      item.totalMissingEntries
-    ]);
+  // Updated headers to include Department, Role, and Shift
+  const headers = [
+    "Name",
+    "Email",
+    "Department",
+    "Role",
+    "Shift",
+    "Missing Entries"
+  ];
 
-    // Convert to CSV format
-    const csvContent = [
-      headers.join(","), // header row
-      ...rows.map(row => row.map(value => `"${value}"`).join(",")) // data rows
-    ].join("\n");
+  // Map data rows
+  const rows = attendance.map(item => [
+    item.name || "",
+    item.email || "",
+    item.departmentName || "N/A",
+    item.roleName || "N/A",
+    item.shift ? `${item.shift.startHour} - ${item.shift.endHour}` : "N/A",
+    item.totalMissingEntries || 0
+  ]);
 
-    // Create Blob and download
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Missing_Entries_${fromDate || "All"}_${toDate || "All"}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const csvContent = [
+    headers.join(","), // header row
+    ...rows.map(row => row.map(value => `"${value}"`).join(",")) // data rows
+  ].join("\n");
+
+  // Create Blob and download
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Missing_Entries_${fromDate || "All"}_${toDate || "All"}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   return (
     <div>

@@ -293,6 +293,7 @@ const fetchReports = async () => {
                   )}
                 </div>
               </div>
+              <div className="flex items-center gap-2" >
               {rightLabelKey && (
                 <span className="bg-gray-100 flex flex-col items-center text-gray-600 text-sm px-3 py-1 rounded-full">
                   <label className="font-semibold text-nowrap">
@@ -309,6 +310,7 @@ const fetchReports = async () => {
                   <h4 className="text-xs">{item[rightLabelKey1]}</h4>
                 </span>
               )}
+              </div>
             </div>
           );
         })}
