@@ -408,14 +408,14 @@ const exportToCSV = () => {
               <InfoCard
                 title="Expected Hours"
                 value={convertToHoursAndMinutes(
-                  reports?.totalSummary.sumTotalExpectedMinutes
+                  reports?.totalSummary?.sumTotalExpectedMinutes
                 )}
               />
             )}
           <InfoCard
             title="Worked Hours"
             value={convertToHoursAndMinutes(
-              reports?.totalSummary.sumTotalWorkedMinutes
+              reports?.totalSummary?.sumTotalWorkedMinutes
             )}
           />
         </div>
