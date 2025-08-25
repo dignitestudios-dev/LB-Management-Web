@@ -131,12 +131,32 @@ function Reports() {
 
     let hasEmployees =
       reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
+    let hasDepartmentEmployees =
+      reports.departmentEmployees?.length > 0 
     let hasProjects =
       reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
 
     // ==========================
     // Employee Data Section
     // ==========================
+    if (hasDepartmentEmployees) {
+      data.push(["Name", "Department", "Worked Time", "Expected Time"]);
+
+      if (reports.departmentEmployees?.length > 0) {
+        data.push(["--- Employees ---"]);
+        reports.departmentEmployees.forEach((e) => {
+          data.push([
+            e.name,
+            e.departmentName || "",
+            formatTime(e.totalWorkedMinutes || 0),
+            formatTime(e.totalExpectedMinutes || 0),
+          ]);
+        });
+      }
+
+
+      data.push([""]);
+    }
     if (hasEmployees) {
       data.push(["Name", "Department", "Worked Time", "Expected Time"]);
 

@@ -6,6 +6,7 @@ import ProjectModal from "./ProjectModal";
 import { ErrorToast, SuccessToast } from "../global/Toaster";
 import instance, { baseUrl } from "../../axios";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import { X } from "lucide-react";
 
 const EmployeeMissingEntryTable = ({
   attendance,
@@ -137,7 +138,8 @@ const EmployeeMissingEntryTable = ({
       {/* Details Modal */}
       {showDetailsModal && selectedEmployee && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+          <div className="bg-white relative rounded-xl h-[50vh] overflow-hidden overflow-y-auto shadow-xl p-6 w-full max-w-lg">
+            <div className="absolute right-4 font-bold cursor-pointer"  onClick={() => setShowDetailsModal(false)}><X/></div>
             <h2 className="text-lg font-semibold mb-4">
               Missing Attendance - {selectedEmployee.name}
             </h2>
