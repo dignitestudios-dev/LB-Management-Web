@@ -8,6 +8,7 @@ import instance, { baseUrl } from "../../axios";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import { X } from "lucide-react";
 import MultiSelectFilter from "../ui/MultipleFilterSelector";
+import { formatHour } from "../../lib/helpers";
 
 const EmployeeMissingEntryTable = ({
   attendance,
@@ -20,10 +21,10 @@ const EmployeeMissingEntryTable = ({
   const [loadingdelete, setloading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState();
-   const [departments, setDepartments] = useState([]);
-    const [roles, setRoles] = useState([]);
-    const [shifts, setShifts] = useState([]);
-const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [selectedShifts, setSelectedShifts] = useState([]);
   // New State for Eye Modal
@@ -69,10 +70,9 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
     fetchFormOptions();
   }, []);
 
-
-  useEffect(()=>{
-    fetchAttendance(selectedDepartments , selectedRoles , selectedShifts)
-  },[selectedDepartments , selectedRoles , selectedShifts])
+  useEffect(() => {
+    fetchAttendance(selectedDepartments, selectedRoles, selectedShifts);
+  }, [selectedDepartments, selectedRoles, selectedShifts]);
   return (
     <div>
       <div className="bg-white shadow-sm border border-gray-200">
@@ -99,35 +99,44 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
-                  <BsClockHistory className="w-4 h-4" />
-                    <MultiSelectFilter
-            title="Departments"
-            options={departments.map((d) => ({ value: d._id, label: d.name }))}
-            selected={selectedDepartments}
-            setSelected={setSelectedDepartments}
-          />
+                  {/* <BsClockHistory className="w-4 h-4" /> */}
+                  <MultiSelectFilter
+                    title="Departments"
+                    options={departments.map((d) => ({
+                      value: d._id,
+                      label: d.name,
+                    }))}
+                    selected={selectedDepartments}
+                    setSelected={setSelectedDepartments}
+                  />
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
-                  <BsClockHistory className="w-4 h-4" />
-                      <MultiSelectFilter
-            title="Roles"
-            options={roles.map((r) => ({ value: r._id, label: r.name }))}
-            selected={selectedRoles}
-            setSelected={setSelectedRoles}
-          />
+                  {/* <BsClockHistory className="w-4 h-4" /> */}
+                  <MultiSelectFilter
+                    title="Roles"
+                    options={roles.map((r) => ({
+                      value: r._id,
+                      label: r.name,
+                    }))}
+                    selected={selectedRoles}
+                    setSelected={setSelectedRoles}
+                  />
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
-                  <BsClockHistory className="w-4 h-4" />
-                      <MultiSelectFilter
-            title="Shifts"
-            options={shifts.map((s) => ({ value: s._id, label: s.name }))}
-            selected={selectedShifts}
-            setSelected={setSelectedShifts}
-          />
+                  {/* <BsClockHistory className="w-4 h-4" /> */}
+                  <MultiSelectFilter
+                    title="Shifts"
+                    options={shifts.map((s) => ({
+                      value: s._id,
+                      label: s.name,
+                    }))}
+                    selected={selectedShifts}
+                    setSelected={setSelectedShifts}
+                  />
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -164,7 +173,13 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
                     <td className="px-6 py-4">{item.totalMissingEntries}</td>
                     <td className="px-6 py-4">{item.departmentName}</td>
                     <td className="px-6 py-4">{item.roleName}</td>
-                    <td className="px-6 py-4">{item.shift?.startHour+ "-" +item.shift?.endHour}</td>
+                    <td className="border text-center px-4 py-2">
+                      {item.shift
+                        ? ` (${formatHour(
+                            item.shift.startHour
+                          )} - ${formatHour(item.shift.endHour)})`
+                        : "—"}
+                    </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => {
@@ -203,7 +218,12 @@ const [selectedDepartments, setSelectedDepartments] = useState([]);
       {showDetailsModal && selectedEmployee && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white relative rounded-xl h-[50vh] overflow-hidden overflow-y-auto shadow-xl p-6 w-full max-w-lg">
-            <div className="absolute right-4 font-bold cursor-pointer"  onClick={() => setShowDetailsModal(false)}><X/></div>
+            <div
+              className="absolute right-4 font-bold cursor-pointer"
+              onClick={() => setShowDetailsModal(false)}
+            >
+              <X />
+            </div>
             <h2 className="text-lg font-semibold mb-4">
               Missing Attendance - {selectedEmployee.name}
             </h2>

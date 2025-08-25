@@ -36,32 +36,37 @@ function Reports() {
   const [openProjectTypeDropdown, setOpenProjectTypeDropdown] = useState(false);
 
   const appliedFilters = [];
-  const fetchReports = async () => {
-    try {
-      setLoading(true);
-      const params = { startDate, endDate };
-      selectedProjects.forEach((id, idx) => {
-        params[`projectId[${idx}]`] = id;
-      });
+const fetchReports = async () => {
+  try {
+    setLoading(true);
 
-      projectsType.forEach((id, idx) => {
-        params[`projectTypes[${idx}]`] = id;
-      });
-      draftDepartments.forEach((id, idx) => {
-        params[`departmentId[${idx}]`] = id;
-      });
-      draftDivisions.forEach((id, idx) => {
-        params[`divisionIds[${idx}]`] = id;
-      });
+    // Start fresh
+    const params = {};
 
-      const res = await axios.get("/departments/getReports", { params });
-      setReports(res.data);
-    } catch (err) {
-      ErrorToast("Failed to fetch reports");
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
+    selectedProjects.forEach((id, idx) => {
+      params[`projectId[${idx}]`] = id;
+    });
+    projectsType.forEach((id, idx) => {
+      params[`projectTypes[${idx}]`] = id;
+    });
+    selectedDepartments.forEach((id, idx) => {
+      params[`departmentId[${idx}]`] = id;
+    });
+    selectedDivisions.forEach((id, idx) => {
+      params[`divisionIds[${idx}]`] = id;
+    });
+
+    const res = await axios.get("/departments/getReports", { params });
+    setReports(res.data);
+  } catch (err) {
+    console.error("Error fetching reports:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchFormOptions = async () => {
     try {
@@ -134,10 +139,10 @@ function Reports() {
     };
 
     let hasEmployees = false;
-      // reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
+    // reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
     let hasDepartmentEmployees = reports.departmentEmployees?.length > 0;
-    let hasProjects = false
-      // reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
+    let hasProjects = false;
+    // reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
 
     // ==========================
     // Employee Data Section
@@ -659,12 +664,12 @@ function Reports() {
               <label className="block text-sm mb-1">Project Type</label>
               <div
                 className="border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm cursor-pointer flex justify-between items-center"
-                onClick={() =>{
-                  setOpenProjectTypeDropdown(!openProjectTypeDropdown)
-                   setOpenDepartmentDropdown(false)
-                setOpenDivisionDropdown(false)
-                setOpenProjectDropdown(false)
-               } }
+                onClick={() => {
+                  setOpenProjectTypeDropdown(!openProjectTypeDropdown);
+                  setOpenDepartmentDropdown(false);
+                  setOpenDivisionDropdown(false);
+                  setOpenProjectDropdown(false);
+                }}
               >
                 <span>
                   {projectsType.length > 0
@@ -717,10 +722,10 @@ function Reports() {
                   selectedProjects,
                   projectsType,
                 });
-                setOpenDepartmentDropdown(false)
-                setOpenProjectTypeDropdown(false)
-                setOpenDivisionDropdown(false)
-                setOpenProjectDropdown(false)
+                setOpenDepartmentDropdown(false);
+                setOpenProjectTypeDropdown(false);
+                setOpenDivisionDropdown(false);
+                setOpenProjectDropdown(false);
                 fetchReports();
                 setShowDrawer(false);
               }}
@@ -736,10 +741,17 @@ function Reports() {
                 setSelectedDepartments([]);
                 setSelectedDivisions([]);
                 setProjectsType([]);
-                 setOpenDepartmentDropdown(false)
-                setOpenProjectTypeDropdown(false)
-                setOpenDivisionDropdown(false)
-                setOpenProjectDropdown(false)
+
+                setSummaryTriggered({}); // clear applied filters
+
+                // Close dropdowns
+                setOpenDepartmentDropdown(false);
+                setOpenProjectTypeDropdown(false);
+                setOpenDivisionDropdown(false);
+                setOpenProjectDropdown(false);
+
+                // Fetch reports again with cleared filters
+                // fetchReports();
               }}
               className="w-1/2 h-[45px] rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800"
             >
