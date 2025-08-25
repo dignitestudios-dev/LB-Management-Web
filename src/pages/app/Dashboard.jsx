@@ -25,8 +25,11 @@ import EmployeeTimeSheet from "../../components/app/EmployeeTimeSheet";
 import { PiArticleNyTimes } from "react-icons/pi";
 import Divisions from "../../components/app/Divisions";
 import Reports from "../../components/app/Reports";
+import Holidays from "../../components/app/Holidays";
+import MissingEnteries from "../../components/app/MissingEnteries";
 
-const   Dashboard = () => {
+
+const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("summary");
   const [logoutLoading, setLogoutLoading] = useState(false);
   const navigate = useNavigate();
@@ -66,6 +69,10 @@ const   Dashboard = () => {
         return <EmployeeTimeSheet />;
       case "reports":
         return <Reports />;
+      case "holidays":
+        return <Holidays />;
+      case "missenteries":
+        return <MissingEnteries />;
       default:
         return <Summary />;
     }
@@ -182,11 +189,23 @@ const   Dashboard = () => {
               active={activeTab === "summary"}
               onClick={() => setActiveTab("summary")}
             />
-     <SidebarItem
+            <SidebarItem
               icon={<PiArticleNyTimes />}
               label="Reports"
               active={activeTab === "reports"}
               onClick={() => setActiveTab("reports")}
+            />
+            <SidebarItem
+              icon={<PiArticleNyTimes />}
+              label="Holidays"
+              active={activeTab === "holidays"}
+              onClick={() => setActiveTab("holidays")}
+            />
+            <SidebarItem
+              icon={<FaUsers />}
+              label="Missing Enteries"
+              active={activeTab === "missenteries"}
+              onClick={() => setActiveTab("missenteries")}
             />
             <SidebarItem
               icon={<FaUsers />}
@@ -230,7 +249,6 @@ const   Dashboard = () => {
               active={activeTab === "timeSheet"}
               onClick={() => setActiveTab("timeSheet")}
             />
-       
           </ul>
         </div>
 

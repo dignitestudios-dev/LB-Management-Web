@@ -80,140 +80,147 @@ function Reports() {
     fetchReports();
   }, []);
 
-const exportToCSV = () => {
-  if (!reports) return;
+  const exportToCSV = () => {
+    if (!reports) return;
 
-  // Map IDs to Names
-  const getNames = (ids, list) =>
-    ids?.map((id) => list.find((item) => item._id === id)?.name || id).join(", ") || "";
+    // Map IDs to Names
+    const getNames = (ids, list) =>
+      ids
+        ?.map((id) => list.find((item) => item._id === id)?.name || id)
+        .join(", ") || "";
 
-  let data = [];
+    let data = [];
 
-  // ==========================
-  // Applied Filters Section
-  // ==========================
-  data.push(["Applied Filters"]);
-  if (summaryTriggered?.startDate && summaryTriggered?.endDate)
-    data.push([`Date Range: ${summaryTriggered.startDate} to ${summaryTriggered.endDate}`]);
-  if (summaryTriggered?.selectedUser?.name)
-    data.push([`Employee: ${summaryTriggered.selectedUser.name}`]);
-  if (summaryTriggered?.selectedDepartments?.length)
-    data.push([
-      `Departments: ${getNames(summaryTriggered.selectedDepartments, departments)}`,
-    ]);
-  if (summaryTriggered?.selectedDivisions?.length)
-    data.push([
-      `Divisions: ${getNames(summaryTriggered.selectedDivisions, divisions)}`,
-    ]);
-  if (summaryTriggered?.selectedProjects?.length)
-    data.push([
-      `Projects: ${getNames(summaryTriggered.selectedProjects, projects)}`,
-    ]);
-  if (summaryTriggered?.projectsType?.length)
-    data.push([`Project Type: ${summaryTriggered.projectsType}`]);
-  data.push([""]); // Empty line for separation
+    // ==========================
+    // Applied Filters Section
+    // ==========================
+    data.push(["Applied Filters"]);
+    if (summaryTriggered?.startDate && summaryTriggered?.endDate)
+      data.push([
+        `Date Range: ${summaryTriggered.startDate} to ${summaryTriggered.endDate}`,
+      ]);
+    if (summaryTriggered?.selectedUser?.name)
+      data.push([`Employee: ${summaryTriggered.selectedUser.name}`]);
+    if (summaryTriggered?.selectedDepartments?.length)
+      data.push([
+        `Departments: ${getNames(
+          summaryTriggered.selectedDepartments,
+          departments
+        )}`,
+      ]);
+    if (summaryTriggered?.selectedDivisions?.length)
+      data.push([
+        `Divisions: ${getNames(summaryTriggered.selectedDivisions, divisions)}`,
+      ]);
+    if (summaryTriggered?.selectedProjects?.length)
+      data.push([
+        `Projects: ${getNames(summaryTriggered.selectedProjects, projects)}`,
+      ]);
+    if (summaryTriggered?.projectsType?.length)
+      data.push([`Project Type: ${summaryTriggered.projectsType}`]);
+    data.push([""]); // Empty line for separation
 
-  // ==========================
-  // Helper: Convert Minutes to H:M
-  // ==========================
-  const formatTime = (minutes) => {
-    const hrs = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hrs}h ${mins}m`;
+    // ==========================
+    // Helper: Convert Minutes to H:M
+    // ==========================
+    const formatTime = (minutes) => {
+      const hrs = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hrs}h ${mins}m`;
+    };
+
+    let hasEmployees =
+      reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
+    let hasProjects =
+      reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
+
+    // ==========================
+    // Employee Data Section
+    // ==========================
+    if (hasEmployees) {
+      data.push(["Name", "Department", "Worked Time", "Expected Time"]);
+
+      if (reports.topEmployees?.length > 0) {
+        data.push(["--- Top Employees ---"]);
+        reports.topEmployees.forEach((e) => {
+          data.push([
+            e.name,
+            e.departmentName || "",
+            formatTime(e.totalWorkedMinutes || 0),
+            formatTime(e.totalExpectedMinutes || 0),
+          ]);
+        });
+      }
+
+      if (reports.bottomEmployees?.length > 0) {
+        data.push(["--- Bottom Employees ---"]);
+        reports.bottomEmployees.forEach((e) => {
+          data.push([
+            e.name,
+            e.departmentName || "",
+            formatTime(e.totalWorkedMinutes || 0),
+            formatTime(e.totalExpectedMinutes || 0),
+          ]);
+        });
+      }
+
+      data.push([""]);
+    }
+
+    // ==========================
+    // Project Data Section
+    // ==========================
+    if (hasProjects) {
+      data.push(["Project Name", "Worked Time"]);
+
+      if (reports.topProjects?.length > 0) {
+        data.push(["--- Top Projects ---"]);
+        reports.topProjects.forEach((p) => {
+          data.push([p.name, formatTime(p.totalWorkedMinutes || 0)]);
+        });
+      }
+
+      if (reports.bottomProjects?.length > 0) {
+        data.push(["--- Least Projects ---"]);
+        reports.bottomProjects.forEach((p) => {
+          data.push([p.name, formatTime(p.totalWorkedMinutes || 0)]);
+        });
+      }
+
+      data.push([""]);
+    }
+
+    // ==========================
+    // Summary Row
+    // ==========================
+    if (hasEmployees || hasProjects) {
+      data.push([
+        "TOTAL WORKED",
+        formatTime(reports.totalSummary?.sumTotalWorkedMinutes || 0),
+        "TOTAL EXPECTED",
+        formatTime(reports.totalSummary?.sumTotalExpectedMinutes || 0),
+      ]);
+    } else {
+      // If no employees/projects, only show filters and summary
+      data.push([
+        "TOTAL WORKED",
+        formatTime(reports.totalSummary?.sumTotalWorkedMinutes || 0),
+      ]);
+    }
+
+    // ==========================
+    // Convert to CSV & Download
+    // ==========================
+    const csvContent = data.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `reports_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-
-  let hasEmployees = reports.topEmployees?.length > 0 || reports.bottomEmployees?.length > 0;
-  let hasProjects = reports.topProjects?.length > 0 || reports.bottomProjects?.length > 0;
-
-  // ==========================
-  // Employee Data Section
-  // ==========================
-  if (hasEmployees) {
-    data.push(["Name", "Department", "Worked Time", "Expected Time"]);
-
-    if (reports.topEmployees?.length > 0) {
-      data.push(["--- Top Employees ---"]);
-      reports.topEmployees.forEach((e) => {
-        data.push([
-          e.name,
-          e.departmentName || "",
-          formatTime(e.totalWorkedMinutes || 0),
-          formatTime(e.totalExpectedMinutes || 0),
-        ]);
-      });
-    }
-
-    if (reports.bottomEmployees?.length > 0) {
-      data.push(["--- Bottom Employees ---"]);
-      reports.bottomEmployees.forEach((e) => {
-        data.push([
-          e.name,
-          e.departmentName || "",
-          formatTime(e.totalWorkedMinutes || 0),
-          formatTime(e.totalExpectedMinutes || 0),
-        ]);
-      });
-    }
-
-    data.push([""]);
-  }
-
-  // ==========================
-  // Project Data Section
-  // ==========================
-  if (hasProjects) {
-    data.push(["Project Name", "Worked Time"]);
-
-    if (reports.topProjects?.length > 0) {
-      data.push(["--- Top Projects ---"]);
-      reports.topProjects.forEach((p) => {
-        data.push([p.name, formatTime(p.totalWorkedMinutes || 0)]);
-      });
-    }
-
-    if (reports.bottomProjects?.length > 0) {
-      data.push(["--- Least Projects ---"]);
-      reports.bottomProjects.forEach((p) => {
-        data.push([p.name, formatTime(p.totalWorkedMinutes || 0)]);
-      });
-    }
-
-    data.push([""]);
-  }
-
-  // ==========================
-  // Summary Row
-  // ==========================
-  if (hasEmployees || hasProjects) {
-    data.push([
-      "TOTAL WORKED",
-      formatTime(reports.totalSummary?.sumTotalWorkedMinutes || 0),
-      "TOTAL EXPECTED",
-      formatTime(reports.totalSummary?.sumTotalExpectedMinutes || 0),
-    ]);
-  } else {
-    // If no employees/projects, only show filters and summary
-    data.push([
-      "TOTAL WORKED",
-      formatTime(reports.totalSummary?.sumTotalWorkedMinutes || 0),
-    ]);
-  }
-
-  // ==========================
-  // Convert to CSV & Download
-  // ==========================
-  const csvContent = data.map((row) => row.join(",")).join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", `reports_${Date.now()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-
 
   const formatMinutes = (mins) => {
     if (!mins) return "0h 0m";
@@ -261,13 +268,17 @@ const exportToCSV = () => {
               </div>
               {rightLabelKey && (
                 <span className="bg-gray-100 flex flex-col items-center text-gray-600 text-sm px-3 py-1 rounded-full">
-                  <label className="font-semibold text-nowrap">Worked Time</label>
+                  <label className="font-semibold text-nowrap">
+                    Worked Time
+                  </label>
                   <h4 className="text-xs">{item[rightLabelKey]}</h4>
                 </span>
               )}
               {rightLabelKey1 && (
                 <span className="bg-gray-100 text-gray-600  flex flex-col items-center text-sm px-3 py-1 rounded-full">
-                  <label className="font-semibold text-nowrap">Expected Time</label>
+                  <label className="font-semibold text-nowrap">
+                    Expected Time
+                  </label>
                   <h4 className="text-xs">{item[rightLabelKey1]}</h4>
                 </span>
               )}
@@ -404,14 +415,14 @@ const exportToCSV = () => {
       {loading && <div className="p-6 text-center">Loading...</div>}
       {!loading && (
         <div className="flex gap-4 py-4">
-          {reports?.topEmployees?.length > 0 &&(
-              <InfoCard
-                title="Expected Hours"
-                value={convertToHoursAndMinutes(
-                  reports?.totalSummary?.sumTotalExpectedMinutes
-                )}
-              />
-            )}
+          {reports?.topEmployees?.length > 0 && (
+            <InfoCard
+              title="Expected Hours"
+              value={convertToHoursAndMinutes(
+                reports?.totalSummary?.sumTotalExpectedMinutes
+              )}
+            />
+          )}
           <InfoCard
             title="Worked Hours"
             value={convertToHoursAndMinutes(
@@ -423,8 +434,24 @@ const exportToCSV = () => {
       {!loading &&
         reports &&
         reports.topEmployees.length > 0 &&
-       reports.bottomEmployees.length > 0 && (
+        reports.bottomEmployees.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {reports.departmentEmployees.length > 0 &&
+              renderList(
+                "Department Employees",
+                reports.departmentEmployees?.map((e) => ({
+                  ...e,
+                  totalWorkedHours: `${Math.floor(
+                    e.totalWorkedMinutes / 60
+                  )}h ${e.totalWorkedMinutes % 60}m`,
+                  totalExpectedMinutes: `${Math.floor(
+                    e.totalExpectedMinutes / 60
+                  )}h ${e.totalExpectedMinutes % 60}m`,
+                })),
+                "totalWorkedHours"
+                // "totalExpectedMinutes"
+              )}
+
             {renderList(
               "Top Contributors",
               reports.topEmployees?.map((e) => ({
@@ -465,7 +492,7 @@ const exportToCSV = () => {
                   e.totalExpectedMinutes / 60
                 )}h ${e.totalExpectedMinutes % 60}m`,
               })),
-              "totalWorkedHours",
+              "totalWorkedHours"
               // "totalExpectedMinutes"
             )}
             {renderList(
@@ -479,7 +506,7 @@ const exportToCSV = () => {
                   e.totalExpectedMinutes / 60
                 )}h ${e.totalExpectedMinutes % 60}m`,
               })),
-              "totalWorkedHours",
+              "totalWorkedHours"
               // "totalExpectedMinutes"
             )}
           </div>
