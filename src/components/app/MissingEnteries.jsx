@@ -5,6 +5,7 @@ import instance, { baseUrl } from "../../axios";
 import EmployeeMissingEntryTable from "./EmployeeMissingEntryTable";
 import { GrFilter } from "react-icons/gr";
 import { ErrorToast } from "../global/Toaster";
+import { formatHour } from "../../lib/helpers";
 
 const MissingEnteries = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -16,52 +17,51 @@ const MissingEnteries = () => {
   const [loading, setLoading] = useState(false);
   const [tableShow, setTableShow] = useState(false);
 
- const fetchAttendance = async (departmentIds, roleIds, shiftIds) => {
-  setLoadingAttendance(true);
-  try {
-    // Start with base query params
-    const queryParams = new URLSearchParams({
-      startDate: fromDate,
-      endDate: toDate,
-    });
-
-    // Append department IDs if provided
-    if (Array.isArray(departmentIds)) {
-      departmentIds.forEach((id, index) => {
-        queryParams.append(`departmentIds[${index}]`, id);
+  const fetchAttendance = async (departmentIds, roleIds, shiftIds) => {
+    setLoadingAttendance(true);
+    try {
+      // Start with base query params
+      const queryParams = new URLSearchParams({
+        startDate: fromDate,
+        endDate: toDate,
       });
+
+      // Append department IDs if provided
+      if (Array.isArray(departmentIds)) {
+        departmentIds.forEach((id, index) => {
+          queryParams.append(`departmentIds[${index}]`, id);
+        });
+      }
+
+      // Append role IDs if provided
+      if (Array.isArray(roleIds)) {
+        roleIds.forEach((id, index) => {
+          queryParams.append(`roleIds[${index}]`, id);
+        });
+      }
+
+      // Append shift IDs if provided
+      if (Array.isArray(shiftIds)) {
+        shiftIds.forEach((id, index) => {
+          queryParams.append(`shiftIds[${index}]`, id);
+        });
+      }
+
+      const response = await instance.get(
+        `/attendance/getTotalMissingAttendance?${queryParams.toString()}`
+      );
+
+      if (response.data.success) {
+        setAttendance(response?.data.data);
+        setIsOpen(false);
+        setTableShow(true);
+      }
+    } catch (error) {
+      console.error("Error fetching filtered attendance", error);
+    } finally {
+      setLoadingAttendance(false);
     }
-
-    // Append role IDs if provided
-    if (Array.isArray(roleIds)) {
-      roleIds.forEach((id, index) => {
-        queryParams.append(`roleIds[${index}]`, id);
-      });
-    }
-
-    // Append shift IDs if provided
-    if (Array.isArray(shiftIds)) {
-      shiftIds.forEach((id, index) => {
-        queryParams.append(`shiftIds[${index}]`, id);
-      });
-    }
-
-    const response = await instance.get(
-      `/attendance/getTotalMissingAttendance?${queryParams.toString()}`
-    );
-
-    if (response.data.success) {
-      setAttendance(response?.data.data);
-      setIsOpen(false);
-      setTableShow(true);
-    }
-  } catch (error) {
-    console.error("Error fetching filtered attendance", error);
-  } finally {
-    setLoadingAttendance(false);
-  }
-};
-
+  };
 
   const handleClear = () => {
     setFromDate("");
@@ -72,48 +72,54 @@ const MissingEnteries = () => {
   };
 
   /** EXPORT TO CSV **/
-const handleExportCSV = () => {
-  if (!attendance || attendance.length === 0) {
-    ErrorToast("No data to export");
-    return;
-  }
+  const handleExportCSV = () => {
+    if (!attendance || attendance.length === 0) {
+      ErrorToast("No data to export");
+      return;
+    }
 
-  // Updated headers to include Department, Role, and Shift
-  const headers = [
-    "Name",
-    "Email",
-    "Department",
-    "Role",
-    "Shift",
-    "Missing Entries"
-  ];
+    // Updated headers to include Department, Role, and Shift
+    const headers = [
+      "Name",
+      "Email",
+      "Department",
+      "Role",
+      "Shift",
+      "Missing Entries",
+    ];
 
-  // Map data rows
-  const rows = attendance.map(item => [
-    item.name || "",
-    item.email || "",
-    item.departmentName || "N/A",
-    item.roleName || "N/A",
-    item.shift ? `${item.shift.startHour} - ${item.shift.endHour}` : "N/A",
-    item.totalMissingEntries || 0
-  ]);
+    // Map data rows
+    const rows = attendance.map((item) => [
+      item.name || "",
+      item.email || "",
+      item.departmentName || "N/A",
+      item.roleName || "N/A",
+      item.shift
+        ? ` (${formatHour(item.shift.startHour)} - ${formatHour(
+            item.shift.endHour
+          )})`
+        : "N/A",
+      item.totalMissingEntries || 0,
+    ]);
 
-  const csvContent = [
-    headers.join(","), // header row
-    ...rows.map(row => row.map(value => `"${value}"`).join(",")) // data rows
-  ].join("\n");
+    const csvContent = [
+      headers.join(","), // header row
+      ...rows.map((row) => row.map((value) => `"${value}"`).join(",")), // data rows
+    ].join("\n");
 
-  // Create Blob and download
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `Missing_Entries_${fromDate || "All"}_${toDate || "All"}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
+    // Create Blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `Missing_Entries_${fromDate || "All"}_${toDate || "All"}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div>
