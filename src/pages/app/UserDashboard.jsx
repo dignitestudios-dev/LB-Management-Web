@@ -211,7 +211,7 @@ const UserDashboard = () => {
 
     return `${hours}h ${minutes}m`;
   };
-  const [selectedReasons, setSelectedReasons] = useState({});
+  const [selectedReasons, setSelectedReasons] = useState("");
   const [shiftDate, setShiftDate] = useState("");
   const [description, setDiscription] = useState("");
   const [selectmissingType, setSelectmissingType] = useState("");
