@@ -284,7 +284,7 @@ const ModalMissingAttendance = ({
                     <option value="absent">Absent</option>
                     <option value="forgot">Forgot</option>
                     {/* <option value="holiday">Holiday</option> */}
-                    <option value="other">Other</option>
+                    {/* <option value="other">Other</option> */}
                   </select>
                   {errors[lastIndex]?.reason && (
                     <p className="text-red-500 text-xs mt-1">
