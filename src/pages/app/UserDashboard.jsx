@@ -1269,7 +1269,7 @@ const ForgotProjectList = ({
     }
    
 
-    return console.log(payload)
+    // return console.log(payload)
     try {
       const res = await axios.post("/attendance/missing", payload);
 

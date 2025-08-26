@@ -108,7 +108,7 @@ const ModalMissingAttendance = ({
         shiftDate: currentEntry.shiftDate,
       };
 
-      return console.log(currentEntry)
+      // return console.log(currentEntry)
  
       if(!payload.reason){
         return ErrorToast("Please select reason")
@@ -283,7 +283,7 @@ const ModalMissingAttendance = ({
                     <option value="">Select reason</option>
                     <option value="absent">Absent</option>
                     <option value="forgot">Forgot</option>
-                    <option value="holiday">Holiday</option>
+                    {/* <option value="holiday">Holiday</option> */}
                     <option value="other">Other</option>
                   </select>
                   {errors[lastIndex]?.reason && (
