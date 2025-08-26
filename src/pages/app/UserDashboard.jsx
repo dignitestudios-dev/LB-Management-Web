@@ -1188,7 +1188,7 @@ const ForgotProjectList = ({
 
   const payload = {
     shiftDate: shiftDate,
-    reason: selectmissingType === "checkout_missing" ? "" : selectedReasons,
+    reason:  selectedReasons,
     note: entries
       ?.map((entry) => entry?.description)
       .filter(Boolean)
@@ -1267,7 +1267,9 @@ const ForgotProjectList = ({
       setIsSubmitting(false);
       return;
     }
+   
 
+    return console.log(payload)
     try {
       const res = await axios.post("/attendance/missing", payload);
 

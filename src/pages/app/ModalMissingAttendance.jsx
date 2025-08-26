@@ -108,6 +108,11 @@ const ModalMissingAttendance = ({
         shiftDate: currentEntry.shiftDate,
       };
 
+      return console.log(currentEntry)
+ 
+      if(!payload.reason){
+        return ErrorToast("Please select reason")
+      }
       const res = await axios.post("/attendance/missing", payload);
 
       SuccessToast("Submitted successfully");
