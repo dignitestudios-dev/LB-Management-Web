@@ -442,49 +442,71 @@ const fetchReports = async () => {
         </div>
       )}
       {loading && <div className="p-6 text-center">Loading...</div>}
-      {!loading && (
-  <div className="flex flex-col gap-6 py-4">
-    {/* 🔹 Overall Summary */}
-    <div className="flex flex-wrap gap-4">
-      {reports?.topEmployees?.length > 0 && (
-        <InfoCard
-          title="Expected Hours (All Departments)"
-          value={convertToHoursAndMinutes(
+  {!loading && reports?.departmentBreakdown?.length > 0 && (
+  <div className="flex flex-col md:flex-row gap-6 py-4">
+    {/* 🔹 Expected Hours Card */}
+    <div className="bg-red-50 rounded-lg p-6 w-full md:w-1/2 shadow-sm">
+      <div className="w-8 h-[3px] bg-red-800 mb-2"></div>
+      <h2 className="text-xl font-semibold text-black mb-4">
+        Expected Hours
+      </h2>
+
+      {/* Total Expected */}
+      <div className="text-gray-700 font-medium mb-4">
+        Total:{" "}
+        <span className="text-gray-600">
+          {convertToHoursAndMinutes(
             reports?.totalSummary?.sumTotalExpectedMinutes
           )}
-        />
-      )}
-      <InfoCard
-        title="Worked Hours (All Departments)"
-        value={convertToHoursAndMinutes(
-          reports?.totalSummary?.sumTotalWorkedMinutes
-        )}
-      />
+        </span>
+      </div>
+
+      {/* Department Breakdown */}
+      <div className="grid grid-cols-2 gap-y-1 text-gray-600">
+        {reports.departmentBreakdown.map((dept) => (
+          <React.Fragment key={dept.departmentId}>
+            <span className="font-bold">{dept.departmentName}</span>
+            <span className="text-right">
+              {convertToHoursAndMinutes(dept.totalExpectedMinutes)}
+            </span>
+          </React.Fragment>
+        ))}
+      </div>
     </div>
 
-    {/* 🔹 Department Breakdown */}
-    {reports?.departmentBreakdown?.length > 0 && (
-      <div className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold text-gray-700">Department Summary</h2>
+    {/* 🔹 Worked Hours Card */}
+    <div className="bg-red-50 rounded-lg p-6 w-full md:w-1/2 shadow-sm">
+      <div className="w-8 h-[3px] bg-red-800 mb-2"></div>
+      <h2 className="text-xl font-semibold text-black mb-4">
+        Worked Hours
+      </h2>
 
-        <div className="flex flex-wrap gap-4">
-          {reports.departmentBreakdown.map((dept) => (
-            <div key={dept.departmentId} className="flex flex-col gap-2">
-              <InfoCard
-                title={`${dept.departmentName} — Expected`}
-                value={convertToHoursAndMinutes(dept.totalExpectedMinutes)}
-              />
-              <InfoCard
-                title={`${dept.departmentName} — Worked`}
-                value={convertToHoursAndMinutes(dept.totalWorkedMinutes)}
-              />
-            </div>
-          ))}
-        </div>
+      {/* Total Worked */}
+      <div className="text-gray-700 font-medium mb-4">
+        Total:{" "}
+        <span className="text-gray-600">
+          {convertToHoursAndMinutes(
+            reports?.totalSummary?.sumTotalWorkedMinutes
+          )}
+        </span>
       </div>
-    )}
+
+      {/* Department Breakdown */}
+      <div className="grid grid-cols-2 gap-y-1 text-gray-600">
+        {reports.departmentBreakdown.map((dept) => (
+          <React.Fragment key={dept.departmentId}>
+            <span className="font-bold">{dept.departmentName}</span>
+            <span className="text-right">
+              {convertToHoursAndMinutes(dept.totalWorkedMinutes)}
+            </span>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
   </div>
 )}
+
+
 
       {!loading &&
         reports &&
