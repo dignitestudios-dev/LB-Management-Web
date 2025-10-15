@@ -443,23 +443,49 @@ const fetchReports = async () => {
       )}
       {loading && <div className="p-6 text-center">Loading...</div>}
       {!loading && (
-        <div className="flex gap-4 py-4">
-          {reports?.topEmployees?.length > 0 && (
-            <InfoCard
-              title="Expected Hours"
-              value={convertToHoursAndMinutes(
-                reports?.totalSummary?.sumTotalExpectedMinutes
-              )}
-            />
+  <div className="flex flex-col gap-6 py-4">
+    {/* 🔹 Overall Summary */}
+    <div className="flex flex-wrap gap-4">
+      {reports?.topEmployees?.length > 0 && (
+        <InfoCard
+          title="Expected Hours (All Departments)"
+          value={convertToHoursAndMinutes(
+            reports?.totalSummary?.sumTotalExpectedMinutes
           )}
-          <InfoCard
-            title="Worked Hours"
-            value={convertToHoursAndMinutes(
-              reports?.totalSummary?.sumTotalWorkedMinutes
-            )}
-          />
-        </div>
+        />
       )}
+      <InfoCard
+        title="Worked Hours (All Departments)"
+        value={convertToHoursAndMinutes(
+          reports?.totalSummary?.sumTotalWorkedMinutes
+        )}
+      />
+    </div>
+
+    {/* 🔹 Department Breakdown */}
+    {reports?.departmentBreakdown?.length > 0 && (
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-gray-700">Department Summary</h2>
+
+        <div className="flex flex-wrap gap-4">
+          {reports.departmentBreakdown.map((dept) => (
+            <div key={dept.departmentId} className="flex flex-col gap-2">
+              <InfoCard
+                title={`${dept.departmentName} — Expected`}
+                value={convertToHoursAndMinutes(dept.totalExpectedMinutes)}
+              />
+              <InfoCard
+                title={`${dept.departmentName} — Worked`}
+                value={convertToHoursAndMinutes(dept.totalWorkedMinutes)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
       {!loading &&
         reports &&
         reports.topEmployees.length > 0 &&
