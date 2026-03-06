@@ -4,7 +4,8 @@ import Cookies from "js-cookie";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
 // export const baseUrl = "https://1b75nbwh-3121.inc1.devtunnels.ms";
-export const baseUrl = "https://managementapi.zuimp.online";
+// export const baseUrl = "https://managementapi.zuimp.online";
+export const baseUrl = "https://638e-101-53-226-103.ngrok-free.app";
 // export const baseUrl = "https://devmanagementapi.zuimp.online";
 // export const baseUrl = "http://192.168.9.42:3050";
 // export const baseUrl = "https://155e-45-199-187-86.ngrok-free.app";
@@ -29,7 +30,7 @@ instance.interceptors.request.use((request) => {
   if (!navigator.onLine) {
     // No internet connection
     ErrorToast(
-      "No internet connection. Please check your network and try again."
+      "No internet connection. Please check your network and try again.",
     );
     return;
     // return Promise.reject(new Error("No internet connection"));
@@ -63,7 +64,7 @@ instance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default instance;
