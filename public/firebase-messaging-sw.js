@@ -57,7 +57,7 @@ let notification;
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  console.log("Received background message ", payload);
+  
   const data = JSON.parse(payload?.data?.data);
   notification = data;
 
@@ -79,7 +79,7 @@ self.addEventListener("notificationclick", (event) => {
   const action = event.action;
 
   if (action === "reply") {
-    console.log(notification?.type === "chat");
+    
     if (notification?.type === "chat") {
       // Redirect to the chat page
       event.waitUntil(
@@ -87,7 +87,7 @@ self.addEventListener("notificationclick", (event) => {
       );
     }
   } else if (action === "view") {
-    console.log("View action clicked");
+    
 
     if (notification?.type === "booking") {
       // Redirect to the booking tracking page

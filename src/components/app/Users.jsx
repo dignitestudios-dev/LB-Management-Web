@@ -4,6 +4,7 @@ import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImSpinner3 } from "react-icons/im";
 import SearchBar from "../global/SearchBar";
 import Pagination from "../global/Pagination";
+import MultiSelectFilter from "../ui/MultipleFilterSelector";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +15,9 @@ const Users = () => {
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedShifts, setSelectedShifts] = useState([]);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -33,6 +37,7 @@ const Users = () => {
     department: "",
     shift: "",
     employeeCode: "",
+    joiningDate: "",
   });
 
   // Pagination & Search
@@ -44,10 +49,30 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/users", {
-        params: { search, page, limit },
+
+      const params = {
+        search,
+        page,
+        limit,
+      };
+
+      // Add departments
+      selectedDepartments.forEach((id, idx) => {
+        params[`departmentId[${idx}]`] = id;
       });
-      console.log(res?.data?.pagination?.totalPages, "datacomes");
+
+      // Add roles
+      selectedRoles.forEach((id, idx) => {
+        params[`roleId[${idx}]`] = id;
+      });
+
+      // Add shifts
+      selectedShifts.forEach((id, idx) => {
+        params[`shiftId[${idx}]`] = id;
+      });
+
+      const res = await axios.get("/users", { params });
+
       setUsers(res.data.data);
       setTotalPages(res?.data?.pagination?.totalPages);
     } catch (err) {
@@ -59,7 +84,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [search, page]);
+  }, [search, page, selectedDepartments, selectedRoles, selectedShifts]);
 
   const fetchFormOptions = async () => {
     try {
@@ -96,6 +121,7 @@ const Users = () => {
       "department",
       "shift",
       "employeeCode",
+      "joiningDate",
     ];
     if (required.some((key) => !form[key])) {
       ErrorToast("Please fill all fields");
@@ -114,6 +140,7 @@ const Users = () => {
         department: "",
         shift: "",
         employeeCode: "",
+        joiningDate: "",
       });
       fetchUsers();
     } catch (err) {
@@ -143,23 +170,42 @@ const Users = () => {
   const updateUser = async () => {
     if (!editingUser) return;
 
-    const { name, email, role, department, shift, employeeCode } = editForm;
+    const {
+      name,
+      email,
+      role,
+      department,
+      shift,
+      employeeCode,
+      deactivate,
+      deactivateDate,
+    } = editForm;
 
     if (!name || !email || !role || !department || !shift || !employeeCode) {
-      ErrorToast("All fields  are required");
+      ErrorToast("All fields are required");
+      return;
+    }
+
+    if (deactivate && !deactivateDate) {
+      ErrorToast("Deactivation date is required");
       return;
     }
 
     try {
       setEditLoading(true);
-      await axios.put("/users", {
+
+      const body = {
         userId: editingUser._id,
         name,
         role,
         department,
         shift,
         employeeCode,
-      });
+        isDeleted: deactivate ? true : false,
+        ...(deactivate && { deactivateDate }), // send deactivateDate only if toggle is on
+      };
+
+      await axios.put("/users", body);
 
       SuccessToast("User updated successfully");
       setEditModalOpen(false);
@@ -243,6 +289,14 @@ const Users = () => {
               </option>
             ))}
           </select>
+          <input
+            name={"joiningDate"}
+            type={"date"}
+            placeholder={"Joining Date"}
+            value={form["joiningDate"]}
+            onChange={handleChange}
+            className="p-2 border rounded w-full"
+          />
         </div>
 
         <button
@@ -259,149 +313,247 @@ const Users = () => {
           setPage(1); // Reset to page 1 on new search
         }}
       />
+      <div className="flex gap-4 mb-4">
+        {/* <MultiSelectFilter
+    title="Departments"
+    options={departments.map((d) => ({ value: d._id, label: d.name }))}
+    selected={selectedDepartments}
+    setSelected={setSelectedDepartments}
+  /> */}
+        {/* <MultiSelectFilter
+    title="Roles"
+    options={roles.map((r) => ({ value: r._id, label: r.name }))}
+    selected={selectedRoles}
+    setSelected={setSelectedRoles}
+  /> */}
+        {/* <MultiSelectFilter
+    title="Shifts"
+    options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+    selected={selectedShifts}
+    setSelected={setSelectedShifts}
+  /> */}
+      </div>
 
       {/* Users Table */}
-      {loading ? (
-        <p className="text-center text-gray-500">Loading users...</p>
-      ) : users.length > 0 ? (
-        <>
-          <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
-            <table className="min-w-full border ">
-              <thead className="bg-red-100 text-gray-800">
-                <tr>
-                  <th className="px-4 py-3 border">#</th>
-                  <th className="px-4 py-3 border">Name</th>
-                  <th className="px-4 py-3 border">Email</th>
-                  <th className="px-4 py-3 border">Employee Code</th>
-                  <th className="px-4 py-3 border">Department</th>
-                  <th className="px-4 py-3 border">Role</th>
-                  <th className="px-4 py-3 border">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user, i) => (
-                  <tr key={user._id} className="hover:bg-blue-50">
-                    <td className="border text-center px-4 py-2">{i + 1}</td>
-                    <td className="border text-center px-4 py-2">
-                      {user.name}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.email}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.employeeCode}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.department?.name || "—"}
-                    </td>
-                    <td className="border text-center px-4 py-2">
-                      {user.role?.name || "—"}
-                    </td>
-                    <td className="px-4 py-2 text-center border">
-                      <button
-                        onClick={() => openEditModal(user)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Pagination */}
-          {/* Pagination */}
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
-          />
-        </>
-      ) : (
-        <p className="text-center text-gray-600">No users found.</p>
-      )}
-
-      {/* Edit Modal */}
-      {editModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-md shadow-md w-full max-w-xl">
-            <h2 className="text-lg font-semibold mb-4">Edit User</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {["name", "employeeCode"].map((field) => (
-                <input
-                  key={field}
-                  name={field}
-                  type={"text"}
-                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  value={editForm[field]}
-                  onChange={handleEditChange}
-                  className="p-2 border rounded"
+      <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
+        <table className="min-w-full border">
+          <thead className="bg-red-100 text-gray-800">
+            <tr>
+              <th className="px-4 py-3 border">#</th>
+              <th className="px-4 py-3 border">Name</th>
+              <th className="px-4 py-3 border">Email</th>
+              <th className="px-4 py-3 border">Employee Code</th>
+              <th className="px-4 py-3 border">
+                <MultiSelectFilter
+                  title="Departments"
+                  options={departments.map((d) => ({
+                    value: d._id,
+                    label: d.name,
+                  }))}
+                  selected={selectedDepartments}
+                  setSelected={setSelectedDepartments}
                 />
+              </th>
+              <th className="px-4 py-3 border">
+                <MultiSelectFilter
+                  title="Roles"
+                  options={roles.map((r) => ({ value: r._id, label: r.name }))}
+                  selected={selectedRoles}
+                  setSelected={setSelectedRoles}
+                />
+              </th>
+              <th className="px-4 py-3 border">
+                <MultiSelectFilter
+                  title="Shifts"
+                  options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+                  selected={selectedShifts}
+                  setSelected={setSelectedShifts}
+                />
+              </th>
+              <th className="px-4 py-3 border">Actions</th>
+            </tr>
+          </thead>
+
+          {loading ? (
+            <tbody>
+              <tr>
+                <td colSpan="8" className="text-center p-4 text-gray-500">
+                  Loading users...
+                </td>
+              </tr>
+            </tbody>
+          ) : users.length > 0 ? (
+            <tbody>
+              {users.map((user, i) => (
+                <tr key={user._id} className="hover:bg-blue-50">
+                  <td className="border text-center px-4 py-2">{i + 1}</td>
+                  <td className="border text-center px-4 py-2">{user.name}</td>
+                  <td className="border text-center px-4 py-2">{user.email}</td>
+                  <td className="border text-center px-4 py-2">
+                    {user.employeeCode}
+                  </td>
+                  <td className="border text-center px-4 py-2">
+                    {user.department?.name || "—"}
+                  </td>
+                  <td className="border text-center px-4 py-2">
+                    {user.role?.name || "—"}
+                  </td>
+                  <td className="border text-center px-4 py-2">
+                    {user.shift
+                      ? `${user.shift.name} (${formatHour(
+                          user.shift.startHour
+                        )} - ${formatHour(user.shift.endHour)})`
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-2 text-center border">
+                    <button
+                      onClick={() => openEditModal(user)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
               ))}
+            </tbody>
+          ) : (
+            <tbody>
+              <tr>
+                <td colSpan="8" className="text-center p-4 text-gray-600">
+                  No users found.
+                </td>
+              </tr>
+            </tbody>
+          )}
+        </table>
+      </div>
 
-              <select
-                name="role"
-                value={editForm.role}
-                onChange={handleEditChange}
-                className="p-2 border rounded"
-              >
-                <option value="">Select Role</option>
-                {roles.map((r) => (
-                  <option key={r._id} value={r._id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                name="department"
-                value={editForm.department}
-                onChange={handleEditChange}
-                className="p-2 border rounded"
-              >
-                <option value="">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d._id} value={d._id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                name="shift"
-                value={editForm.shift}
-                onChange={handleEditChange}
-                className="p-2 border rounded"
-              >
-                <option value="">Select Shift</option>
-                {shifts.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name} ({formatHour(s.startHour)} -{" "}
-                    {formatHour(s.endHour)})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex justify-end mt-4 space-x-2">
-              <button
-                onClick={() => setEditModalOpen(false)}
-                className="px-4 py-2 border rounded hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={updateUser}
-                disabled={editLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
-              >
-                Update {editLoading && <ImSpinner3 className="animate-spin" />}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Pagination */}
+      {users.length > 0 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(p) => setPage(p)}
+        />
       )}
+
+     {editModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-md shadow-md w-full max-w-xl">
+      <h2 className="text-lg font-semibold mb-4">Edit User</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Text Inputs */}
+        {["name", "employeeCode"].map((field) => (
+          <input
+            key={field}
+            name={field}
+            type="text"
+            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+            value={editForm[field]}
+            onChange={handleEditChange}
+            className="p-2 border rounded"
+          />
+        ))}
+
+        {/* Role Select */}
+        <select
+          name="role"
+          value={editForm.role}
+          onChange={handleEditChange}
+          className="p-2 border rounded"
+        >
+          <option value="">Select Role</option>
+          {roles.map((r) => (
+            <option key={r._id} value={r._id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Department Select */}
+        <select
+          name="department"
+          value={editForm.department}
+          onChange={handleEditChange}
+          className="p-2 border rounded"
+        >
+          <option value="">Select Department</option>
+          {departments.map((d) => (
+            <option key={d._id} value={d._id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Shift Select */}
+        <select
+          name="shift"
+          value={editForm.shift}
+          onChange={handleEditChange}
+          className="p-2 border rounded"
+        >
+          <option value="">Select Shift</option>
+          {shifts.map((s) => (
+            <option key={s._id} value={s._id}>
+              {s.name} ({formatHour(s.startHour)} - {formatHour(s.endHour)})
+            </option>
+          ))}
+        </select>
+
+        {/* Deactivate Toggle */}
+        <br/>
+        <div className="flex items-center gap-2 mt-2">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="deactivate"
+              checked={editForm.deactivate || false}
+              onChange={(e) =>
+                setEditForm((prev) => ({
+                  ...prev,
+                  deactivate: e.target.checked,
+                  // reset date if toggle is off
+                  deactivateDate: e.target.checked ? prev.deactivateDate : "",
+                }))
+              }
+            />
+            Deactivate User
+          </label>
+        </div>
+
+        {/* Deactivate Date Input (conditionally shown) */}
+        {editForm.deactivate && (
+          <input
+            type="date"
+            name="deactivateDate"
+            value={editForm.deactivateDate || ""}
+            onChange={handleEditChange}
+            className="p-2 border rounded mt-2"
+          />
+        )}
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end mt-4 space-x-2">
+        <button
+          onClick={() => setEditModalOpen(false)}
+          className="px-4 py-2 border rounded hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={updateUser}
+          disabled={editLoading}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+        >
+          Update {editLoading && <ImSpinner3 className="animate-spin" />}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

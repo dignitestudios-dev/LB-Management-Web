@@ -23,6 +23,7 @@ const useLogin = () => {
       }
       return response?.data;
     } catch (error) {
+      console.log(error)
       processError(error);
     } finally {
       setLoading(false);

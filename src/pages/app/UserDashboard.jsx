@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useCheckin, useLogin } from "../../hooks/api/Post";
 import { useUsers } from "../../hooks/api/Get";
-import { baseUrl } from "../../axios";
+import instance, { baseUrl } from "../../axios";
 import Cookies from "js-cookie";
-import { IoLogOut } from "react-icons/io5";
+import {
+  IoFingerPrintOutline,
+  IoLogOut,
+  IoLogOutOutline,
+} from "react-icons/io5";
 import { useNavigate } from "react-router";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
 import { ImCross, ImSpinner3 } from "react-icons/im";
@@ -13,6 +17,8 @@ import { PiArticleNyTimes } from "react-icons/pi";
 import TimesheetTable from "./TimeSheet";
 import ModalMissingAttendance from "./ModalMissingAttendance";
 import axios from "../../axios";
+import { BiLogInCircle, BiLogOutCircle } from "react-icons/bi";
+import { FaSpinner } from "react-icons/fa";
 const UserDashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -23,15 +29,10 @@ const UserDashboard = () => {
 
   const fetchAttendance = async () => {
     try {
-      const response = await fetch(`${baseUrl}/attendance/missing`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await instance.get(`/attendance/missing`);
 
-      const result = await response.json();
-      if (result.success) {
-        setMissingAttendance(result.data);
+      if (response.data.success) {
+        setMissingAttendance(response.data.data);
         setModalOpen(true);
       }
     } catch (error) {
@@ -75,7 +76,7 @@ const UserDashboard = () => {
   const { checkInData, checkInloading } = useCheckin();
 
   const { data: user, loading: userLoading } = useUsers("/users/me");
-
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [timerInterval, setTimerInterval] = useState(null); // To store the timer interval
   const [checkOutTimeForgot, setcheckOutTimeForgot] = useState(null);
   const [checkInTimeForgot, setcheckInTimeForgot] = useState(null);
@@ -85,6 +86,7 @@ const UserDashboard = () => {
   const [stoppedTime, setStoppedTime] = useState(null);
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     await postData("/auth/logout", false, null, null, (res) => {
       Cookies.remove("token");
 
@@ -96,6 +98,7 @@ const UserDashboard = () => {
 
       navigate("/auth/login");
     });
+    setLogoutLoading(false);
   };
 
   useEffect(() => {
@@ -136,16 +139,9 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchToday = async () => {
       try {
-        const response = await fetch(`${baseUrl}/attendance/today`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setTodayAttendance(result.data);
+        const response = await instance.get(`/attendance/today`);
+        if (response.data.success) {
+          setTodayAttendance(response.data.data);
         }
       } catch (error) {
         console.error("Error fetching today's attendance", error);
@@ -177,14 +173,12 @@ const UserDashboard = () => {
       return;
     }
 
-    // Stop the timer and record the time when Check Out is clicked
     clearInterval(timerInterval);
     setStoppedTime(new Date().toISOString());
     setIsTimeStoppedForCheckout(true);
     setIsModalOpen(true);
   };
 
-  // Reset stopped time when modal closes
   useEffect(() => {
     if (!isModalOpen) {
       setIsTimeStoppedForCheckout(false);
@@ -217,10 +211,11 @@ const UserDashboard = () => {
 
     return `${hours}h ${minutes}m`;
   };
-  const [selectedReasons, setSelectedReasons] = useState({});
+  const [selectedReasons, setSelectedReasons] = useState("");
   const [shiftDate, setShiftDate] = useState("");
   const [description, setDiscription] = useState("");
   const [selectmissingType, setSelectmissingType] = useState("");
+
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
       {modalOpen && missingAttendance.length > 0 && (
@@ -290,9 +285,24 @@ const UserDashboard = () => {
                 <hr className="my-2" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
+                  disabled={logoutLoading}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
+                    logoutLoading
+                      ? "bg-red-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  } text-white`}
                 >
-                  <IoLogOut className="text-lg" /> Logout
+                  {logoutLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin text-sm" />
+                      Logging out...
+                    </>
+                  ) : (
+                    <>
+                      <IoLogOut className="text-lg" />
+                      Logout
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -366,6 +376,7 @@ const UserDashboard = () => {
                           hour: "numeric",
                           minute: "2-digit",
                           hour12: true,
+                          timeZone: "Asia/Karachi",
                         }
                       )}
                     </p>
@@ -391,31 +402,38 @@ const UserDashboard = () => {
                     </p>
                     <p className="text-lg font-bold">
                       {new Date(
-                        todayAttendance.checkOutTime
+                        todayAttendance?.checkOutTime
                       ).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true,
+                        timeZone: "Asia/Karachi",
                       })}
                     </p>
                   </div>
                 )}
               </div>
-
-              <div className="flex gap-4 justify-center mt-10">
+              <div className="flex flex-wrap gap-4 justify-center mt-10">
+                {/* Check In Button */}
                 <button
                   onClick={handleCheckIn}
-                  className="px-6 py-2 rounded-full bg-black text-white font-semibold shadow transition-all duration-200"
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
                   disabled={checkInloading}
                 >
-                  {checkInloading ? "Checking In..." : "Check In"}
+                  <IoFingerPrintOutline className="text-xl text-white" />
+                  <span className="text-sm sm:text-base">
+                    {checkInloading ? "Checking In..." : "Check In"}
+                  </span>
                 </button>
+
+                {/* Check Out Button */}
                 <button
                   onClick={handleCheckOut}
-                  className="px-6 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow transition-all duration-200"
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
                   disabled={checkInloading}
                 >
-                  Check Out
+                  <IoLogOutOutline className="text-xl text-white" />
+                  <span className="text-sm sm:text-base">Check Out</span>
                 </button>
               </div>
             </div>
@@ -738,8 +756,6 @@ const ProjectList = ({
       60;
     return `${h} hour(s) ${m} minute(s) ${s} second(s)`;
   };
-
-  console.log(checkInTime, "checkInTimeForgot====>", checkInTime, "===>");
 
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
@@ -1064,7 +1080,6 @@ const ForgotProjectList = ({
   const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
-  console.log("entries --- ", entries);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -1078,12 +1093,16 @@ const ForgotProjectList = ({
     const createDateTime = (timeStr) => {
       const [hours, minutes] = timeStr.trim().split(":").map(Number);
       const date = new Date(shiftDate);
-      date.setUTCHours(hours, minutes, 0, 0); // Set time in UTC
+      date.setUTCHours(hours, minutes, 0, 0); // Use UTC to prevent timezone bugs
       return date;
     };
 
     const checkInDate = createDateTime(checkInTimeForgot);
     const checkOutDate = createDateTime(checkOutTimeForgot);
+
+    if (checkOutDate <= checkInDate) {
+      checkOutDate.setDate(checkOutDate.getDate() + 1); // Fix for night shifts
+    }
 
     const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
 
@@ -1091,7 +1110,6 @@ const ForgotProjectList = ({
   };
 
   const totalAvailableMinutes = availableMinutes();
-  console.log("totalAvailable", totalAvailableMinutes);
 
   const totalEnteredMinutes = entries.reduce((sum, entry) => {
     const hours = parseInt(entry.hoursWorked) || 0;
@@ -1170,7 +1188,7 @@ const ForgotProjectList = ({
 
   const payload = {
     shiftDate: shiftDate,
-    reason: selectmissingType === "checkout_missing" ? "" : selectedReasons,
+    reason:  selectedReasons,
     note: entries
       ?.map((entry) => entry?.description)
       .filter(Boolean)
@@ -1188,7 +1206,7 @@ const ForgotProjectList = ({
   };
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    console.log("payload-- ", payload);
+
     const newErrors = {};
 
     entries.forEach((entry, index) => {
@@ -1249,10 +1267,12 @@ const ForgotProjectList = ({
       setIsSubmitting(false);
       return;
     }
+   
 
+    // return console.log(payload)
     try {
       const res = await axios.post("/attendance/missing", payload);
-      console.log("Success:", res.data);
+
       SuccessToast("Submitted successfully");
       setIsUpdate((prev) => !prev);
       setForgotisModalOpen(false);

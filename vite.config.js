@@ -6,5 +6,8 @@ export default defineConfig({
   plugins: [react()],
   build:{
     target: 'esnext',
+  },
+  server:{
+    allowedHosts:["b96bdae7dc2c.ngrok-free.app"]
   }
 })

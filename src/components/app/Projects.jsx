@@ -7,18 +7,37 @@ import Pagination from "../../components/global/Pagination";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
+  const [divisions, setDivisions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
+  const [newProject, setNewProject] = useState({
+    name: "",
+    division: "",
+    projectType: "",
+  });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [editedName, setEditedName] = useState("");
+  const [divisionId, setDivisonId] = useState("");
+  const [projectType, setProjectType] = useState("");
   const [updating, setUpdating] = useState(false);
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  const fetchDivisions = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/division");
+      setDivisions(res.data.data);
+    } catch (err) {
+      ErrorToast("Failed to fetch departments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -43,17 +62,25 @@ const Projects = () => {
     fetchProjects();
   }, [search, currentPage]);
 
+  useEffect(() => {
+    fetchDivisions();
+  }, []);
+
   const createProject = async () => {
-    if (!newProjectName.trim()) {
-      ErrorToast("Please enter a project name");
+    if (
+      !newProject.name.trim() ||
+      !newProject.projectType.trim() ||
+      !newProject.division.trim()
+    ) {
+      ErrorToast("Please fill all fields");
       return;
     }
 
     try {
       setCreating(true);
-      await axios.post("/projects", { name: newProjectName });
+      await axios.post("/projects", newProject);
       SuccessToast("Project created successfully");
-      setNewProjectName("");
+      setNewProject({ name: "", division: "", projectType: "" });
       fetchProjects();
     } catch (err) {
       ErrorToast("Failed to create project");
@@ -65,6 +92,8 @@ const Projects = () => {
   const openEditModal = (project) => {
     setEditingProject(project);
     setEditedName(project.name);
+    setDivisonId(project.division._id);
+    setProjectType(project.projectType);
     setEditModalOpen(true);
   };
 
@@ -85,6 +114,8 @@ const Projects = () => {
       await axios.put(`/projects`, {
         id: editingProject._id,
         name: editedName,
+        projectType,
+        division: divisionId,
       });
       SuccessToast("Project updated successfully");
       closeEditModal();
@@ -101,20 +132,57 @@ const Projects = () => {
       {/* Create Project Form */}
       <div className="bg-[rgb(237_237_237)] shadow-md p-4 rounded-md mb-6">
         <h3 className="text-lg font-semibold mb-2">Projects</h3>
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            placeholder="Enter project name"
-            className="border rounded-md p-2 flex-1"
-          />
+        <div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={newProject.name}
+              onChange={(e) =>
+                setNewProject((prev) => ({ ...prev, name: e.target.value }))
+              }
+              placeholder="Project name"
+              className="border border-gray-300 rounded-md px-3 py-2 flex-1 "
+            />
+
+            <select
+              value={newProject.division}
+              onChange={(e) =>
+                setNewProject((prev) => ({ ...prev, division: e.target.value }))
+              }
+              className="border border-gray-300 rounded-md px-3 py-2 "
+            >
+              <option value="">Select division</option>
+              {divisions?.map((division) => (
+                <option key={division._id} value={division._id}>
+                  {division.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Project Type Dropdown */}
+            <select
+              value={newProject.projectType}
+              onChange={(e) =>
+                setNewProject((prev) => ({
+                  ...prev,
+                  projectType: e.target.value,
+                }))
+              }
+              className="border border-gray-300 rounded-md px-3 py-2 "
+            >
+              <option value="">Project type</option>
+              <option value="external">External</option>
+              <option value="internal">Internal</option>
+            </select>
+
+            {/* Small Create Button */}
+          </div>
           <button
             onClick={createProject}
             disabled={creating}
-            className="bg-[#f40e00] text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+            className="bg-[#f40e00] text-white mt-4 px-12  py-2 rounded hover:bg-red-700 disabled:opacity-50 text-sm"
           >
-            {creating ? "Creating..." : "Create"}
+            {creating ? "..." : "Create"}
           </button>
         </div>
       </div>
@@ -138,6 +206,8 @@ const Projects = () => {
                 <tr>
                   <th className="px-4 py-2 border">#</th>
                   <th className="px-4 py-2 border">Project Name</th>
+                  <th className="px-4 py-2 border">Division</th>
+                  <th className="px-4 py-2 border">Project Type</th>
                   <th className="px-4 py-2 border">Created At</th>
                   <th className="px-4 py-2 border">Action</th>
                 </tr>
@@ -153,6 +223,12 @@ const Projects = () => {
                     </td>
                     <td className="px-4 py-2 text-center font-medium border">
                       {project.name}
+                    </td>
+                    <td className="px-4 py-2 text-center font-medium border">
+                      {project.division.name}
+                    </td>
+                    <td className="px-4 py-2 text-center capitalize font-medium border">
+                      {project.projectType}
                     </td>
                     <td className="px-4 py-2 text-center text-sm border">
                       {new Date(project.createdAt).toLocaleDateString()}
@@ -193,6 +269,32 @@ const Projects = () => {
               className="w-full border p-2 rounded mb-4"
               placeholder="Project name"
             />
+            <select
+              value={divisionId}
+              onChange={(e) =>
+                setDivisonId(e.target.value)
+              }
+              className="border border-gray-300 rounded-md px-3 py-2 w-full mb-4"
+            >
+              <option value="">Select division</option>
+              {divisions?.map((division) => (
+                <option key={division._id} value={division._id}>
+                  {division.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={projectType}
+              onChange={(e) =>
+                setProjectType(e.target.value)
+              }
+              className="border border-gray-300 rounded-md px-3 py-2 w-full mb-4"
+            >
+              <option value="">Project type</option>
+              <option value="external">External</option>
+              <option value="internal">Internal</option>
+            </select>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeEditModal}

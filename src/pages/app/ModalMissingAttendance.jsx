@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
-
+import { IoLogOut } from "react-icons/io5";
+import { FaSpinner } from "react-icons/fa";
+import { useLogin } from "../../hooks/api/Post";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router";
 const ModalMissingAttendance = ({
   setIsUpdate,
   missingAttendance = [],
@@ -16,7 +20,9 @@ const ModalMissingAttendance = ({
   setSelectmissingType,
   selectedReasons,
 }) => {
-  console.log("checkInTime -- ", checkOutTime, checkInTime);
+   const [logoutLoading, setLogoutLoading] = useState(false);
+    const { postData, loading } = useLogin();
+    const navigate = useNavigate();
   const [formData, setFormData] = useState(
     missingAttendance?.map((item) => ({
       shiftDate: item?.shiftDate,
@@ -102,8 +108,13 @@ const ModalMissingAttendance = ({
         shiftDate: currentEntry.shiftDate,
       };
 
+      // return console.log(currentEntry)
+ 
+      if(!payload.reason){
+        return ErrorToast("Please select reason")
+      }
       const res = await axios.post("/attendance/missing", payload);
-      console.log("Success:", res?.data);
+
       SuccessToast("Submitted successfully");
       if (missingAttendance.length === 0) {
         setModalOpen(false);
@@ -139,8 +150,41 @@ const ModalMissingAttendance = ({
     });
   };
 
+  const handleLogout = async () => {
+    setLogoutLoading(true);
+    await postData("/auth/logout", false, null, null, (res) => {
+      Cookies.remove("token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      SuccessToast("Logged out successfully.");
+      navigate("/auth/login");
+    });
+    setLogoutLoading(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+      <button
+        onClick={handleLogout}
+        disabled={logoutLoading}
+        className={`w-[100px] top-4 right-4 flex absolute items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
+          logoutLoading
+            ? "bg-red-400 cursor-not-allowed"
+            : "bg-red-600 hover:bg-red-700"
+        } text-white`}
+      >
+        {logoutLoading ? (
+          <>
+            <FaSpinner className="animate-spin text-sm" />
+            Logging out...
+          </>
+        ) : (
+          <>
+            <IoLogOut className="text-lg" />
+            Logout
+          </>
+        )}
+      </button>
       <div className="bg-white p-6 max-h-[90vh] overflow-auto rounded-lg shadow-lg max-w-2xl w-full">
         <h2 className="text-lg font-semibold text-red-600 mb-4">
           Missing Attendance Detected
@@ -203,42 +247,7 @@ const ModalMissingAttendance = ({
                       <input
                         type="time"
                         value={checkOutTime || ""}
-                        min={
-                          item?.type === "checkout_missing"
-                            ? formatTimeOnly(item?.checkInTimes)
-                            : checkInTime
-                        }
-                        onChange={(e) => {
-                          const selected = e.target.value;
-
-                          const checkInBase =
-                            item?.type === "checkout_missing"
-                              ? formatTimeOnly(item?.checkInTimes)
-                              : checkInTime;
-
-                          if (!selected || !checkInBase) return;
-
-                          const [inH, inM] = checkInBase.split(":").map(Number);
-                          const [outH, outM] = selected.split(":").map(Number);
-
-                          const checkInDate = new Date(0, 0, 0, inH, inM);
-                          const checkOutDate = new Date(0, 0, 0, outH, outM);
-                          const isOvernightShift =
-                            outH < 6 &&
-                            (inH >= 18 || checkOutDate < checkInDate);
-
-                          if (
-                            !isOvernightShift &&
-                            checkOutDate <= checkInDate
-                          ) {
-                            ErrorToast(
-                              "Checkout time must be after check-in time"
-                            );
-                            return;
-                          }
-
-                          setcheckOutTime(selected);
-                        }}
+                        onChange={(e) => setcheckOutTime(e.target.value)}
                         className="w-full border rounded-md px-2 py-1"
                       />
                     </div>
@@ -274,9 +283,8 @@ const ModalMissingAttendance = ({
                     <option value="">Select reason</option>
                     <option value="absent">Absent</option>
                     <option value="forgot">Forgot</option>
-                    <option value="weekend">Weekend</option>
-                    <option value="holiday">Holiday</option>
-                    <option value="other">Other</option>
+                    {/* <option value="holiday">Holiday</option> */}
+                    {/* <option value="other">Other</option> */}
                   </select>
                   {errors[lastIndex]?.reason && (
                     <p className="text-red-500 text-xs mt-1">
@@ -333,7 +341,8 @@ const ModalMissingAttendance = ({
                 </div>
               )}
               {item?.reason === "forgot" ||
-              item?.type === "checkout_missing" ? (
+              item?.type === "checkout_missing" ||
+              item?.reason === "holiday" ? (
                 <div></div>
               ) : (
                 <div>
@@ -360,17 +369,18 @@ const ModalMissingAttendance = ({
         })}
 
         <div className="mt-4 flex justify-end gap-3">
-          {selectedReasons !== "forgot" && (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className={`px-5 py-2 rounded text-white ${
-                submitting ? "bg-red-300" : "bg-red-500 hover:bg-red-600"
-              }`}
-            >
-              {submitting ? "Submitting..." : "Submit"}
-            </button>
-          )}
+          {selectedReasons !== "forgot" &&
+            formData[formData.length - 1]?.type !== "checkout_missing" && (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className={`px-5 py-2 rounded text-white ${
+                  submitting ? "bg-red-300" : "bg-red-500 hover:bg-red-600"
+                }`}
+              >
+                {submitting ? "Submitting..." : "Submit"}
+              </button>
+            )}
         </div>
       </div>
     </div>

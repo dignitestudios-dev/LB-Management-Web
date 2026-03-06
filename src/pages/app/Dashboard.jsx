@@ -14,6 +14,7 @@ import {
   FaSignOutAlt,
   FaBusinessTime,
   FaTasks,
+  FaSpinner,
 } from "react-icons/fa";
 import Shift from "../../components/app/Shifts";
 import { useLogin } from "../../hooks/api/Post";
@@ -22,9 +23,15 @@ import { SuccessToast } from "../../components/global/Toaster";
 import { IoLogOut } from "react-icons/io5";
 import EmployeeTimeSheet from "../../components/app/EmployeeTimeSheet";
 import { PiArticleNyTimes } from "react-icons/pi";
+import Divisions from "../../components/app/Divisions";
+import Reports from "../../components/app/Reports";
+import Holidays from "../../components/app/Holidays";
+import MissingEnteries from "../../components/app/MissingEnteries";
+
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("summary");
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const navigate = useNavigate();
   const { postData, loading } = useLogin();
   const { data: user, loading: userLoading } = useUsers("/users/me");
@@ -33,7 +40,7 @@ const Dashboard = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      console.log(parsedUser, "roless");
+
       if (parsedUser.role?.name !== "Admin") {
         navigate("/app/userdashboard");
       }
@@ -48,6 +55,8 @@ const Dashboard = () => {
         return <Users />;
       case "departments":
         return <Departments />;
+      case "divisions":
+        return <Divisions />;
       case "summary":
         return <Summary />;
       case "roles":
@@ -58,6 +67,12 @@ const Dashboard = () => {
         return <Shift />;
       case "timeSheet":
         return <EmployeeTimeSheet />;
+      case "reports":
+        return <Reports />;
+      case "holidays":
+        return <Holidays />;
+      case "missenteries":
+        return <MissingEnteries />;
       default:
         return <Summary />;
     }
@@ -80,6 +95,7 @@ const Dashboard = () => {
   }, [isProfileOpen]);
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     await postData("/auth/logout", false, null, null, (res) => {
       Cookies.remove("token");
       localStorage.removeItem("token");
@@ -87,6 +103,7 @@ const Dashboard = () => {
       SuccessToast("Logged out successfully.");
       navigate("/auth/login");
     });
+    setLogoutLoading(false);
   };
 
   return (
@@ -137,9 +154,24 @@ const Dashboard = () => {
                 <hr className="my-2" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm"
+                  disabled={logoutLoading}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
+                    logoutLoading
+                      ? "bg-red-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  } text-white`}
                 >
-                  <IoLogOut className="text-lg" /> Logout
+                  {logoutLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin text-sm" />
+                      Logging out...
+                    </>
+                  ) : (
+                    <>
+                      <IoLogOut className="text-lg" />
+                      Logout
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -157,7 +189,24 @@ const Dashboard = () => {
               active={activeTab === "summary"}
               onClick={() => setActiveTab("summary")}
             />
-
+            <SidebarItem
+              icon={<PiArticleNyTimes />}
+              label="Reports"
+              active={activeTab === "reports"}
+              onClick={() => setActiveTab("reports")}
+            />
+            <SidebarItem
+              icon={<PiArticleNyTimes />}
+              label="Holidays"
+              active={activeTab === "holidays"}
+              onClick={() => setActiveTab("holidays")}
+            />
+            <SidebarItem
+              icon={<FaUsers />}
+              label="Missing Enteries"
+              active={activeTab === "missenteries"}
+              onClick={() => setActiveTab("missenteries")}
+            />
             <SidebarItem
               icon={<FaUsers />}
               label="All Users"
@@ -169,6 +218,12 @@ const Dashboard = () => {
               label="All Departments"
               active={activeTab === "departments"}
               onClick={() => setActiveTab("departments")}
+            />
+            <SidebarItem
+              icon={<FaBuilding />}
+              label="All Divisions"
+              active={activeTab === "divisions"}
+              onClick={() => setActiveTab("divisions")}
             />
             <SidebarItem
               icon={<FaBusinessTime />}

@@ -5,6 +5,7 @@ import { baseUrl } from "../../axios";
 import EmployeeTable from "./EmployeeTable";
 import { GrFilter } from "react-icons/gr";
 import { Nodata } from "../../assets/export";
+import { ErrorToast } from "../global/Toaster";
 
 const EmployeeTimeSheet = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -17,14 +18,12 @@ const EmployeeTimeSheet = () => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    const start = firstDay.toISOString().split("T")[0];
-    const end = lastDay.toISOString().split("T")[0];
-
-    return { start, end };
+    return { start: firstDay, end: lastDay }; // ✅ return Date objects
   };
   const { start, end } = getMonthRange();
-  const [fromDate, setFromDate] = useState(start);
-  const [toDate, setToDate] = useState(today);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   const [isOpen, setIsOpen] = useState(true);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
@@ -35,11 +34,27 @@ const EmployeeTimeSheet = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [attendance, setAttendance] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const fetchUsers = async (searchTerm = "") => {
+  const [summaryTriggered, setSummaryTriggered] = useState({});
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+  });
+  const formatDateLocal = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchUsers = async (searchTerm = "", page = 1) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${baseUrl}/users?search=${encodeURIComponent(searchTerm)}`,
+        `${baseUrl}/users?search=${encodeURIComponent(
+          searchTerm
+        )}&page=${page}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -50,6 +65,10 @@ const EmployeeTimeSheet = () => {
       const result = await response.json();
       if (result.success) {
         setUsers(result.data);
+        setPagination({
+          currentPage: result.pagination.currentPage,
+          totalPages: result.pagination.totalPages,
+        });
       }
     } catch (error) {
       console.error("Error fetching users", error);
@@ -60,7 +79,7 @@ const EmployeeTimeSheet = () => {
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      fetchUsers(query);
+      fetchUsers(query, 1);
     }, 500);
     return () => clearTimeout(delayDebounce);
   }, [query]);
@@ -99,6 +118,7 @@ const EmployeeTimeSheet = () => {
         setAttendance(result?.data);
         setIsOpen(false);
         setTableShow(true);
+         setSummaryTriggered({ selectedUser });
       }
     } catch (error) {
       console.error("Error fetching filtered attendance", error);
@@ -110,35 +130,37 @@ const EmployeeTimeSheet = () => {
     fetchUsers();
   }, []);
   const handleClear = () => {
-    const { start, end } = getMonthRange();
     setSelectedUser(null);
     setQuery("");
-    setFromDate(start);
-    setToDate(today);
+    setFromDate("");
+    setToDate("");
     setAttendance([]);
     setTableShow(false);
     setIsOpen(true);
+    setError("");
+
+    setSummaryTriggered({});
   };
+
   return (
     <div>
       <div
         className="flex justify-between p-4"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {tableShow && (
-          <div>
-            {selectedUser && (
-              <div className="flex items-center">
-                <span className="text-sm text-gray-500">
-                  Showing Attendance For :
-                </span>
-                <h2 className="text-xl mx-2 font-bold text-gray-800">
-                  {selectedUser?.name}
-                </h2>
-              </div>
-            )}
-          </div>
-        )}
+        <div>
+          {summaryTriggered?.selectedUser && (
+            <div className="flex items-center">
+              <span className="text-sm text-gray-500">
+                Showing Attendance For :
+              </span>
+              <h2 className="text-xl mx-2 font-bold text-gray-800">
+                {summaryTriggered?.selectedUser?.name}
+              </h2>
+            </div>
+          )}
+        </div>
+
         <button className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-md shadow-sm transition">
           <GrFilter className="text-lg" />
           <span className="text-sm font-semibold">Filter</span>
@@ -171,7 +193,8 @@ const EmployeeTimeSheet = () => {
                 </div>
 
                 {showDropdown && (
-                  <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md max-h-64 overflow-y-auto">
+                  <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md">
+                    {/* Search Input */}
                     <div className="flex items-center px-2 py-2 border-b">
                       <input
                         type="text"
@@ -183,39 +206,74 @@ const EmployeeTimeSheet = () => {
                       <FaSearch className="text-gray-400" />
                     </div>
 
-                    {loading ? (
-                      <div className="p-2 text-sm text-gray-500">
-                        Loading...
-                      </div>
-                    ) : users.length === 0 ? (
-                      <div className="p-2 text-sm text-gray-500">
-                        No employees found.
-                      </div>
-                    ) : (
-                      users.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            setSelectedUser(item);
-                            setShowDropdown(false);
-                            setError("");
-                          }}
-                        >
-                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
-                            {getInitials(item.name)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-800">
-                              {item.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {item.designation || "Designation"}
-                            </div>
-                          </div>
+                    {/* Scrollable List */}
+                    <div className="max-h-64 overflow-y-auto">
+                      {loading ? (
+                        <div className="p-4 space-y-2">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="h-10 bg-gray-100 animate-pulse rounded-md"
+                            ></div>
+                          ))}
                         </div>
-                      ))
-                    )}
+                      ) : users.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500">
+                          No employees found.
+                        </div>
+                      ) : (
+                        users.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setSelectedUser(item);
+                              setShowDropdown(false);
+                              setError("");
+                            }}
+                          >
+                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
+                              {getInitials(item.name)}
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-800">
+                                {item?.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {item?.designation}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Pagination Fixed Bottom */}
+                    <div className="flex items-center justify-between p-2 text-sm border-t sticky bottom-0 bg-white">
+                      <button
+                        className="px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
+                        disabled={pagination.currentPage === 1}
+                        onClick={() =>
+                          fetchUsers(query, pagination.currentPage - 1)
+                        }
+                      >
+                        Prev
+                      </button>
+                      <span className="text-gray-600">
+                        Page {pagination.currentPage} of {pagination.totalPages}
+                      </span>
+                      <button
+                        className="px-2 py-1 bg-red-100 text-red-600 rounded disabled:opacity-50"
+                        disabled={
+                          pagination.currentPage === pagination.totalPages
+                        }
+                        onClick={() =>
+                          fetchUsers(query, pagination.currentPage + 1)
+                        }
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 )}
                 <p className="text-red-600 text-[12px] mt-2 px-2 ">{error}</p>
@@ -249,7 +307,10 @@ const EmployeeTimeSheet = () => {
 
             <div className="flex items-center justify-between mt-4 gap-4">
               <button
-                onClick={fetchAttendance}
+                onClick={() => {
+                  fetchAttendance();
+                 
+                }}
                 disabled={loadingAttendance}
                 className={`w-[200px] px-4 py-2 rounded-md text-md font-[500] flex items-center justify-center gap-2 ${
                   loadingAttendance
@@ -278,7 +339,12 @@ const EmployeeTimeSheet = () => {
         </div>
       )}
       {tableShow ? (
-        <EmployeeTable attendance={attendance} />
+        <EmployeeTable
+          attendance={attendance}
+          loading={loading}
+          setAttendance={setAttendance}
+          fetchAttendance={fetchAttendance}
+        />
       ) : (
         <div className="flex flex-col justify-center items-center h-[60vh]">
           {/* <img src={Nodata} className="w-[160px] h-[160px] " alt="" /> */}
