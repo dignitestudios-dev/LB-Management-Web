@@ -111,7 +111,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
+    <div className="h-screen bg-[#f4f8ff] flex flex-col overflow-hidden">
       {/* Sidebar */}
       <div className="w-full flex justify-between items-center px-6 py-4 bg-white border-b shadow-sm">
         <div className="text-2xl font-bold text-black">
@@ -183,9 +183,9 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 bg-white border-r p-6 shadow-md">
+          <div className="w-64 bg-white border-r p-6 shadow-md overflow-y-auto flex-shrink-0">
           <ul className="space-y-2 mt-10">
             {/* <SidebarItem
               icon={<FaChartBar />}
