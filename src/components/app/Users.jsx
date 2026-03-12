@@ -236,7 +236,7 @@ const Users = () => {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {["name", "email", "password", "employeeCode"].map((field) => (
+          {["name", "email", "password", "employeeCode"]?.map((field) => (
             <input
               key={field}
               name={field}
@@ -255,7 +255,7 @@ const Users = () => {
             className="p-2 border rounded w-full"
           >
             <option value="">Select Role</option>
-            {roles.map((r) => (
+            {roles?.map((r) => (
               <option key={r._id} value={r._id}>
                 {r.name}
               </option>
@@ -269,7 +269,7 @@ const Users = () => {
             className="p-2 border rounded w-full"
           >
             <option value="">Select Department</option>
-            {departments.map((d) => (
+            {departments?.map((d) => (
               <option key={d._id} value={d._id}>
                 {d.name}
               </option>
@@ -283,7 +283,7 @@ const Users = () => {
             className="p-2 border rounded w-full"
           >
             <option value="">Select Shift</option>
-            {shifts.map((s) => (
+            {shifts?.map((s) => (
               <option key={s._id} value={s._id}>
                 {s.name} ({formatHour(s.startHour)} - {formatHour(s.endHour)})
               </option>
@@ -316,19 +316,19 @@ const Users = () => {
       <div className="flex gap-4 mb-4">
         {/* <MultiSelectFilter
     title="Departments"
-    options={departments.map((d) => ({ value: d._id, label: d.name }))}
+    options={departments?.map((d) => ({ value: d._id, label: d.name }))}
     selected={selectedDepartments}
     setSelected={setSelectedDepartments}
   /> */}
         {/* <MultiSelectFilter
     title="Roles"
-    options={roles.map((r) => ({ value: r._id, label: r.name }))}
+    options={roles?.map((r) => ({ value: r._id, label: r.name }))}
     selected={selectedRoles}
     setSelected={setSelectedRoles}
   /> */}
         {/* <MultiSelectFilter
     title="Shifts"
-    options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+    options={shifts?.map((s) => ({ value: s._id, label: s.name }))}
     selected={selectedShifts}
     setSelected={setSelectedShifts}
   /> */}
@@ -346,7 +346,7 @@ const Users = () => {
               <th className="px-4 py-3 border">
                 <MultiSelectFilter
                   title="Departments"
-                  options={departments.map((d) => ({
+                  options={departments?.map((d) => ({
                     value: d._id,
                     label: d.name,
                   }))}
@@ -357,7 +357,7 @@ const Users = () => {
               <th className="px-4 py-3 border">
                 <MultiSelectFilter
                   title="Roles"
-                  options={roles.map((r) => ({ value: r._id, label: r.name }))}
+                  options={roles?.map((r) => ({ value: r._id, label: r.name }))}
                   selected={selectedRoles}
                   setSelected={setSelectedRoles}
                 />
@@ -365,7 +365,7 @@ const Users = () => {
               <th className="px-4 py-3 border">
                 <MultiSelectFilter
                   title="Shifts"
-                  options={shifts.map((s) => ({ value: s._id, label: s.name }))}
+                  options={shifts?.map((s) => ({ value: s._id, label: s.name }))}
                   selected={selectedShifts}
                   setSelected={setSelectedShifts}
                 />
@@ -382,9 +382,9 @@ const Users = () => {
                 </td>
               </tr>
             </tbody>
-          ) : users.length > 0 ? (
+          ) : users?.length > 0 ? (
             <tbody>
-              {users.map((user, i) => (
+              {users?.map((user, i) => (
                 <tr key={user._id} className="hover:bg-blue-50">
                   <td className="border text-center px-4 py-2">{i + 1}</td>
                   <td className="border text-center px-4 py-2">{user.name}</td>
@@ -429,7 +429,7 @@ const Users = () => {
       </div>
 
       {/* Pagination */}
-      {users.length > 0 && (
+      {users?.length > 0 && (
         <Pagination
           currentPage={page}
           totalPages={totalPages}
@@ -444,7 +444,7 @@ const Users = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Text Inputs */}
-        {["name", "employeeCode"].map((field) => (
+        {["name", "employeeCode"]?.map((field) => (
           <input
             key={field}
             name={field}
@@ -464,7 +464,7 @@ const Users = () => {
           className="p-2 border rounded"
         >
           <option value="">Select Role</option>
-          {roles.map((r) => (
+          {roles?.map((r) => (
             <option key={r._id} value={r._id}>
               {r.name}
             </option>
@@ -479,7 +479,7 @@ const Users = () => {
           className="p-2 border rounded"
         >
           <option value="">Select Department</option>
-          {departments.map((d) => (
+          {departments?.map((d) => (
             <option key={d._id} value={d._id}>
               {d.name}
             </option>
@@ -494,7 +494,7 @@ const Users = () => {
           className="p-2 border rounded"
         >
           <option value="">Select Shift</option>
-          {shifts.map((s) => (
+          {shifts?.map((s) => (
             <option key={s._id} value={s._id}>
               {s.name} ({formatHour(s.startHour)} - {formatHour(s.endHour)})
             </option>

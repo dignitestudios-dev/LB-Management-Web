@@ -143,14 +143,14 @@ const Holidays = () => {
                 </tr>
               </thead>
               <tbody>
-                {holidays.length === 0 ? (
+                {holidays?.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="text-center py-4 text-gray-500">
                       No holidays found.
                     </td>
                   </tr>
                 ) : (
-                  holidays.map((hol, index) => (
+                  holidays?.map((hol, index) => (
                     <tr
                       key={hol._id}
                       className="text-gray-800 hover:bg-gray-50"

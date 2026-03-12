@@ -381,7 +381,7 @@ const handleExport = () => {
                     className="appearance-none w-full border border-gray-300 bg-white rounded-md px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                   >
                     <option value="">Select Department</option>
-                    {department.map((depart) => (
+                    {department?.map((depart) => (
                       <option key={depart._id} value={depart._id}>
                         {depart?.name}
                       </option>

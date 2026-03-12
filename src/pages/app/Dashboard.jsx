@@ -183,7 +183,7 @@ const Dashboard = () => {
         {/* Sidebar */}
         <div className="w-64 bg-white border-r p-6 shadow-md">
           <ul className="space-y-2 mt-10">
-            <SidebarItem
+            {/* <SidebarItem
               icon={<FaChartBar />}
               label="Get Summary"
               active={activeTab === "summary"}
@@ -194,7 +194,7 @@ const Dashboard = () => {
               label="Reports"
               active={activeTab === "reports"}
               onClick={() => setActiveTab("reports")}
-            />
+            /> */}
             <SidebarItem
               icon={<PiArticleNyTimes />}
               label="Holidays"
