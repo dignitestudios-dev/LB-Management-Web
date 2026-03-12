@@ -103,8 +103,8 @@ export default function VerifyOtp() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#f4f8ff] px-6 py-12">
-        <div className="w-full max-w-md bg-[rgb(237 237 237)] rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100 relative">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-12">
+        <div className="w-full max-w-md bg-white rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100 relative">
           {/* Back Button */}
           <button
             onClick={() => navigate("/auth/forget-password")}
@@ -151,7 +151,7 @@ export default function VerifyOtp() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-[#f40e00] text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
               disabled={verifying}
             >
               {verifying ? "Verifying..." : "Verify OTP"}
@@ -181,8 +181,13 @@ export default function VerifyOtp() {
       </div>
 
       {/* Right Side */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]">
-        <img src="/demo.png" alt="" />
+      <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat bg-primary">
+        <img
+          src="/logo-dx.webp"
+          alt="Dexnive watermark"
+          className="pointer-events-none absolute h-72 w-72 opacity-15"
+        />
+        <img src="/demo.png" alt="" className="relative z-10" />
       </div>
     </div>
   );

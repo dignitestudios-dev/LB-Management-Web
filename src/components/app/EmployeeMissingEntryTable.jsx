@@ -8,7 +8,6 @@ import instance, { baseUrl } from "../../axios";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import { X } from "lucide-react";
 import MultiSelectFilter from "../ui/MultipleFilterSelector";
-import { formatHour } from "../../lib/helpers";
 
 const EmployeeMissingEntryTable = ({
   attendance,
@@ -23,10 +22,8 @@ const EmployeeMissingEntryTable = ({
   const [deleteId, setDeleteId] = useState();
   const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [shifts, setShifts] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedRoles, setSelectedRoles] = useState([]);
-  const [selectedShifts, setSelectedShifts] = useState([]);
   // New State for Eye Modal
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -53,14 +50,12 @@ const EmployeeMissingEntryTable = ({
   };
   const fetchFormOptions = async () => {
     try {
-      const [roleRes, deptRes, shiftRes] = await Promise.all([
+      const [roleRes, deptRes] = await Promise.all([
         instance.get("/roles/"),
         instance.get("/departments/"),
-        instance.get("/shifts/"),
       ]);
       setRoles(roleRes.data.data);
       setDepartments(deptRes.data.data);
-      setShifts(shiftRes.data.data);
     } catch (err) {
       ErrorToast("Failed to load form data");
     }
@@ -71,8 +66,8 @@ const EmployeeMissingEntryTable = ({
   }, []);
 
   useEffect(() => {
-    fetchAttendance(selectedDepartments, selectedRoles, selectedShifts);
-  }, [selectedDepartments, selectedRoles, selectedShifts]);
+    fetchAttendance(selectedDepartments, selectedRoles);
+  }, [selectedDepartments, selectedRoles]);
   return (
     <div>
       <div className="bg-white shadow-sm border border-gray-200">
@@ -126,20 +121,6 @@ const EmployeeMissingEntryTable = ({
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  {/* <BsClockHistory className="w-4 h-4" /> */}
-                  <MultiSelectFilter
-                    title="Shifts"
-                    options={shifts.map((s) => ({
-                      value: s._id,
-                      label: s.name,
-                    }))}
-                    selected={selectedShifts}
-                    setSelected={setSelectedShifts}
-                  />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Action
               </th>
             </tr>
@@ -173,13 +154,6 @@ const EmployeeMissingEntryTable = ({
                     <td className="px-6 py-4">{item.totalMissingEntries}</td>
                     <td className="px-6 py-4">{item.departmentName}</td>
                     <td className="px-6 py-4">{item.roleName}</td>
-                    <td className="border text-center px-4 py-2">
-                      {item.shift
-                        ? ` (${formatHour(
-                            item.shift.startHour
-                          )} - ${formatHour(item.shift.endHour)})`
-                        : "—"}
-                    </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => {

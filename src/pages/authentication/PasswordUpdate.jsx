@@ -86,7 +86,7 @@ export default function ResetPassword() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 bg-[#f40e00] text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
               disabled={loading}
             >
               {loading ? "Updating..." : "Update Password"}
@@ -94,8 +94,13 @@ export default function ResetPassword() {
           </form>
         </div>
       </div>
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]">
-        <img src="/demo.png" alt="" />
+      <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat bg-primary">
+        <img
+          src="/logo-dx.webp"
+          alt="Dexnive watermark"
+          className="pointer-events-none absolute h-72 w-72 opacity-15"
+        />
+        <img src="/demo.png" alt="" className="relative z-10" />
       </div>
     </div>
   );

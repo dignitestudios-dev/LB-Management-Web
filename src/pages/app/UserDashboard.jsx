@@ -239,7 +239,7 @@ const UserDashboard = () => {
       {/* Topbar */}
       <div className="w-full flex justify-between items-center px-6 py-4 bg-white border-b shadow-sm">
         <div className="text-2xl font-bold text-black">
-          <img src="/logo.webp" alt="" className="w-auto h-8" />
+          <img src="/logo-dx.webp" alt="" className="w-auto h-8" />
         </div>
         {userLoading ? (
           <p className="text-sm font-medium text-gray-500">Loading...</p>
@@ -288,8 +288,8 @@ const UserDashboard = () => {
                   disabled={logoutLoading}
                   className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
                     logoutLoading
-                      ? "bg-red-400 cursor-not-allowed"
-                      : "bg-red-600 hover:bg-red-700"
+                      ? "bg-primary/50 cursor-not-allowed"
+                      : "bg-primary"
                   } text-white`}
                 >
                   {logoutLoading ? (

@@ -1,32 +1,35 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../axios";
 import { ErrorToast, SuccessToast } from "../../components/global/Toaster";
-import { ImSpinner3 } from "react-icons/im";
-import SearchBar from "../global/SearchBar";
+import { FiPlus, FiEdit2, FiFilter } from "react-icons/fi";
+import { BiSearch } from "react-icons/bi";
+import { FiX } from "react-icons/fi";
 import Pagination from "../global/Pagination";
-import MultiSelectFilter from "../ui/MultipleFilterSelector";
+import AddUserModal from "./AddUserModal";
+import EditUserModal from "./EditUserModal";
+import UserFiltersModal from "./UserFiltersModal";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [shifts, setShifts] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedRoles, setSelectedRoles] = useState([]);
-  const [selectedShifts, setSelectedShifts] = useState([]);
 
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({
     name: "",
     role: "",
     department: "",
-    shift: "",
     employeeCode: "",
+    isLead: false,
   });
 
   const [form, setForm] = useState({
@@ -35,15 +38,15 @@ const Users = () => {
     password: "",
     role: "",
     department: "",
-    shift: "",
     employeeCode: "",
+    isLead: false,
     joiningDate: "",
   });
 
   // Pagination & Search
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(10); // Fixed limit
+  const [limit] = useState(50); // Fixed limit
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchUsers = async () => {
@@ -66,11 +69,6 @@ const Users = () => {
         params[`roleId[${idx}]`] = id;
       });
 
-      // Add shifts
-      selectedShifts.forEach((id, idx) => {
-        params[`shiftId[${idx}]`] = id;
-      });
-
       const res = await axios.get("/users", { params });
 
       setUsers(res.data.data);
@@ -84,18 +82,16 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [search, page, selectedDepartments, selectedRoles, selectedShifts]);
+  }, [search, page, selectedDepartments, selectedRoles]);
 
   const fetchFormOptions = async () => {
     try {
-      const [roleRes, deptRes, shiftRes] = await Promise.all([
+      const [roleRes, deptRes] = await Promise.all([
         axios.get("/roles/"),
         axios.get("/departments/"),
-        axios.get("/shifts/"),
       ]);
       setRoles(roleRes.data.data);
       setDepartments(deptRes.data.data);
-      setShifts(shiftRes.data.data);
     } catch (err) {
       ErrorToast("Failed to load form data");
     }
@@ -106,7 +102,12 @@ const Users = () => {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, type, value, checked } = e.target;
+
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -119,7 +120,6 @@ const Users = () => {
       "password",
       "role",
       "department",
-      "shift",
       "employeeCode",
       "joiningDate",
     ];
@@ -130,7 +130,10 @@ const Users = () => {
     }
 
     try {
-      await axios.post("/users/", form);
+      await axios.post("/users/", {
+        ...form,
+        joiningDate: `${form.joiningDate}T00:00:00Z`,
+      });
       SuccessToast("User created successfully!");
       setForm({
         name: "",
@@ -138,10 +141,11 @@ const Users = () => {
         password: "",
         role: "",
         department: "",
-        shift: "",
         employeeCode: "",
+        isLead: false,
         joiningDate: "",
       });
+      setAddModalOpen(false);
       fetchUsers();
     } catch (err) {
       ErrorToast("User creation failed");
@@ -157,8 +161,8 @@ const Users = () => {
       email: user.email || "",
       role: user.role?._id || "",
       department: user.department?._id || "",
-      shift: user.shift?._id || "",
       employeeCode: user.employeeCode || "",
+      isLead: user.isLead || false,
     });
     setEditModalOpen(true);
   };
@@ -175,13 +179,13 @@ const Users = () => {
       email,
       role,
       department,
-      shift,
       employeeCode,
+      isLead,
       deactivate,
       deactivateDate,
     } = editForm;
 
-    if (!name || !email || !role || !department || !shift || !employeeCode) {
+    if (!name || !email || !role || !department || !employeeCode) {
       ErrorToast("All fields are required");
       return;
     }
@@ -199,10 +203,10 @@ const Users = () => {
         name,
         role,
         department,
-        shift,
         employeeCode,
+        isLead,
         isDeleted: deactivate ? true : false,
-        ...(deactivate && { deactivateDate }), // send deactivateDate only if toggle is on
+        ...(deactivate && { deactivateDate }),
       };
 
       await axios.put("/users", body);
@@ -218,214 +222,233 @@ const Users = () => {
     }
   };
 
-  const formatHour = (hour) => {
-    const period = hour >= 12 ? "PM" : "AM";
-    const h = hour % 12 || 12;
-    return `${h}:00 ${period}`;
-  };
-
   return (
     <div className="p-6">
-      {/* Create User Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-[rgb(237_237_237)] p-4 rounded-lg shadow mb-6 space-y-3"
-      >
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          Create New User
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {["name", "email", "password", "employeeCode"]?.map((field) => (
-            <input
-              key={field}
-              name={field}
-              type={field === "password" ? "password" : "text"}
-              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              value={form[field]}
-              onChange={handleChange}
-              className="p-2 border rounded w-full"
-            />
-          ))}
-
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          >
-            <option value="">Select Role</option>
-            {roles?.map((r) => (
-              <option key={r._id} value={r._id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="department"
-            value={form.department}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          >
-            <option value="">Select Department</option>
-            {departments?.map((d) => (
-              <option key={d._id} value={d._id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="shift"
-            value={form.shift}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          >
-            <option value="">Select Shift</option>
-            {shifts?.map((s) => (
-              <option key={s._id} value={s._id}>
-                {s.name} ({formatHour(s.startHour)} - {formatHour(s.endHour)})
-              </option>
-            ))}
-          </select>
-          <input
-            name={"joiningDate"}
-            type={"date"}
-            placeholder={"Joining Date"}
-            value={form["joiningDate"]}
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-          />
-        </div>
-
+      {/* Page header */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-slate-800">Manage Users</h2>
         <button
-          type="submit"
-          className="mt-4 bg-[#f40e00] text-white px-6 py-2 rounded hover:bg-red-700 flex items-center justify-center gap-2"
-          disabled={submitLoading}
+          onClick={() => setAddModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition"
         >
-          {submitLoading && <ImSpinner3 className="animate-spin" />} Create User
+          <FiPlus className="text-base" />
+          Add User
         </button>
-      </form>
-      <SearchBar
-        onSearch={(q) => {
-          setSearch(q);
-          setPage(1); // Reset to page 1 on new search
+      </div>
+
+      <AddUserModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        form={form}
+        onFormChange={handleChange}
+        onSubmit={handleSubmit}
+        roles={roles}
+        departments={departments}
+        submitLoading={submitLoading}
+      />
+
+      <UserFiltersModal
+        isOpen={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        departments={departments}
+        roles={roles}
+        selectedDepartments={selectedDepartments}
+        selectedRoles={selectedRoles}
+        onApply={(depts, roles) => {
+          setSelectedDepartments(depts);
+          setSelectedRoles(roles);
+          setPage(1);
         }}
       />
-      <div className="flex gap-4 mb-4">
-        {/* <MultiSelectFilter
-    title="Departments"
-    options={departments?.map((d) => ({ value: d._id, label: d.name }))}
-    selected={selectedDepartments}
-    setSelected={setSelectedDepartments}
-  /> */}
-        {/* <MultiSelectFilter
-    title="Roles"
-    options={roles?.map((r) => ({ value: r._id, label: r.name }))}
-    selected={selectedRoles}
-    setSelected={setSelectedRoles}
-  /> */}
-        {/* <MultiSelectFilter
-    title="Shifts"
-    options={shifts?.map((s) => ({ value: s._id, label: s.name }))}
-    selected={selectedShifts}
-    setSelected={setSelectedShifts}
-  /> */}
+
+      {/* Search + Filter row */}
+      <div className="mb-3 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <BiSearch
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search users..."
+              className="h-10 w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilterModalOpen(true)}
+            className={`relative inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition ${
+              selectedDepartments.length > 0 || selectedRoles.length > 0
+                ? "border-primary bg-primary text-white"
+                : "border-slate-300 bg-white text-slate-600"
+            }`}
+          >
+            <FiFilter size={15} />
+            Filters
+            {(selectedDepartments.length > 0 || selectedRoles.length > 0) && (
+              <span className="ml-0.5 rounded-full bg-white/30 px-1.5 py-0.5 text-xs font-semibold">
+                {selectedDepartments.length + selectedRoles.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Applied filter chips */}
+        {(selectedDepartments.length > 0 || selectedRoles.length > 0) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-slate-500">Active filters:</span>
+            {selectedDepartments.map((id) => {
+              const dept = departments.find((d) => d._id === id);
+              return dept ? (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                >
+                  {dept.name}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDepartments((prev) =>
+                        prev.filter((d) => d !== id),
+                      );
+                      setPage(1);
+                    }}
+                  >
+                    <FiX size={11} />
+                  </button>
+                </span>
+              ) : null;
+            })}
+            {selectedRoles.map((id) => {
+              const role = roles.find((r) => r._id === id);
+              return role ? (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                >
+                  {role.name}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedRoles((prev) => prev.filter((r) => r !== id));
+                      setPage(1);
+                    }}
+                  >
+                    <FiX size={11} />
+                  </button>
+                </span>
+              ) : null;
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDepartments([]);
+                setSelectedRoles([]);
+                setPage(1);
+              }}
+              className="text-xs font-medium text-slate-500"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Users Table */}
-      <div className="overflow-x-auto p-4 bg-[rgb(237_237_237)] rounded-xl shadow">
-        <table className="min-w-full border">
-          <thead className="bg-red-100 text-gray-800">
-            <tr>
-              <th className="px-4 py-3 border">#</th>
-              <th className="px-4 py-3 border">Name</th>
-              <th className="px-4 py-3 border">Email</th>
-              <th className="px-4 py-3 border">Employee Code</th>
-              <th className="px-4 py-3 border">
-                <MultiSelectFilter
-                  title="Departments"
-                  options={departments?.map((d) => ({
-                    value: d._id,
-                    label: d.name,
-                  }))}
-                  selected={selectedDepartments}
-                  setSelected={setSelectedDepartments}
-                />
-              </th>
-              <th className="px-4 py-3 border">
-                <MultiSelectFilter
-                  title="Roles"
-                  options={roles?.map((r) => ({ value: r._id, label: r.name }))}
-                  selected={selectedRoles}
-                  setSelected={setSelectedRoles}
-                />
-              </th>
-              <th className="px-4 py-3 border">
-                <MultiSelectFilter
-                  title="Shifts"
-                  options={shifts?.map((s) => ({ value: s._id, label: s.name }))}
-                  selected={selectedShifts}
-                  setSelected={setSelectedShifts}
-                />
-              </th>
-              <th className="px-4 py-3 border">Actions</th>
-            </tr>
-          </thead>
-
-          {loading ? (
-            <tbody>
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="max-h-[60vh] overflow-y-auto">
+          <table className="min-w-full">
+            <thead className="sticky -top-px z-10 bg-[#f2e7f9] text-primary">
               <tr>
-                <td colSpan="8" className="text-center p-4 text-gray-500">
-                  Loading users...
-                </td>
+                <th className="px-4 py-2 border">#</th>
+                <th className="px-4 py-2 border">Name</th>
+                <th className="px-4 py-2 border">Email</th>
+                <th className="px-4 py-2 border">Employee Code</th>
+                <th className="px-4 py-2 border">Department</th>
+                <th className="px-4 py-2 border">Role</th>
+                <th className="px-4 py-2 border">Actions</th>
               </tr>
-            </tbody>
-          ) : users?.length > 0 ? (
-            <tbody>
-              {users?.map((user, i) => (
-                <tr key={user._id} className="hover:bg-blue-50">
-                  <td className="border text-center px-4 py-2">{i + 1}</td>
-                  <td className="border text-center px-4 py-2">{user.name}</td>
-                  <td className="border text-center px-4 py-2">{user.email}</td>
-                  <td className="border text-center px-4 py-2">
-                    {user.employeeCode}
-                  </td>
-                  <td className="border text-center px-4 py-2">
-                    {user.department?.name || "—"}
-                  </td>
-                  <td className="border text-center px-4 py-2">
-                    {user.role?.name || "—"}
-                  </td>
-                  <td className="border text-center px-4 py-2">
-                    {user.shift
-                      ? `${user.shift.name} (${formatHour(
-                          user.shift.startHour
-                        )} - ${formatHour(user.shift.endHour)})`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-2 text-center border">
-                    <button
-                      onClick={() => openEditModal(user)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                    >
-                      Edit
-                    </button>
+            </thead>
+
+            {loading ? (
+              <tbody>
+                {[...Array(7)].map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-3.5 w-5 rounded bg-slate-200" />
+                    </td>
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-3.5 w-28 rounded bg-slate-200" />
+                    </td>
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-3.5 w-44 rounded bg-slate-200" />
+                    </td>
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-3.5 w-20 rounded bg-slate-200" />
+                    </td>
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-3.5 w-24 rounded bg-slate-200" />
+                    </td>
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-3.5 w-20 rounded bg-slate-200" />
+                    </td>
+                    <td className="border px-4 py-3">
+                      <div className="mx-auto h-7 w-7 rounded-md bg-slate-200" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            ) : users?.length > 0 ? (
+              <tbody>
+                {users?.map((user, i) => (
+                  <tr
+                    key={user._id}
+                    className="border-t border-slate-100 text-gray-800 hover:bg-slate-50"
+                  >
+                    <td className="border px-4 py-2 text-center">{i + 1}</td>
+                    <td className="border px-4 py-2 text-center">
+                      {user.name}
+                    </td>
+                    <td className="border px-4 py-2 text-center">
+                      {user.email}
+                    </td>
+                    <td className="border px-4 py-2 text-center">
+                      {user.employeeCode}
+                    </td>
+                    <td className="border px-4 py-2 text-center">
+                      {user.department?.name || "—"}
+                    </td>
+                    <td className="border px-4 py-2 text-center">
+                      {user.role?.name || "—"}
+                    </td>
+                    <td className="border px-4 py-2 text-center">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                        title="Edit User"
+                      >
+                        <FiEdit2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            ) : (
+              <tbody>
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-slate-400">
+                    No users found.
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          ) : (
-            <tbody>
-              <tr>
-                <td colSpan="8" className="text-center p-4 text-gray-600">
-                  No users found.
-                </td>
-              </tr>
-            </tbody>
-          )}
-        </table>
+              </tbody>
+            )}
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}
@@ -437,123 +460,20 @@ const Users = () => {
         />
       )}
 
-     {editModalOpen && (
-  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-md shadow-md w-full max-w-xl">
-      <h2 className="text-lg font-semibold mb-4">Edit User</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Text Inputs */}
-        {["name", "employeeCode"]?.map((field) => (
-          <input
-            key={field}
-            name={field}
-            type="text"
-            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-            value={editForm[field]}
-            onChange={handleEditChange}
-            className="p-2 border rounded"
-          />
-        ))}
-
-        {/* Role Select */}
-        <select
-          name="role"
-          value={editForm.role}
-          onChange={handleEditChange}
-          className="p-2 border rounded"
-        >
-          <option value="">Select Role</option>
-          {roles?.map((r) => (
-            <option key={r._id} value={r._id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Department Select */}
-        <select
-          name="department"
-          value={editForm.department}
-          onChange={handleEditChange}
-          className="p-2 border rounded"
-        >
-          <option value="">Select Department</option>
-          {departments?.map((d) => (
-            <option key={d._id} value={d._id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Shift Select */}
-        <select
-          name="shift"
-          value={editForm.shift}
-          onChange={handleEditChange}
-          className="p-2 border rounded"
-        >
-          <option value="">Select Shift</option>
-          {shifts?.map((s) => (
-            <option key={s._id} value={s._id}>
-              {s.name} ({formatHour(s.startHour)} - {formatHour(s.endHour)})
-            </option>
-          ))}
-        </select>
-
-        {/* Deactivate Toggle */}
-        <br/>
-        <div className="flex items-center gap-2 mt-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="deactivate"
-              checked={editForm.deactivate || false}
-              onChange={(e) =>
-                setEditForm((prev) => ({
-                  ...prev,
-                  deactivate: e.target.checked,
-                  // reset date if toggle is off
-                  deactivateDate: e.target.checked ? prev.deactivateDate : "",
-                }))
-              }
-            />
-            Deactivate User
-          </label>
-        </div>
-
-        {/* Deactivate Date Input (conditionally shown) */}
-        {editForm.deactivate && (
-          <input
-            type="date"
-            name="deactivateDate"
-            value={editForm.deactivateDate || ""}
-            onChange={handleEditChange}
-            className="p-2 border rounded mt-2"
-          />
-        )}
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-end mt-4 space-x-2">
-        <button
-          onClick={() => setEditModalOpen(false)}
-          className="px-4 py-2 border rounded hover:bg-gray-100"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={updateUser}
-          disabled={editLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
-        >
-          Update {editLoading && <ImSpinner3 className="animate-spin" />}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+      <EditUserModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditingUser(null);
+        }}
+        editForm={editForm}
+        onEditFormChange={handleEditChange}
+        onSetEditForm={setEditForm}
+        onUpdate={updateUser}
+        roles={roles}
+        departments={departments}
+        editLoading={editLoading}
+      />
     </div>
   );
 };

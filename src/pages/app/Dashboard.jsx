@@ -15,6 +15,7 @@ import {
   FaBusinessTime,
   FaTasks,
   FaSpinner,
+  FaDollarSign,
 } from "react-icons/fa";
 import Shift from "../../components/app/Shifts";
 import { useLogin } from "../../hooks/api/Post";
@@ -27,10 +28,10 @@ import Divisions from "../../components/app/Divisions";
 import Reports from "../../components/app/Reports";
 import Holidays from "../../components/app/Holidays";
 import MissingEnteries from "../../components/app/MissingEnteries";
-
+import Rates from "../../components/app/Rates";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("summary");
+  const [activeTab, setActiveTab] = useState("users");
   const [logoutLoading, setLogoutLoading] = useState(false);
   const navigate = useNavigate();
   const { postData, loading } = useLogin();
@@ -57,24 +58,27 @@ const Dashboard = () => {
         return <Departments />;
       case "divisions":
         return <Divisions />;
-      case "summary":
-        return <Summary />;
+      // case "summary":
+      //   return <Summary />;
       case "roles":
         return <Roles />;
       case "projects":
         return <Projects />;
-      case "shifts":
-        return <Shift />;
+      // case "shifts":
+      //   return <Shift />;
       case "timeSheet":
         return <EmployeeTimeSheet />;
-      case "reports":
-        return <Reports />;
+      // case "reports":
+      //   return <Reports />;
       case "holidays":
         return <Holidays />;
       case "missenteries":
         return <MissingEnteries />;
+      case "rates":
+        return <Rates />;
       default:
-        return <Summary />;
+        return <Users />;
+      //   return <Summary />;
     }
   };
 
@@ -111,7 +115,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <div className="w-full flex justify-between items-center px-6 py-4 bg-white border-b shadow-sm">
         <div className="text-2xl font-bold text-black">
-          <img src="/logo.webp" alt="" className="w-auto h-8" />
+          <img src="/logo-dx.webp" alt="" className="w-auto h-8" />
         </div>
         {userLoading ? (
           <p className="text-sm font-medium text-gray-500">Loading...</p>
@@ -124,7 +128,7 @@ const Dashboard = () => {
               <p className="text-sm font-medium text-gray-700">
                 Welcome, {user?.name || "Guest"}
               </p>
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary shadow-sm">
                 <img
                   src="/user.png"
                   alt="Profile"
@@ -139,16 +143,16 @@ const Dashboard = () => {
               >
                 <div className="space-y-1">
                   <p>
-                    <strong>Name:</strong> {user.name}
+                    <strong>Name:</strong> {user?.name}
                   </p>
                   <p>
-                    <strong>Code:</strong> {user.employeeCode}
+                    <strong>Code:</strong> {user?.employeeCode}
                   </p>
                   <p>
-                    <strong>Department:</strong> {user.department.name}
+                    <strong>Department:</strong> {user?.department?.name}
                   </p>
                   <p>
-                    <strong>Role:</strong> {user.role.name}
+                    <strong>Role:</strong> {user?.role?.name}
                   </p>
                 </div>
                 <hr className="my-2" />
@@ -157,8 +161,8 @@ const Dashboard = () => {
                   disabled={logoutLoading}
                   className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
                     logoutLoading
-                      ? "bg-red-400 cursor-not-allowed"
-                      : "bg-red-600 hover:bg-red-700"
+                      ? "bg-primary/50 cursor-not-allowed"
+                      : "bg-primary"
                   } text-white`}
                 >
                   {logoutLoading ? (
@@ -196,6 +200,18 @@ const Dashboard = () => {
               onClick={() => setActiveTab("reports")}
             /> */}
             <SidebarItem
+              icon={<FaUsers />}
+              label="All Users"
+              active={activeTab === "users"}
+              onClick={() => setActiveTab("users")}
+            />
+            <SidebarItem
+              icon={<FaDollarSign />}
+              label="Rates"
+              active={activeTab === "rates"}
+              onClick={() => setActiveTab("rates")}
+            />
+            <SidebarItem
               icon={<PiArticleNyTimes />}
               label="Holidays"
               active={activeTab === "holidays"}
@@ -206,12 +222,6 @@ const Dashboard = () => {
               label="Missing Enteries"
               active={activeTab === "missenteries"}
               onClick={() => setActiveTab("missenteries")}
-            />
-            <SidebarItem
-              icon={<FaUsers />}
-              label="All Users"
-              active={activeTab === "users"}
-              onClick={() => setActiveTab("users")}
             />
             <SidebarItem
               icon={<FaBuilding />}
@@ -225,12 +235,12 @@ const Dashboard = () => {
               active={activeTab === "divisions"}
               onClick={() => setActiveTab("divisions")}
             />
-            <SidebarItem
+            {/* <SidebarItem
               icon={<FaBusinessTime />}
               label="Shifts"
               active={activeTab === "shifts"}
               onClick={() => setActiveTab("shifts")}
-            />
+            /> */}
             <SidebarItem
               icon={<FaUserShield />}
               label="All Roles"
@@ -273,8 +283,8 @@ const SidebarItem = ({ icon, label, active, onClick }) => (
       className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition 
         ${
           active
-            ? "bg-red-100 text-[#f40e00] font-semibold"
-            : "text-gray-700 hover:bg-gray-100"
+            ? "bg-primary/10 text-primary font-semibold"
+            : "text-gray-700 hover:bg-primary/5"
         }`}
     >
       <span className="text-lg">{icon}</span>

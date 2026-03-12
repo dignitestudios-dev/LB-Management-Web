@@ -180,7 +180,7 @@ const Projects = () => {
           <button
             onClick={createProject}
             disabled={creating}
-            className="bg-[#f40e00] text-white mt-4 px-12  py-2 rounded hover:bg-red-700 disabled:opacity-50 text-sm"
+            className="bg-primary text-white mt-4 px-12  py-2 rounded hover:bg-red-700 disabled:opacity-50 text-sm"
           >
             {creating ? "..." : "Create"}
           </button>

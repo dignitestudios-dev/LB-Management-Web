@@ -575,7 +575,7 @@ const handleExport = () => {
                 !startDate &&
                 !endDate
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[#f40e00] hover:bg-red-700"
+                  : "bg-primary hover:bg-red-700"
               }`}
             >
               Get Summary

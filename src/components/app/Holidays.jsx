@@ -25,7 +25,7 @@ const Holidays = () => {
   const fetchHolidays = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/attendance/getAllHolidays");
+      const res = await axios.get("/holidays");
       console.log(res);
       setHolidays(res.data.data);
       setTotalPages(res?.data?.pagination?.totalPages);
@@ -112,7 +112,7 @@ const Holidays = () => {
           <button
             onClick={createHoliday}
             disabled={newLoading}
-            className="bg-[#f40e00] text-white px-4 py-2 rounded hover:bg-red-700"
+            className="bg-primary text-white px-4 py-2 rounded hover:bg-red-700"
           >
             Create
           </button>

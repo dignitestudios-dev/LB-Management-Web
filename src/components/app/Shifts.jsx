@@ -134,7 +134,7 @@ const Shift = () => {
           />
           <button
             onClick={createShift}
-            className="bg-[#f40e00] text-white px-6 py-2 rounded hover:bg-red-700"
+            className="bg-primary text-white px-6 py-2 rounded hover:bg-red-700"
           >
             Create
           </button>

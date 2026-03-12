@@ -28,8 +28,9 @@ export default function ForgetPassword() {
   return (
     <div className="min-h-screen flex">
       {/* Left Section - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#f4f8ff] px-6 py-12">
-        <div className="w-full max-w-md bg-[rgb(237 237 237)] rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-12">
+        <div className="w-full max-w-md bg-white rounded-3xl p-10 shadow-2xl transition-all duration-300 hover:shadow-blue-100">
+
           {/* Logo / Heading */}
           <div className="text-center mb-8">
             <h2 className="text-4xl font-bold text-black">Forgot Password</h2>
@@ -59,18 +60,31 @@ export default function ForgetPassword() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-3 bg-[#f40e00] text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
               disabled={loading}
             >
               {loading ? "Sending..." : "Send Reset Link"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/auth/login")}
+              className="w-full text-sm font-medium text-primary"
+            >
+              Back to Login
             </button>
           </form>
         </div>
       </div>
 
       {/* Right Section - Image/Gradient */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-cover bg-center bg-no-repeat bg-[#f40e00]">
-        <img src="/demo.png" alt="" />
+      <div className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat bg-primary">
+        <img
+          src="/logo-dx.webp"
+          alt="Dexnive watermark"
+          className="pointer-events-none absolute h-72 w-72 opacity-15"
+        />
+        <img src="/demo.png" alt="" className="relative z-10" />
       </div>
     </div>
   );
