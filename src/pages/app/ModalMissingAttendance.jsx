@@ -7,6 +7,7 @@ import { useLogin } from "../../hooks/api/Post";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router";
 const ModalMissingAttendance = ({
+  isOpen,
   setIsUpdate,
   missingAttendance = [],
   setModalOpen,
@@ -24,7 +25,7 @@ const ModalMissingAttendance = ({
     const { postData, loading } = useLogin();
     const navigate = useNavigate();
   const [formData, setFormData] = useState(
-    missingAttendance?.map((item) => ({
+    (Array.isArray(missingAttendance) ? missingAttendance : []).map((item) => ({
       shiftDate: item?.shiftDate,
       reason: "",
       note: "",
@@ -34,9 +35,9 @@ const ModalMissingAttendance = ({
   );
 
   useEffect(() => {
-    if (missingAttendance) {
+    if (Array.isArray(missingAttendance)) {
       setFormData(
-        missingAttendance?.map((item) => ({
+        missingAttendance.map((item) => ({
           shiftDate: item?.shiftDate,
           reason: "",
           note: "",
@@ -50,6 +51,17 @@ const ModalMissingAttendance = ({
   const [errors, setErrors] = useState([]);
 
   const [submitting, setSubmitting] = useState(false);
+  const lastFormEntry = formData?.[formData.length - 1];
+
+  useEffect(() => {
+    if (
+      lastFormEntry?.type === "checkout_missing" &&
+      lastFormEntry?.checkInTimes &&
+      !checkInTime
+    ) {
+      setcheckInTime(formatTime(lastFormEntry.checkInTimes));
+    }
+  }, [lastFormEntry?.type, lastFormEntry?.checkInTimes, checkInTime]);
 
   const handleChange = (index, field, value) => {
     const updated = [...formData];
@@ -163,14 +175,23 @@ const ModalMissingAttendance = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${
+        isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
+      <div
+        className={`absolute inset-0 bg-black/60 transition-opacity duration-200 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
+      />
       <button
         onClick={handleLogout}
         disabled={logoutLoading}
-        className={`w-[100px] top-4 right-4 flex absolute items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition ${
+        className={`w-[100px] top-4 right-4 flex absolute items-center justify-center gap-2 px-4 py-2 rounded-md text-sm transition z-10 ${
           logoutLoading
-            ? "bg-red-400 cursor-not-allowed"
-            : "bg-red-600 hover:bg-red-700"
+            ? "bg-primary/40 cursor-not-allowed"
+            : "bg-primary hover:bg-primary/90"
         } text-white`}
       >
         {logoutLoading ? (
@@ -185,27 +206,21 @@ const ModalMissingAttendance = ({
           </>
         )}
       </button>
-      <div className="bg-white p-6 max-h-[90vh] overflow-auto rounded-lg shadow-lg max-w-2xl w-full">
-        <h2 className="text-lg font-semibold text-red-600 mb-4">
+      <div
+        className={`relative z-10 w-full max-w-2xl rounded-xl bg-white p-6 max-h-[90vh] overflow-auto shadow-xl transition-all duration-200 ${
+          isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+        }`}
+      >
+        <h2 className="text-lg font-semibold text-primary mb-4">
           Missing Attendance Detected
         </h2>
         {formData?.slice(-1)?.map((item, index) => {
           const lastIndex = formData.length - 1;
-          const items = formData[lastIndex];
-          useEffect(() => {
-            if (
-              item?.type === "checkout_missing" &&
-              item?.checkInTimes &&
-              !checkInTime
-            ) {
-              setcheckInTime(formatTime(item.checkInTimes));
-            }
-          }, [item?.checkInTimes, item?.type]);
 
           return (
             <div
               key={lastIndex}
-              className="border rounded-md p-4 mb-4 bg-red-50 space-y-3"
+              className="mb-4 space-y-3 rounded-xl border border-primary/10 bg-primary/5 p-4"
             >
               <div className="font-semibold text-gray-800">
                 📅{" "}
@@ -269,65 +284,65 @@ const ModalMissingAttendance = ({
                   </div>
                 </>
               ) : (
-                <div>
-                  <label className="block mb-1 font-medium">Reason</label>
-                  <select
-                    value={item.reason}
-                    onChange={(e) => {
-                      const updatedReason = e.target.value;
-                      setSelectedReasons(updatedReason);
-                      handleChange(lastIndex, "reason", updatedReason);
-                    }}
-                    className="w-full border rounded-md h-[45px] px-2"
-                  >
-                    <option value="">Select reason</option>
-                    <option value="absent">Absent</option>
-                    <option value="forgot">Forgot</option>
-                    {/* <option value="holiday">Holiday</option> */}
-                    {/* <option value="other">Other</option> */}
-                  </select>
-                  {errors[lastIndex]?.reason && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors[lastIndex]?.reason}
-                    </p>
-                  )}
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block font-medium">Reason</label>
+                    <select
+                      value={item.reason}
+                      onChange={(e) => {
+                        const updatedReason = e.target.value;
+                        setSelectedReasons(updatedReason);
+                        handleChange(lastIndex, "reason", updatedReason);
+                      }}
+                      className="h-[45px] w-full rounded-md border border-slate-300 px-2"
+                    >
+                      <option value="">Select reason</option>
+                      <option value="absent">Absent</option>
+                      <option value="forgot">Forgot</option>
+                      <option value="holiday">Holiday</option>
+                      <option value="other">Other</option>
+                    </select>
+                    {errors[lastIndex]?.reason && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {errors[lastIndex]?.reason}
+                      </p>
+                    )}
+                  </div>
 
                   {item?.reason === "forgot" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div>
-                        <label className="block mb-1 font-medium">
+                        <label className="mb-1 block font-medium">
                           Check In Time
                         </label>
                         <input
                           type="time"
                           value={checkInTime || ""}
                           onChange={(e) => setcheckInTime(e.target.value)}
-                          className="w-full border rounded-md px-2 py-1"
+                          className="w-full rounded-md border border-slate-300 px-2 py-1"
                         />
                       </div>
 
                       <div>
-                        <label className="block mb-1 font-medium">
+                        <label className="mb-1 block font-medium">
                           Check Out Time
                         </label>
                         <input
                           type="time"
                           value={checkOutTime || ""}
                           onChange={(e) => setcheckOutTime(e.target.value)}
-                          className="w-full border rounded-md px-2 py-1"
+                          className="w-full rounded-md border border-slate-300 px-2 py-1"
                         />
                       </div>
 
                       <div>
                         <button
-                          disabled={
+                          disabled={checkInTime === null || checkOutTime === null}
+                          className={`${
                             checkInTime === null || checkOutTime === null
-                          }
-                          className={` ${
-                            checkInTime === null || checkOutTime === null
-                              ? "bg-gray-300 cursor-not-allowed text-gray-500 "
-                              : "bg-red-100 text-red-500"
-                          }   rounded-md p-2  font-[500] `}
+                              ? "cursor-not-allowed bg-gray-300 text-gray-500"
+                              : "bg-primary/10 text-primary"
+                          } rounded-md p-2 font-[500]`}
                           onClick={() => {
                             setShiftDate(item?.shiftDate);
                             setIsModalOpen(true);
@@ -370,12 +385,14 @@ const ModalMissingAttendance = ({
 
         <div className="mt-4 flex justify-end gap-3">
           {selectedReasons !== "forgot" &&
-            formData[formData.length - 1]?.type !== "checkout_missing" && (
+            lastFormEntry?.type !== "checkout_missing" && (
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className={`px-5 py-2 rounded text-white ${
-                  submitting ? "bg-red-300" : "bg-red-500 hover:bg-red-600"
+                className={`inline-flex h-10 items-center justify-center rounded-lg px-5 text-sm font-medium text-white transition ${
+                  submitting
+                    ? "cursor-not-allowed bg-primary/40"
+                    : "bg-primary hover:bg-primary/90"
                 }`}
               >
                 {submitting ? "Submitting..." : "Submit"}

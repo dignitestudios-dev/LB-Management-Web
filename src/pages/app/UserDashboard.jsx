@@ -218,23 +218,22 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f4f8ff] flex flex-col">
-      {modalOpen && missingAttendance.length > 0 && (
-        <ModalMissingAttendance
-          setIsUpdate={setIsUpdate}
-          setShiftDate={setShiftDate}
-          setDiscription={setDiscription}
-          setModalOpen={setModalOpen}
-          setIsModalOpen={setForgotisModalOpen}
-          missingAttendance={missingAttendance}
-          checkInTime={checkInTimeForgot}
-          checkOutTime={checkOutTimeForgot}
-          setcheckOutTime={setcheckOutTimeForgot}
-          setcheckInTime={setcheckInTimeForgot}
-          setSelectedReasons={setSelectedReasons}
-          setSelectmissingType={setSelectmissingType}
-          selectedReasons={selectedReasons}
-        />
-      )}
+      <ModalMissingAttendance
+        isOpen={modalOpen && missingAttendance?.length > 0}
+        setIsUpdate={setIsUpdate}
+        setShiftDate={setShiftDate}
+        setDiscription={setDiscription}
+        setModalOpen={setModalOpen}
+        setIsModalOpen={setForgotisModalOpen}
+        missingAttendance={missingAttendance}
+        checkInTime={checkInTimeForgot}
+        checkOutTime={checkOutTimeForgot}
+        setcheckOutTime={setcheckOutTimeForgot}
+        setcheckInTime={setcheckInTimeForgot}
+        setSelectedReasons={setSelectedReasons}
+        setSelectmissingType={setSelectmissingType}
+        selectedReasons={selectedReasons}
+      />
 
       {/* Topbar */}
       <div className="w-full flex justify-between items-center px-6 py-4 bg-white border-b shadow-sm">
@@ -252,7 +251,7 @@ const UserDashboard = () => {
               <p className="text-sm font-medium text-gray-700">
                 Welcome, {user?.name || "Guest"}
               </p>
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500 shadow-sm">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary shadow-sm">
                 <img
                   src="/user.png"
                   alt="Profile"
@@ -318,8 +317,8 @@ const UserDashboard = () => {
               onClick={() => setActiveTab("dashboard")}
               className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition cursor-pointer font-semibold ${
                 activeTab === "dashboard"
-                  ? "bg-red-100 text-[#f40e00]"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-700 hover:bg-primary/5"
               }`}
             >
               <TbReportAnalytics />
@@ -329,8 +328,8 @@ const UserDashboard = () => {
               onClick={() => setActiveTab("timeSheet")}
               className={`flex items-center w-full gap-3 px-3 py-2 rounded-lg transition cursor-pointer font-semibold ${
                 activeTab === "timeSheet"
-                  ? "bg-red-100 text-[#f40e00]"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-700 hover:bg-primary/5"
               }`}
             >
               <PiArticleNyTimes />
@@ -343,30 +342,30 @@ const UserDashboard = () => {
         <div className="flex-1 p-8">
           {activeTab === "dashboard" && (
             <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-7xl">
-              <h1 className="text-3xl font-bold text-center text-black mb-4">
+              <h1 className="text-3xl font-bold text-center text-slate-800 mb-4">
                 Daily Reporting
               </h1>
 
-              <div className="flex flex-col md:flex-row justify-between items-center bg-[#eaf1ff] p-6 rounded-xl shadow-md w-full">
+              <div className="flex flex-col md:flex-row justify-between items-center bg-[#faf6fd] p-6 rounded-xl w-full">
                 <div
-                  className="w-64 h-64 mx-auto flex flex-col items-center justify-center rounded-full shadow-inner border border-gray-200 bg-cover"
+                  className="w-64 h-64 mx-auto flex flex-col items-center justify-center rounded-full shadow-inner border border-primary/20 bg-cover"
                   style={{ backgroundImage: 'url("/clock.png")' }}
                 >
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">{day}</p>
-                    <h2 className="text-3xl font-bold text-gray-800 tracking-widest">
+                    <p className="text-sm text-slate-500 mb-1">{day}</p>
+                    <h2 className="text-3xl font-bold text-primary tracking-widest">
                       {currentTime}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">{currentDate}</p>
-                    <p className="text-sm text-gray-500">Asia/Karachi</p>
+                    <p className="text-sm text-slate-500 mt-1">{currentDate}</p>
+                    <p className="text-sm text-slate-500">Asia/Karachi</p>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-center items-center gap-6 mt-3 mb-3">
                 {todayAttendance?.checkInTime && (
-                  <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
-                    <p className="font-semibold uppercase tracking-wide text-xs text-blue-600 mb-1">
+                  <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-center text-sm text-primary shadow-sm">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary/80">
                       Checked In At
                     </p>
                     <p className="text-lg font-bold">
@@ -384,8 +383,8 @@ const UserDashboard = () => {
                 )}
                 {todayAttendance?.checkInTime &&
                   !todayAttendance?.checkOutTime && (
-                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
-                      <p className="font-semibold uppercase tracking-wide text-xs text-yellow-600 mb-1">
+                    <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-center text-sm text-primary shadow-sm">
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary/80">
                         Total Duration (Excl. Break)
                       </p>
                       <p className="text-lg font-bold">
@@ -396,8 +395,8 @@ const UserDashboard = () => {
                   )}
 
                 {todayAttendance?.checkOutTime && (
-                  <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm shadow-sm text-center">
-                    <p className="font-semibold uppercase tracking-wide text-xs text-green-600 mb-1">
+                  <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-center text-sm text-primary shadow-sm">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary/80">
                       Checked Out At
                     </p>
                     <p className="text-lg font-bold">
@@ -417,7 +416,7 @@ const UserDashboard = () => {
                 {/* Check In Button */}
                 <button
                   onClick={handleCheckIn}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
                   disabled={checkInloading}
                 >
                   <IoFingerPrintOutline className="text-xl text-white" />
@@ -429,7 +428,7 @@ const UserDashboard = () => {
                 {/* Check Out Button */}
                 <button
                   onClick={handleCheckOut}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-slate-900 via-black to-slate-600 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
                   disabled={checkInloading}
                 >
                   <IoLogOutOutline className="text-xl text-white" />
@@ -478,75 +477,105 @@ const UserDashboard = () => {
       </div>
 
       {/* Modal */}
-      {ForgotisModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
-            <div className="flex justify-between">
-              <h2 className="text-xl font-semibold mb-4 text-black">
-                Select Project for Check Out
-              </h2>
-              <ImCross
-                className="cursor-pointer"
-                onClick={() => setForgotisModalOpen(false)}
-              />
-            </div>
-
-            <ForgotProjectList
-              // handleModalSubmit={handleModalSubmit}
-              getTimeDifference={getTimeDifference}
-              missingAttendance={missingAttendance}
-              checkOutTimeForgot={checkOutTimeForgot}
-              checkInTimeForgot={checkInTimeForgot}
-              onClose={() => setForgotisModalOpen(false)}
-              postData={postData}
-              checkInTime={todayAttendance?.checkInTime}
-              setTodayAttendance={setTodayAttendance}
-              setModalOpen={setModalOpen}
-              setIsModalOpen={setIsModalOpen}
-              setForgotisModalOpen={setForgotisModalOpen}
-              todayAttendance={todayAttendance}
-              isTimeStoppedForCheckout={isTimeStoppedForCheckout}
-              stoppedTime={stoppedTime}
-              setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
-              setStoppedTime={setStoppedTime}
-              selectedReasons={selectedReasons}
-              shiftDate={shiftDate}
-              selectmissingType={selectmissingType}
-              setIsUpdate={setIsUpdate}
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${
+          ForgotisModalOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
+            ForgotisModalOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setForgotisModalOpen(false)}
+        />
+        <div
+          className={`relative w-full max-w-xl rounded-xl bg-white p-6 shadow-lg transition-all duration-200 ${
+            ForgotisModalOpen
+              ? "translate-y-0 opacity-100"
+              : "translate-y-4 opacity-0"
+          }`}
+        >
+          <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+            <h2 className="text-xl font-semibold text-slate-800">
+              Select Project for Check Out
+            </h2>
+            <ImCross
+              className="cursor-pointer text-slate-500 hover:text-slate-700"
+              onClick={() => setForgotisModalOpen(false)}
             />
           </div>
-        </div>
-      )}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
-            <div className="flex justify-between">
-              <h2 className="text-xl font-semibold mb-4 text-black">
-                Select Project for Check Out
-              </h2>
-              <ImCross
-                className="cursor-pointer"
-                onClick={() => setIsModalOpen(false)}
-              />
-            </div>
 
-            <ProjectList
-              getTimeDifference={getTimeDifference}
-              checkOutTimeForgot={checkOutTimeForgot}
-              checkInTimeForgot={checkInTimeForgot}
-              onClose={() => setIsModalOpen(false)}
-              postData={postData}
-              checkInTime={todayAttendance?.checkInTime}
-              setTodayAttendance={setTodayAttendance}
-              todayAttendance={todayAttendance}
-              isTimeStoppedForCheckout={isTimeStoppedForCheckout}
-              stoppedTime={stoppedTime}
-              setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
-              setStoppedTime={setStoppedTime}
+          <ForgotProjectList
+            getTimeDifference={getTimeDifference}
+            missingAttendance={missingAttendance}
+            checkOutTimeForgot={checkOutTimeForgot}
+            checkInTimeForgot={checkInTimeForgot}
+            onClose={() => setForgotisModalOpen(false)}
+            postData={postData}
+            checkInTime={todayAttendance?.checkInTime}
+            setTodayAttendance={setTodayAttendance}
+            setModalOpen={setModalOpen}
+            setIsModalOpen={setIsModalOpen}
+            setForgotisModalOpen={setForgotisModalOpen}
+            todayAttendance={todayAttendance}
+            isTimeStoppedForCheckout={isTimeStoppedForCheckout}
+            stoppedTime={stoppedTime}
+            setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
+            setStoppedTime={setStoppedTime}
+            selectedReasons={selectedReasons}
+            shiftDate={shiftDate}
+            selectmissingType={selectmissingType}
+            setIsUpdate={setIsUpdate}
+          />
+        </div>
+      </div>
+
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${
+          isModalOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
+            isModalOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setIsModalOpen(false)}
+        />
+        <div
+          className={`relative w-full max-w-xl rounded-xl bg-white p-6 shadow-lg transition-all duration-200 ${
+            isModalOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+          }`}
+        >
+          <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+            <h2 className="text-xl font-semibold text-slate-800">
+              Select Project for Check Out
+            </h2>
+            <ImCross
+              className="cursor-pointer text-slate-500 hover:text-slate-700"
+              onClick={() => setIsModalOpen(false)}
             />
           </div>
+
+          <ProjectList
+            getTimeDifference={getTimeDifference}
+            checkOutTimeForgot={checkOutTimeForgot}
+            checkInTimeForgot={checkInTimeForgot}
+            onClose={() => setIsModalOpen(false)}
+            postData={postData}
+            checkInTime={todayAttendance?.checkInTime}
+            setTodayAttendance={setTodayAttendance}
+            todayAttendance={todayAttendance}
+            isTimeStoppedForCheckout={isTimeStoppedForCheckout}
+            stoppedTime={stoppedTime}
+            setIsTimeStoppedForCheckout={setIsTimeStoppedForCheckout}
+            setStoppedTime={setStoppedTime}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -769,7 +798,7 @@ const ProjectList = ({
             min="1"
             max="10"
             placeholder="Enter number of projects"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             onChange={(e) => {
               const count = parseInt(e.target.value);
               if (isNaN(count) || count < 1 || count > 10) {
@@ -782,7 +811,7 @@ const ProjectList = ({
           {projectCount && (
             <button
               onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
             >
               Okay
             </button>
@@ -805,7 +834,7 @@ const ProjectList = ({
             </button>
             <button
               onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
+              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
             >
               Okay
             </button>
@@ -816,7 +845,7 @@ const ProjectList = ({
           <div className="text-sm text-gray-700 space-y-1">
             <p>
               <strong>Total Time Duration:</strong>{" "}
-              <span className="text-blue-700 font-medium">
+              <span className="text-primary font-medium">
                 {Math.floor(rawMinutes / 60)} hour(s) {rawMinutes % 60}{" "}
                 minute(s)
               </span>
@@ -829,7 +858,7 @@ const ProjectList = ({
             </p>
             <p>
               <strong>Time Remaining:</strong>{" "}
-              <span className="text-red-600 font-medium">
+              <span className="text-primary font-medium">
                 {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
               </span>
             </p>
@@ -866,7 +895,7 @@ const ProjectList = ({
               return (
                 <div
                   key={index}
-                  className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
+                  className="rounded-lg border border-primary/20 bg-primary/10 p-4 space-y-3 shadow-sm"
                 >
                   <div className="space-y-2">
                     <input
@@ -874,7 +903,7 @@ const ProjectList = ({
                       placeholder="Search project..."
                       value={searchTerms[index] || ""} // Bind to the individual search term
                       onChange={(e) => handleSearchChange(e, index)} // Update specific index's search term
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
                     />
 
@@ -924,7 +953,7 @@ const ProjectList = ({
                       <input
                         type="text"
                         placeholder={`Hours (max: ${maxHours})`}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                         value={entry.hoursWorked}
                         min="0"
                         max={maxHours}
@@ -955,7 +984,7 @@ const ProjectList = ({
                       <input
                         type="text"
                         placeholder={`Minutes (0-59)`}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                         value={entry.minutesWorked}
                         min="0"
                         max="59"
@@ -988,7 +1017,7 @@ const ProjectList = ({
 
                   <textarea
                     placeholder="Description"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                     rows={2}
                     value={entry.description}
                     onChange={(e) =>
@@ -1014,7 +1043,7 @@ const ProjectList = ({
                 setIsTimeStoppedForCheckout(false);
                 setStoppedTime(null);
               }}
-              className="text-sm font-medium text-red-600 hover:underline"
+              className="text-sm font-medium text-primary hover:underline"
             >
               ← Back
             </button>
@@ -1038,7 +1067,7 @@ const ProjectList = ({
                 className={`px-4 py-2 rounded-md text-white text-sm transition ${
                   isSubmitting
                     ? "bg-red-400 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700"
+                    : "bg-primary hover:bg-primary/90"
                 }`}
               >
                 {isSubmitting ? (
@@ -1296,7 +1325,7 @@ const ForgotProjectList = ({
             min="1"
             max="10"
             placeholder="Enter number of projects"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             onChange={(e) => {
               const count = parseInt(e.target.value);
               if (isNaN(count) || count < 1 || count > 10) {
@@ -1309,7 +1338,7 @@ const ForgotProjectList = ({
           {projectCount && (
             <button
               onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
+              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
             >
               Okay
             </button>
@@ -1332,7 +1361,7 @@ const ForgotProjectList = ({
             </button>
             <button
               onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
+              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
             >
               Okay
             </button>
@@ -1343,7 +1372,7 @@ const ForgotProjectList = ({
           <div className="text-sm text-gray-700 space-y-1">
             <p>
               <strong>Total Time Duration:</strong>{" "}
-              <span className="text-blue-700 font-medium">
+              <span className="text-primary font-medium">
                 {getTimeDifference(checkInTimeForgot, checkOutTimeForgot)}
               </span>
             </p>
@@ -1356,7 +1385,7 @@ const ForgotProjectList = ({
             <p>
               <p>
                 <strong>Time Remaining:</strong>{" "}
-                <span className="text-red-600 font-medium">
+                <span className="text-primary font-medium">
                   {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
                 </span>
               </p>
@@ -1392,7 +1421,7 @@ const ForgotProjectList = ({
               return (
                 <div
                   key={index}
-                  className="border border-blue-100 bg-blue-50 rounded-lg p-4 space-y-3 shadow-sm"
+                  className="rounded-lg border border-primary/20 bg-primary/10 p-4 space-y-3 shadow-sm"
                 >
                   <div className="space-y-2">
                     <input
@@ -1400,7 +1429,7 @@ const ForgotProjectList = ({
                       placeholder="Search project..."
                       value={searchTerms[index] || ""} // Bind to the individual search term
                       onChange={(e) => handleSearchChange(e, index)} // Update specific index's search term
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
                     />
 
@@ -1439,7 +1468,7 @@ const ForgotProjectList = ({
                       <input
                         type="text"
                         placeholder={`Hours (max: ${maxHours})`}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                         value={entry.hoursWorked}
                         min="0"
                         max={maxHours}
@@ -1470,7 +1499,7 @@ const ForgotProjectList = ({
                       <input
                         type="text"
                         placeholder={`Minutes (0-59)`}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                         value={entry.minutesWorked}
                         min="0"
                         max="59"
@@ -1503,7 +1532,7 @@ const ForgotProjectList = ({
 
                   <textarea
                     placeholder="Description"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                     rows={2}
                     value={entry.description}
                     onChange={(e) =>
@@ -1529,7 +1558,7 @@ const ForgotProjectList = ({
                 setIsTimeStoppedForCheckout(false);
                 setStoppedTime(null);
               }}
-              className="text-sm font-medium text-red-600 hover:underline"
+              className="text-sm font-medium text-primary hover:underline"
             >
               ← Back
             </button>
@@ -1553,7 +1582,7 @@ const ForgotProjectList = ({
                 className={`px-4 py-2 rounded-md text-white text-sm transition ${
                   isSubmitting
                     ? "bg-red-400 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700"
+                    : "bg-primary hover:bg-primary/90"
                 }`}
               >
                 {isSubmitting ? (
