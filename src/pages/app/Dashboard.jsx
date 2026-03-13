@@ -16,6 +16,7 @@ import {
   FaTasks,
   FaSpinner,
   FaDollarSign,
+  FaClock,
 } from "react-icons/fa";
 import Shift from "../../components/app/Shifts";
 import { useLogin } from "../../hooks/api/Post";
@@ -29,6 +30,7 @@ import Reports from "../../components/app/Reports";
 import Holidays from "../../components/app/Holidays";
 import MissingEnteries from "../../components/app/MissingEnteries";
 import Rates from "../../components/app/Rates";
+import ProductionHours from "../../components/app/ProductionHours";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -37,6 +39,16 @@ const Dashboard = () => {
   const { postData, loading } = useLogin();
   const { data: user, loading: userLoading } = useUsers("/users/me");
   const dropdownRef = useRef(null);
+
+  const normalizedDepartment = user?.department?.name
+    ?.toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  const canAccessProductionHours =
+    user?.isLead === true &&
+    (normalizedDepartment === "project management" ||
+      normalizedDepartment === "project managment");
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -47,6 +59,12 @@ const Dashboard = () => {
       }
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (!canAccessProductionHours && activeTab === "productionHours") {
+      setActiveTab("users");
+    }
+  }, [activeTab, canAccessProductionHours]);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -76,6 +94,8 @@ const Dashboard = () => {
         return <MissingEnteries />;
       case "rates":
         return <Rates />;
+      case "productionHours":
+        return canAccessProductionHours ? <ProductionHours /> : <Users />;
       default:
         return <Users />;
       //   return <Summary />;
@@ -211,6 +231,14 @@ const Dashboard = () => {
               active={activeTab === "rates"}
               onClick={() => setActiveTab("rates")}
             />
+            {canAccessProductionHours && (
+              <SidebarItem
+                icon={<FaClock />}
+                label="Production Hours"
+                active={activeTab === "productionHours"}
+                onClick={() => setActiveTab("productionHours")}
+              />
+            )}
             <SidebarItem
               icon={<PiArticleNyTimes />}
               label="Holidays"

@@ -3,33 +3,50 @@ import { RxCross2 } from "react-icons/rx";
 import { FaSearch, FaSpinner } from "react-icons/fa";
 import { baseUrl } from "../../axios";
 import EmployeeTable from "./EmployeeTable";
-import { GrFilter } from "react-icons/gr";
-import { Nodata } from "../../assets/export";
-import { ErrorToast } from "../global/Toaster";
+import { FiFilter } from "react-icons/fi";
 
 const EmployeeTimeSheet = () => {
-  const today = new Date().toISOString().split("T")[0];
-
-  const getMonthRange = () => {
+  const getCurrentMonth = () => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-
-    return { start: firstDay, end: lastDay }; // ✅ return Date objects
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   };
-  const { start, end } = getMonthRange();
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+
+  const currentMonth = getCurrentMonth();
+
+  const formatMonthLabel = (monthValue) => {
+    if (!monthValue) return "";
+    const [year, month] = monthValue.split("-").map(Number);
+    const date = new Date(year, month - 1, 1);
+    return date.toLocaleString("en-US", { month: "short", year: "numeric" });
+  };
+
+  const getMonthDateBounds = (fromMonthValue, toMonthValue) => {
+    if (!fromMonthValue || !toMonthValue) return { startDate: "", endDate: "" };
+
+    const [fromYear, fromMonth] = fromMonthValue.split("-").map(Number);
+    const [toYear, toMonth] = toMonthValue.split("-").map(Number);
+
+    const firstDay = new Date(fromYear, fromMonth - 1, 1);
+    const lastDay = new Date(toYear, toMonth, 0);
+    const today = new Date();
+    const isCurrentMonth =
+      today.getFullYear() === toYear && today.getMonth() + 1 === toMonth;
+
+    return {
+      startDate: formatDateLocal(firstDay),
+      endDate: formatDateLocal(isCurrentMonth ? today : lastDay),
+    };
+  };
+
+  const [fromMonth, setFromMonth] = useState(currentMonth);
+  const [toMonth, setToMonth] = useState(currentMonth);
 
   const [isOpen, setIsOpen] = useState(true);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
   const [query, setQuery] = useState("");
   const [loadingAttendance, setLoadingAttendance] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [tableShow, setTableShow] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [attendance, setAttendance] = useState(false);
@@ -49,7 +66,7 @@ const EmployeeTimeSheet = () => {
   };
 
   const fetchUsers = async (searchTerm = "", page = 1) => {
-    setLoading(true);
+    setLoadingUsers(true);
     try {
       const response = await fetch(
         `${baseUrl}/users?search=${encodeURIComponent(
@@ -73,7 +90,7 @@ const EmployeeTimeSheet = () => {
     } catch (error) {
       console.error("Error fetching users", error);
     } finally {
-      setLoading(false);
+      setLoadingUsers(false);
     }
   };
 
@@ -99,12 +116,24 @@ const EmployeeTimeSheet = () => {
       setError("Please select an employee first.");
       return;
     }
+
+    if (!fromMonth || !toMonth) {
+      setError("Please select both from and to months.");
+      return;
+    }
+
+    if (fromMonth > toMonth) {
+      setError("From month cannot be greater than To month.");
+      return;
+    }
+
     setLoadingAttendance(true);
     try {
+      const { startDate, endDate } = getMonthDateBounds(fromMonth, toMonth);
       const queryParams = new URLSearchParams({
         id: selectedUser._id,
-        startDate: fromDate,
-        endDate: toDate,
+        startDate,
+        endDate,
       }).toString();
 
       const response = await fetch(`${baseUrl}/attendance/all?${queryParams}`, {
@@ -118,7 +147,13 @@ const EmployeeTimeSheet = () => {
         setAttendance(result?.data);
         setIsOpen(false);
         setTableShow(true);
-         setSummaryTriggered({ selectedUser });
+        setSummaryTriggered({
+          selectedUser,
+          monthRangeLabel:
+            fromMonth === toMonth
+              ? formatMonthLabel(fromMonth)
+              : `${formatMonthLabel(fromMonth)} - ${formatMonthLabel(toMonth)}`,
+        });
       }
     } catch (error) {
       console.error("Error fetching filtered attendance", error);
@@ -132,8 +167,8 @@ const EmployeeTimeSheet = () => {
   const handleClear = () => {
     setSelectedUser(null);
     setQuery("");
-    setFromDate("");
-    setToDate("");
+    setFromMonth(currentMonth);
+    setToMonth(currentMonth);
     setAttendance([]);
     setTableShow(false);
     setIsOpen(true);
@@ -143,35 +178,54 @@ const EmployeeTimeSheet = () => {
   };
 
   return (
-    <div>
-      <div
-        className="flex justify-between p-4"
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
+    <div className="p-6">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           {summaryTriggered?.selectedUser && (
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500">
+            <div className="flex items-center flex-wrap">
+              <span className="text-sm text-slate-500">
                 Showing Attendance For :
               </span>
-              <h2 className="text-xl mx-2 font-bold text-gray-800">
+              <h2 className="text-xl mx-2 font-bold text-slate-800">
                 {summaryTriggered?.selectedUser?.name}
               </h2>
+              {summaryTriggered?.monthRangeLabel && (
+                <span className="text-sm text-slate-500">
+                  ({summaryTriggered.monthRangeLabel})
+                </span>
+              )}
             </div>
           )}
         </div>
 
-        <button className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-md shadow-sm transition">
-          <GrFilter className="text-lg" />
-          <span className="text-sm font-semibold">Filter</span>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 text-sm font-medium text-primary transition hover:bg-primary/15"
+        >
+          <FiFilter size={15} />
+          Filters
         </button>
       </div>
-      {isOpen && (
-        <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-lg z-50 p-4 overflow-y-auto border-l border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+      <div
+        className={`fixed inset-0 z-50 ${
+          isOpen ? "pointer-events-auto" : "pointer-events-none"
+        }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${
+            isOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setIsOpen(false)}
+        />
+        <div
+          className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-xl p-5 overflow-y-auto border-l border-slate-200 transition-transform duration-300 ease-out ${
+            isOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+            <h2 className="text-lg font-semibold text-slate-800">Filters</h2>
             <button
-              className="text-gray-600 hover:text-gray-800"
+              className="rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
               onClick={() => setIsOpen(false)}
             >
               <RxCross2 size={20} />
@@ -187,28 +241,28 @@ const EmployeeTimeSheet = () => {
               <div className="relative">
                 <div
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm cursor-pointer"
+                  className="h-10 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
                 >
                   {selectedUser ? selectedUser.name : "Select Employee"}
                 </div>
 
                 {showDropdown && (
-                  <div className="absolute z-40 bg-white mt-1 w-full border border-gray-300 rounded-md shadow-md">
+                  <div className="absolute z-40 mt-1 w-full rounded-lg border border-slate-300 bg-white shadow-md">
                     {/* Search Input */}
-                    <div className="flex items-center px-2 py-2 border-b">
+                    <div className="flex items-center border-b border-slate-200 px-2 py-2">
                       <input
                         type="text"
-                        className="flex-1 px-2 py-1 text-sm outline-none"
+                        className="flex-1 bg-transparent px-2 py-1 text-sm text-slate-900 outline-none"
                         placeholder="Search..."
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                       />
-                      <FaSearch className="text-gray-400" />
+                      <FaSearch className="text-slate-400" />
                     </div>
 
                     {/* Scrollable List */}
                     <div className="max-h-64 overflow-y-auto">
-                      {loading ? (
+                      {loadingUsers ? (
                         <div className="p-4 space-y-2">
                           {[...Array(4)].map((_, i) => (
                             <div
@@ -225,21 +279,21 @@ const EmployeeTimeSheet = () => {
                         users.map((item, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-3 px-4 py-2 hover:bg-slate-50"
                             onClick={() => {
                               setSelectedUser(item);
                               setShowDropdown(false);
                               setError("");
                             }}
                           >
-                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">
                               {getInitials(item.name)}
                             </div>
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-800">
+                              <div className="text-sm font-medium text-slate-800">
                                 {item?.name}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-slate-500">
                                 {item?.designation}
                               </div>
                             </div>
@@ -249,9 +303,9 @@ const EmployeeTimeSheet = () => {
                     </div>
 
                     {/* Pagination Fixed Bottom */}
-                    <div className="flex items-center justify-between p-2 text-sm border-t sticky bottom-0 bg-white">
+                    <div className="sticky bottom-0 flex items-center justify-between border-t border-slate-200 bg-white p-2 text-sm">
                       <button
-                        className="px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
+                        className="rounded bg-slate-100 px-2 py-1 text-slate-700 disabled:opacity-50"
                         disabled={pagination.currentPage === 1}
                         onClick={() =>
                           fetchUsers(query, pagination.currentPage - 1)
@@ -259,11 +313,11 @@ const EmployeeTimeSheet = () => {
                       >
                         Prev
                       </button>
-                      <span className="text-gray-600">
+                      <span className="text-slate-600">
                         Page {pagination.currentPage} of {pagination.totalPages}
                       </span>
                       <button
-                        className="px-2 py-1 bg-red-100 text-red-600 rounded disabled:opacity-50"
+                        className="rounded bg-primary/10 px-2 py-1 text-primary disabled:opacity-50"
                         disabled={
                           pagination.currentPage === pagination.totalPages
                         }
@@ -282,26 +336,36 @@ const EmployeeTimeSheet = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                From <span className="text-red-500">*</span>
+                From Month <span className="text-red-500">*</span>
               </label>
               <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
+                type="month"
+                value={fromMonth}
+                max={currentMonth}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFromMonth(value);
+                  if (toMonth && value > toMonth) setToMonth(value);
+                  setError("");
+                }}
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                To <span className="text-red-500">*</span>
+                To Month <span className="text-red-500">*</span>
               </label>
               <input
-                type="date"
-                value={toDate}
-                max={today}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
+                type="month"
+                value={toMonth}
+                max={currentMonth}
+                min={fromMonth}
+                onChange={(e) => {
+                  setToMonth(e.target.value);
+                  setError("");
+                }}
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </div>
 
@@ -309,18 +373,17 @@ const EmployeeTimeSheet = () => {
               <button
                 onClick={() => {
                   fetchAttendance();
-                 
                 }}
                 disabled={loadingAttendance}
-                className={`w-[200px] px-4 py-2 rounded-md text-md font-[500] flex items-center justify-center gap-2 ${
+                className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition ${
                   loadingAttendance
-                    ? "bg-red-200 text-red-500 cursor-not-allowed"
-                    : "bg-red-100 text-red-600 hover:bg-red-200"
+                    ? "cursor-not-allowed bg-primary/40 text-white"
+                    : "bg-primary text-white hover:bg-primary/90"
                 }`}
               >
                 {loadingAttendance ? (
                   <>
-                    <FaSpinner className="animate-spin text-red-500 text-sm" />
+                    <FaSpinner className="animate-spin text-sm" />
                     Loading...
                   </>
                 ) : (
@@ -330,25 +393,26 @@ const EmployeeTimeSheet = () => {
 
               <button
                 onClick={handleClear}
-                className="border border-red-600 w-[200px] text-red-600 px-4 py-2 rounded-md text-md font-[500]"
+                className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
               >
                 Reset
               </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
       {tableShow ? (
         <EmployeeTable
           attendance={attendance}
-          loading={loading}
+          loading={loadingAttendance}
           setAttendance={setAttendance}
           fetchAttendance={fetchAttendance}
         />
       ) : (
-        <div className="flex flex-col justify-center items-center h-[60vh]">
-          {/* <img src={Nodata} className="w-[160px] h-[160px] " alt="" /> */}
-          <div>No Record Found</div>{" "}
+        <div className="flex h-[60vh] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 shadow-sm">
+          <div className="text-sm font-medium text-slate-500">
+            Select employee and month filters to view timesheet.
+          </div>
         </div>
       )}
     </div>

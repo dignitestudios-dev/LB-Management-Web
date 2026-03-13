@@ -5,7 +5,6 @@ import { FaEye } from "react-icons/fa";
 import { PiFileText } from "react-icons/pi";
 import { SlCalender } from "react-icons/sl";
 import ProjectModal from "./ProjectModal";
-import { IoMdEyeOff } from "react-icons/io";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { ErrorToast, SuccessToast } from "../global/Toaster";
 import instance, { baseUrl } from "../../axios";
@@ -50,49 +49,46 @@ const EmployeeTable = ({
 
   return (
     <div>
-    <div className="flex flex-wrap gap-4 py-4">
-      <InfoCard
-        title="Expected Minutes"
-        value={attendance.totalExpectedMinutes}
-      />
-      <InfoCard title="Worked Minutes" value={attendance.totalWorkedMinutes} />
+    <div className="mb-4 flex flex-wrap gap-4">
+      <InfoCard title="Worked Minutes" value={attendance?.totalWorkedMinutes} />
       </div>
-      <div className="bg-white shadow-sm border border-gray-200 ">
-        <table className="min-w-full divide-y  divide-gray-200">
-          <thead className="bg-gradient-to-r  from-slate-50 to-blue-50">
-            <tr className=" text-red-600 text-xs md:text-sm uppercase font-semibold tracking-wider">
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="max-h-[60vh] overflow-y-auto">
+        <table className="min-w-full">
+          <thead className="sticky -top-px z-10 bg-[#f2e7f9] text-primary">
+            <tr>
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 {" "}
                 <div className="flex items-center gap-2">
                   <SlCalender className="w-4 h-4" />
                   Shift Date
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <BsClockHistory className="w-4 h-4" />
                   Check In
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <BsClockHistory className="w-4 h-4" />
                   Check Out
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 Worked Hours
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 Reason
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <PiFileText className="w-4 h-4" />
                   Notes
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <th className="border px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">
                 <div className="flex items-center gap-2">Action</div>
               </th>
             </tr>
@@ -102,22 +98,22 @@ const EmployeeTable = ({
               ? // Loading skeleton
                 Array.from({ length: 5 }).map((_, index) => (
                   <tr key={index} className="animate-pulse">
-                    <td className="px-6 py-4">
+                    <td className="border px-6 py-4">
                       <div className="h-4 bg-gray-200 rounded-md w-24"></div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="border px-6 py-4">
                       <div className="h-6 bg-gray-200 rounded-full w-20"></div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="border px-6 py-4">
                       <div className="h-6 bg-gray-200 rounded-full w-20"></div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="border px-6 py-4">
                       <div className="h-4 bg-gray-200 rounded-md w-16"></div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="border px-6 py-4">
                       <div className="h-6 bg-gray-200 rounded-full w-16"></div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="border px-6 py-4">
                       <div className="h-4 bg-gray-200 rounded-md w-32"></div>
                     </td>
                   </tr>
@@ -310,34 +306,34 @@ const EmployeeTable = ({
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 flex gap-4 items-center">
-                      {/* View Button */}
-                      <button
-                        onClick={() => {
-                          setSelectedRow(item);
-                          setShowModal(true);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-800"
-                        title="View Details"
-                      >
-                        <FaEye />
-                      </button>
-
-                      {/* Delete Button */}
-                      {item?._id === null ? (
-                        <></>
-                      ) : (
+                    <td className="px-6 py-4 text-center align-middle">
+                      <div className="inline-flex items-center justify-center gap-2">
+                        {/* View Button */}
                         <button
                           onClick={() => {
-                            setDeleteId(item?._id);
-                            setDeleteModalOpen(true);
+                            setSelectedRow(item);
+                            setShowModal(true);
                           }}
-                          className="text-red-600 hover:text-red-800"
-                          title="Delete Attendance"
+                          className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                          title="View Details"
                         >
-                          <RiDeleteBin6Line />
+                          <FaEye size={14} />
                         </button>
-                      )}
+
+                        {/* Delete Button */}
+                        {item?._id === null ? null : (
+                          <button
+                            onClick={() => {
+                              setDeleteId(item?._id);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="inline-flex items-center justify-center rounded-md bg-red-500 p-1.5 text-white"
+                            title="Delete Attendance"
+                          >
+                            <RiDeleteBin6Line size={14} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -358,6 +354,7 @@ const EmployeeTable = ({
           onConfirm={() => handleDeleteAttendance(deleteId)}
           deleteLoading={loadingdelete}
         />
+        </div>
       </div>
     </div>
   );

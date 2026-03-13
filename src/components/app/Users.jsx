@@ -412,7 +412,14 @@ const Users = () => {
                   >
                     <td className="border px-4 py-2 text-center">{i + 1}</td>
                     <td className="border px-4 py-2 text-center">
-                      {user.name}
+                      <div className="inline-flex items-center gap-2">
+                        <span>{user.name}</span>
+                        {user.isLead && (
+                          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                            Lead
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="border px-4 py-2 text-center">
                       {user.email}
