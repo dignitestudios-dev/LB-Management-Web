@@ -1,29 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { BsClockHistory } from "react-icons/bs";
 import { SlCalender } from "react-icons/sl";
 import { FaEye } from "react-icons/fa";
+import { FiMail } from "react-icons/fi";
 import ProjectModal from "./ProjectModal";
 import { ErrorToast, SuccessToast } from "../global/Toaster";
 import instance, { baseUrl } from "../../axios";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import { X } from "lucide-react";
-import MultiSelectFilter from "../ui/MultipleFilterSelector";
 
-const EmployeeMissingEntryTable = ({
-  attendance,
-  loading,
-  setAttendance,
-  fetchAttendance,
-}) => {
+const EmployeeMissingEntryTable = ({ attendance, loading }) => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loadingdelete, setloading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState();
-  const [departments, setDepartments] = useState([]);
-  const [roles, setRoles] = useState([]);
-  const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [selectedRoles, setSelectedRoles] = useState([]);
   // New State for Eye Modal
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -48,32 +39,12 @@ const EmployeeMissingEntryTable = ({
       setloading(false);
     }
   };
-  const fetchFormOptions = async () => {
-    try {
-      const [roleRes, deptRes] = await Promise.all([
-        instance.get("/roles/"),
-        instance.get("/departments/"),
-      ]);
-      setRoles(roleRes.data.data);
-      setDepartments(deptRes.data.data);
-    } catch (err) {
-      ErrorToast("Failed to load form data");
-    }
-  };
-
-  useEffect(() => {
-    fetchFormOptions();
-  }, []);
-
-  useEffect(() => {
-    fetchAttendance(selectedDepartments, selectedRoles);
-  }, [selectedDepartments, selectedRoles]);
   return (
     <div>
-      <div className="bg-white shadow-sm border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
-            <tr className="text-red-600 text-xs md:text-sm uppercase font-semibold tracking-wider">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="min-w-full">
+          <thead className="sticky -top-px z-10 bg-[#f2e7f9] text-primary">
+            <tr className="text-xs md:text-sm uppercase font-semibold tracking-wider">
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <SlCalender className="w-4 h-4" />
@@ -82,7 +53,7 @@ const EmployeeMissingEntryTable = ({
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
-                  <BsClockHistory className="w-4 h-4" />
+                  <FiMail className="w-4 h-4" />
                   Email
                 </div>
               </th>
@@ -93,32 +64,10 @@ const EmployeeMissingEntryTable = ({
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  {/* <BsClockHistory className="w-4 h-4" /> */}
-                  <MultiSelectFilter
-                    title="Departments"
-                    options={departments.map((d) => ({
-                      value: d._id,
-                      label: d.name,
-                    }))}
-                    selected={selectedDepartments}
-                    setSelected={setSelectedDepartments}
-                  />
-                </div>
+                Department
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  {/* <BsClockHistory className="w-4 h-4" /> */}
-                  <MultiSelectFilter
-                    title="Roles"
-                    options={roles.map((r) => ({
-                      value: r._id,
-                      label: r.name,
-                    }))}
-                    selected={selectedRoles}
-                    setSelected={setSelectedRoles}
-                  />
-                </div>
+                Role
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Action
@@ -138,12 +87,21 @@ const EmployeeMissingEntryTable = ({
                     <td className="px-6 py-4">
                       <div className="h-6 bg-gray-200 rounded-full w-20"></div>
                     </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded-md w-24"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded-md w-20"></div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="mx-auto h-8 w-8 rounded-md bg-gray-200"></div>
+                    </td>
                   </tr>
                 ))
               : attendance?.map((item, index) => (
                   <tr
                     key={index}
-                    className="cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
+                    className="cursor-pointer transition-all duration-200 hover:bg-slate-50"
                   >
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">
@@ -154,13 +112,13 @@ const EmployeeMissingEntryTable = ({
                     <td className="px-6 py-4">{item.totalMissingEntries}</td>
                     <td className="px-6 py-4">{item.departmentName}</td>
                     <td className="px-6 py-4">{item.roleName}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-center align-middle">
                       <button
                         onClick={() => {
                           setSelectedEmployee(item);
                           setShowDetailsModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
                       >
                         <FaEye className="w-5 h-5" />
                       </button>
@@ -189,53 +147,69 @@ const EmployeeMissingEntryTable = ({
       </div>
 
       {/* Details Modal */}
-      {showDetailsModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white relative rounded-xl h-[50vh] overflow-hidden overflow-y-auto shadow-xl p-6 w-full max-w-lg">
-            <div
-              className="absolute right-4 font-bold cursor-pointer"
-              onClick={() => setShowDetailsModal(false)}
-            >
-              <X />
-            </div>
-            <h2 className="text-lg font-semibold mb-4">
-              Missing Attendance - {selectedEmployee.name}
-            </h2>
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                    Date
-                  </th>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                    Reason
-                  </th>
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${
+          showDetailsModal
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${
+            showDetailsModal ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setShowDetailsModal(false)}
+        />
+
+        <div
+          className={`relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl transition-all duration-200 ${
+            showDetailsModal
+              ? "translate-y-0 opacity-100"
+              : "translate-y-4 opacity-0"
+          } h-[50vh] overflow-hidden overflow-y-auto`}
+        >
+          <div
+            className="absolute right-4 font-bold cursor-pointer text-slate-500 hover:text-slate-700"
+            onClick={() => setShowDetailsModal(false)}
+          >
+            <X />
+          </div>
+
+          <h2 className="text-lg font-semibold mb-4 text-primary">
+            Missing Attendance - {selectedEmployee?.name || "Employee"}
+          </h2>
+
+          <table className="min-w-full border border-slate-200">
+            <thead className="bg-[#f2e7f9] text-primary">
+              <tr>
+                <th className="px-4 py-2 text-left text-sm font-semibold">
+                  Date
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">
+                  Reason
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedEmployee?.missingDays?.map((day, idx) => (
+                <tr key={idx} className="border-t">
+                  <td className="px-4 py-2 text-sm text-gray-900">{day.date}</td>
+                  <td className="px-4 py-2 text-sm text-gray-600">{day.reason}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {selectedEmployee.missingDays?.map((day, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="px-4 py-2 text-sm text-gray-900">
-                      {day.date}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
-                      {day.reason}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Close
-              </button>
-            </div>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={() => setShowDetailsModal(false)}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+            >
+              Close
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -9,6 +9,8 @@ const UserFiltersModal = ({
   selectedDepartments,
   selectedRoles,
   onApply,
+  onReset,
+  applyLoading = false,
 }) => {
   const [localDepts, setLocalDepts] = useState(selectedDepartments);
   const [localRoles, setLocalRoles] = useState(selectedRoles);
@@ -32,13 +34,18 @@ const UserFiltersModal = ({
     );
 
   const handleReset = () => {
+    if (onReset) {
+      onReset();
+      return;
+    }
+
     setLocalDepts([]);
     setLocalRoles([]);
   };
 
-  const handleApply = () => {
-    onApply(localDepts, localRoles);
+  const handleApply = async () => {
     onClose();
+    await onApply(localDepts, localRoles);
   };
 
   return (
@@ -139,6 +146,7 @@ const UserFiltersModal = ({
           <button
             type="button"
             onClick={handleReset}
+            disabled={applyLoading}
             className="text-sm font-medium text-slate-500"
           >
             Reset
@@ -147,6 +155,7 @@ const UserFiltersModal = ({
             <button
               type="button"
               onClick={onClose}
+              disabled={applyLoading}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
             >
               Cancel
@@ -154,9 +163,14 @@ const UserFiltersModal = ({
             <button
               type="button"
               onClick={handleApply}
-              className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white"
+              disabled={applyLoading}
+              className={`rounded-lg px-5 py-2 text-sm font-medium text-white ${
+                applyLoading
+                  ? "cursor-not-allowed bg-primary/40"
+                  : "bg-primary"
+              }`}
             >
-              Apply
+              {applyLoading ? "Applying..." : "Apply"}
             </button>
           </div>
         </div>
