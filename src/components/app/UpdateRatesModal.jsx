@@ -214,7 +214,7 @@ const UpdateRatesModal = ({ isOpen, onClose, departments, onUpdate, updateLoadin
               selectedMonths.length === 0 ||
               !rate
             }
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {updateLoading && (
               <ImSpinner3 className="animate-spin text-sm" />

@@ -378,7 +378,7 @@ const EmployeeTimeSheet = () => {
                 className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition ${
                   loadingAttendance
                     ? "cursor-not-allowed bg-primary/40 text-white"
-                    : "bg-primary text-white hover:bg-primary/90"
+                    : "bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white hover:brightness-110"
                 }`}
               >
                 {loadingAttendance ? (

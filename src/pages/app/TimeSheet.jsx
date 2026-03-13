@@ -237,7 +237,7 @@ const TimesheetTable = () => {
                 className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition ${
                   loading
                     ? "cursor-not-allowed bg-primary/40 text-white"
-                    : "bg-primary text-white hover:bg-primary/90"
+                    : "bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white hover:brightness-110"
                 }`}
               >
                 {loading ? "Loading..." : "Search"}
@@ -475,7 +475,7 @@ const TimesheetTable = () => {
                             setSelectedRow(item);
                             setShowModal(true);
                           }}
-                          className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                          className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] p-1.5 text-white transition hover:brightness-110"
                           title="View Details"
                         >
                           <FaEye size={14} />

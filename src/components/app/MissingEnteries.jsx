@@ -278,7 +278,7 @@ const MissingEnteries = () => {
             onClick={() => setExtraFilterModalOpen(true)}
             className={`relative inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition ${
               selectedDepartments.length > 0 || selectedRoles.length > 0
-                ? "border-primary bg-primary text-white"
+                ? "border-primary bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white"
                 : "border-slate-300 bg-white text-slate-600"
             }`}
           >
@@ -294,7 +294,7 @@ const MissingEnteries = () => {
           {tableShow && attendance.length > 0 && (
             <button
               onClick={handleExportCSV}
-              className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-white transition hover:bg-primary/90"
+              className="inline-flex h-10 items-center rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 text-sm font-medium text-white transition hover:brightness-110"
             >
               Export CSV
             </button>
@@ -367,7 +367,7 @@ const MissingEnteries = () => {
                 className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition ${
                   loadingAttendance
                     ? "cursor-not-allowed bg-primary/40 text-white"
-                    : "bg-primary text-white hover:bg-primary/90"
+                    : "bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white hover:brightness-110"
                 }`}
               >
                 {loadingAttendance ? (

@@ -229,7 +229,7 @@ const Users = () => {
         <h2 className="text-2xl font-bold text-slate-800">Manage Users</h2>
         <button
           onClick={() => setAddModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
         >
           <FiPlus className="text-base" />
           Add User
@@ -284,7 +284,7 @@ const Users = () => {
             onClick={() => setFilterModalOpen(true)}
             className={`relative inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition ${
               selectedDepartments.length > 0 || selectedRoles.length > 0
-                ? "border-primary bg-primary text-white"
+                ? "border-primary bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white"
                 : "border-slate-300 bg-white text-slate-600"
             }`}
           >
@@ -436,7 +436,7 @@ const Users = () => {
                     <td className="border px-4 py-2 text-center">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                        className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] p-1.5 text-white transition hover:brightness-110"
                         title="Edit User"
                       >
                         <FiEdit2 size={14} />

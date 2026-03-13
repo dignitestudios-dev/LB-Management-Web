@@ -99,7 +99,7 @@ const UserFiltersModal = ({
                     onClick={() => toggleDept(d._id)}
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                       active
-                        ? "border-primary bg-primary text-white"
+                        ? "border-primary bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white"
                         : "border-slate-300 bg-white text-slate-600"
                     }`}
                   >
@@ -126,7 +126,7 @@ const UserFiltersModal = ({
                     onClick={() => toggleRole(r._id)}
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                       active
-                        ? "border-primary bg-primary text-white"
+                        ? "border-primary bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white"
                         : "border-slate-300 bg-white text-slate-600"
                     }`}
                   >
@@ -167,7 +167,7 @@ const UserFiltersModal = ({
               className={`rounded-lg px-5 py-2 text-sm font-medium text-white ${
                 applyLoading
                   ? "cursor-not-allowed bg-primary/40"
-                  : "bg-primary"
+                      : "bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] hover:brightness-110"
               }`}
             >
               {applyLoading ? "Applying..." : "Apply"}

@@ -118,7 +118,7 @@ const EmployeeMissingEntryTable = ({ attendance, loading }) => {
                           setSelectedEmployee(item);
                           setShowDetailsModal(true);
                         }}
-                        className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                        className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] p-1.5 text-white transition hover:brightness-110"
                       >
                         <FaEye className="w-5 h-5" />
                       </button>
@@ -203,7 +203,7 @@ const EmployeeMissingEntryTable = ({ attendance, loading }) => {
           <div className="flex justify-end mt-4">
             <button
               onClick={() => setShowDetailsModal(false)}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+              className="rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-white transition hover:brightness-110"
             >
               Close
             </button>

@@ -314,7 +314,7 @@ const EmployeeTable = ({
                             setSelectedRow(item);
                             setShowModal(true);
                           }}
-                          className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                          className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] p-1.5 text-white transition hover:brightness-110"
                           title="View Details"
                         >
                           <FaEye size={14} />

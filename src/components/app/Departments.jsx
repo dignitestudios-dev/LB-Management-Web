@@ -119,7 +119,7 @@ const Departments = () => {
         <h2 className="text-2xl font-bold text-slate-800">Manage Departments</h2>
         <button
           onClick={() => setAddModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
         >
           <FiPlus className="text-base" />
           Add Department
@@ -198,7 +198,7 @@ const Departments = () => {
               <button
                 type="submit"
                 disabled={submitLoading}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitLoading && <ImSpinner3 className="animate-spin text-sm" />}
                 Create Department
@@ -278,7 +278,7 @@ const Departments = () => {
                     <td className="border px-4 py-2 text-center">
                       <button
                         onClick={() => openEditModal(dept)}
-                        className="inline-flex items-center justify-center rounded-md bg-primary p-1.5 text-white"
+                        className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] p-1.5 text-white transition hover:brightness-110"
                         title="Edit Department"
                       >
                         <FiEdit2 size={14} />
@@ -392,7 +392,7 @@ const Departments = () => {
                 type="button"
                 onClick={updateDepartment}
                 disabled={updating}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {updating && <ImSpinner3 className="animate-spin text-sm" />}
                 Update Department

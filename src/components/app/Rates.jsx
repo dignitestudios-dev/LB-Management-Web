@@ -96,7 +96,7 @@ const Rates = () => {
           </div>
           <button
             onClick={() => setUpdateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
           >
             <FiEdit2 size={14} />
             Update Rates
