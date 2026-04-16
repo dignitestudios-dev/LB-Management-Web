@@ -170,7 +170,7 @@ const ProductionHours = () => {
                   >
                     <td className="border px-4 py-2">{i + 1}</td>
                     <td className="border px-4 py-2 text-left font-medium whitespace-nowrap">
-                      {row.projectName}
+                      {row.name}
                     </td>
                     <td className="border px-4 py-2 capitalize">{row.type}</td>
                     <td className="border px-4 py-2 whitespace-nowrap">
