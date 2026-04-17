@@ -10,6 +10,20 @@ const getDeptLabel = (key) => {
   return key;
 };
 
+const getTypeBadgeClasses = (type) => {
+  const normalized = String(type || "").toLowerCase();
+
+  if (normalized === "internal") {
+    return "border-emerald-300 bg-emerald-50 text-emerald-700";
+  }
+
+  if (normalized === "external") {
+    return "border-blue-300 bg-blue-50 text-blue-700";
+  }
+
+  return "border-slate-300 bg-slate-100 text-slate-700";
+};
+
 const ProductionHours = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -326,7 +340,15 @@ const ProductionHours = () => {
                     <td className="border px-4 py-2 text-left font-medium whitespace-nowrap">
                       {row.name}
                     </td>
-                    <td className="border px-4 py-2 capitalize">{row.type}</td>
+                    <td className="border px-4 py-2">
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${getTypeBadgeClasses(
+                          row.type,
+                        )}`}
+                      >
+                        {row.type || "-"}
+                      </span>
+                    </td>
                     <td className="border px-4 py-2 whitespace-nowrap">
                       {row.division}
                     </td>
