@@ -69,6 +69,7 @@ const UserDashboard = () => {
   const [ForgotisModalOpen, setForgotisModalOpen] = useState(false);
 
   const [todayAttendance, setTodayAttendance] = useState(null);
+  const [todayAttendanceLoading, setTodayAttendanceLoading] = useState(true);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -138,6 +139,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const fetchToday = async () => {
+      setTodayAttendanceLoading(true);
       try {
         const response = await instance.get(`/attendance/today`);
         if (response.data.success) {
@@ -145,6 +147,8 @@ const UserDashboard = () => {
         }
       } catch (error) {
         console.error("Error fetching today's attendance", error);
+      } finally {
+        setTodayAttendanceLoading(false);
       }
     };
 
@@ -191,6 +195,7 @@ const UserDashboard = () => {
     : 0;
 
   const adjustedWorkedMinutes = Math.max(rawMinutes, 0);
+  const isActionApiLoading = userLoading || todayAttendanceLoading || checkInloading;
 
   const getTimeDifference = (start, end) => {
     if (!start || !end) return null;
@@ -385,7 +390,7 @@ const UserDashboard = () => {
                   !todayAttendance?.checkOutTime && (
                     <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-center text-sm text-primary shadow-sm">
                       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary/80">
-                        Total Duration (Excl. Break)
+                        Total Duration
                       </p>
                       <p className="text-lg font-bold">
                         {Math.floor(adjustedWorkedMinutes / 60)} hour(s){" "}
@@ -417,19 +422,17 @@ const UserDashboard = () => {
                 <button
                   onClick={handleCheckIn}
                   className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#6d05b6] via-primary to-[#c06cf3] text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
-                  disabled={checkInloading}
+                  disabled={isActionApiLoading}
                 >
                   <IoFingerPrintOutline className="text-xl text-white" />
-                  <span className="text-sm sm:text-base">
-                    {checkInloading ? "Checking In..." : "Check In"}
-                  </span>
+                  <span className="text-sm sm:text-base">Check In</span>
                 </button>
 
                 {/* Check Out Button */}
                 <button
                   onClick={handleCheckOut}
                   className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-slate-900 via-black to-slate-600 text-white font-semibold shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 disabled:opacity-50"
-                  disabled={checkInloading}
+                  disabled={isActionApiLoading}
                 >
                   <IoLogOutOutline className="text-xl text-white" />
                   <span className="text-sm sm:text-base">Check Out</span>
@@ -590,68 +593,154 @@ const ProjectList = ({
   todayAttendance,
   isTimeStoppedForCheckout,
   stoppedTime,
-  setIsTimeStoppedForCheckout,
-  setStoppedTime,
-  checkOutTimeForgot,
-  getTimeDifference,
-  checkInTimeForgot,
 }) => {
   const { loading, data: projects } = useUsers("/projects", 1, 1000);
-  const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [searchTerms, setSearchTerms] = useState([]); // Array to store search terms for each entry
-  const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
-  const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
-  const BREAK_MINUTES = 60;
+  const [searchTerms, setSearchTerms] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
+  const projectsList = Array.isArray(projects) ? projects : [];
 
   const endTime = isTimeStoppedForCheckout ? new Date(stoppedTime) : new Date();
   const rawMinutes = Math.floor((endTime - new Date(checkInTime)) / 60000);
 
+  const createEmptyEntry = (projectId = "") => ({
+    project: projectId,
+    hoursWorked: 0,
+    minutesWorked: 0,
+    description: "",
+  });
+
+  const normalizeProjectName = (value = "") =>
+    value.toLowerCase().trim().replace(/\s+/g, " ");
+
+  const findDefaultProject = (list, projectName) => {
+    const normalizedTarget = normalizeProjectName(projectName).replace(/\s/g, "");
+    return list.find((project) => {
+      const normalizedName = normalizeProjectName(project?.name || "").replace(
+        /\s/g,
+        ""
+      );
+      return (
+        normalizedName === normalizedTarget ||
+        normalizedName.includes(normalizedTarget) ||
+        normalizedTarget.includes(normalizedName)
+      );
+    });
+  };
+
+  useEffect(() => {
+    if (isInitialized || loading || projectsList.length === 0)
+      return;
+
+    const defaultProjectNames = ["Free Project", "Break"];
+    const matchedProjects = defaultProjectNames.map((projectName) =>
+      findDefaultProject(projectsList, projectName) || null
+    );
+    const initializedEntries = matchedProjects.map((project) =>
+      createEmptyEntry(project?._id || "")
+    );
+
+    const workedMinutes = (() => {
+      if (!checkInTime) return 0;
+      const currentEndTime = isTimeStoppedForCheckout
+        ? new Date(stoppedTime)
+        : new Date();
+      return Math.max(Math.floor((currentEndTime - new Date(checkInTime)) / 60000), 0);
+    })();
+
+    if (workedMinutes < 8 * 60) {
+      const extraMinutes = 8 * 60 - workedMinutes;
+      const breakIndex = matchedProjects.findIndex(
+        (project) =>
+          normalizeProjectName(project?.name || "").replace(/\s/g, "") === "break"
+      );
+      if (breakIndex >= 0) {
+        initializedEntries[breakIndex] = {
+          ...initializedEntries[breakIndex],
+          hoursWorked: Math.floor(extraMinutes / 60),
+          minutesWorked: extraMinutes % 60,
+        };
+      }
+    }
+
+    setEntries(initializedEntries);
+    setSearchTerms(matchedProjects.map((project) => project?.name || ""));
+    setSelectedProjects(matchedProjects);
+    setIsInitialized(true);
+  }, [isInitialized, loading, projects, checkInTime, isTimeStoppedForCheckout, stoppedTime]);
+
+  const handleAddProject = () => {
+    setEntries((prev) => [...prev, createEmptyEntry()]);
+    setSearchTerms((prev) => [...prev, ""]);
+    setSelectedProjects((prev) => [...prev, null]);
+  };
+
+  const handleRemoveProject = (index) => {
+    setEntries((prev) => prev.filter((_, i) => i !== index));
+    setSearchTerms((prev) => prev.filter((_, i) => i !== index));
+    setSelectedProjects((prev) => prev.filter((_, i) => i !== index));
+    setErrors((prev) => {
+      const next = {};
+      Object.keys(prev).forEach((key) => {
+        const currentIndex = Number(key);
+        if (currentIndex < index) next[currentIndex] = prev[currentIndex];
+        if (currentIndex > index) next[currentIndex - 1] = prev[currentIndex];
+      });
+      return next;
+    });
+    setOpenDropdownIndex((prev) => {
+      if (prev === null) return null;
+      if (prev === index) return null;
+      return prev > index ? prev - 1 : prev;
+    });
+  };
+
   const handleSearchChange = (e, index) => {
     const updatedSearchTerms = [...searchTerms];
-    updatedSearchTerms[index] = e.target.value || ""; // Ensure it's a string, even if empty
+    updatedSearchTerms[index] = e.target.value || "";
     setSearchTerms(updatedSearchTerms);
   };
 
   const handleSelect = (project, index) => {
     const updatedSelectedProjects = [...selectedProjects];
-    updatedSelectedProjects[index] = project; // Update selected project for this index
+    updatedSelectedProjects[index] = project;
 
     setSelectedProjects(updatedSelectedProjects);
     setSearchTerms((prevSearchTerms) => {
       const updatedSearchTerms = [...prevSearchTerms];
-      updatedSearchTerms[index] = project.name; // Set the search term to selected project's name
+      updatedSearchTerms[index] = project.name;
       return updatedSearchTerms;
     });
-    setOpenDropdownIndex(null); // Close dropdown after selection
+    setOpenDropdownIndex(null);
 
     const updatedEntries = [...entries];
     updatedEntries[index] = {
       ...updatedEntries[index],
-      project: project._id, // Set selected project for this entry
+      project: project._id,
     };
     setEntries(updatedEntries);
   };
 
   const toggleDropdown = (index) => {
-    setOpenDropdownIndex((prev) => (prev === index ? null : index)); // Open/close dropdown
+    setOpenDropdownIndex((prev) => (prev === index ? null : index));
   };
 
   const availableMinutes = () => {
     if (!checkInTime) return 0;
-    const endTime = isTimeStoppedForCheckout
+    const currentEndTime = isTimeStoppedForCheckout
       ? new Date(stoppedTime)
       : new Date();
-    return Math.max(
-      Math.floor((endTime - new Date(checkInTime)) / 60000) - BREAK_MINUTES,
-      0
-    );
+    return Math.max(Math.floor((currentEndTime - new Date(checkInTime)) / 60000), 0);
   };
 
+  const MIN_REQUIRED_MINUTES = 8 * 60;
   const totalAvailableMinutes = availableMinutes();
+  const totalRequiredMinutes = Math.max(totalAvailableMinutes, MIN_REQUIRED_MINUTES);
+  const minimumExtraMinutes = Math.max(MIN_REQUIRED_MINUTES - totalAvailableMinutes, 0);
 
   const totalEnteredMinutes = entries.reduce((sum, entry) => {
     const hours = parseInt(entry.hoursWorked) || 0;
@@ -659,30 +748,28 @@ const ProjectList = ({
     return sum + hours * 60 + minutes;
   }, 0);
 
-  const remainingMinutes = totalAvailableMinutes - totalEnteredMinutes;
+  const remainingMinutes = totalRequiredMinutes - totalEnteredMinutes;
+
+  const getEntryProjectName = (entry, index) => {
+    const selected = selectedProjects[index];
+    if (selected?.name) return selected.name;
+    const projectFromList = projectsList.find((project) => project?._id === entry?.project);
+    if (projectFromList?.name) return projectFromList.name;
+    return searchTerms[index] || "";
+  };
+
+  const isFlexibleProjectEntry = (entry, index) => {
+    const normalizedName = normalizeProjectName(getEntryProjectName(entry, index)).replace(
+      /\s/g,
+      ""
+    );
+    return normalizedName === "break" || normalizedName === "freeproject";
+  };
 
   const handleChange = (index, field, value) => {
     const updatedEntries = [...entries];
     updatedEntries[index][field] = value;
     setEntries(updatedEntries);
-  };
-
-  const handleProjectCountSubmit = () => {
-    if (projectCount && projectCount > 0 && projectCount <= 10) {
-      const totalMinutes = availableMinutes();
-      const evenMinutes = Math.floor(totalMinutes / projectCount);
-      const remaining = totalMinutes % projectCount;
-
-      const initialEntries = Array.from({ length: projectCount }, (_, i) => ({
-        project: "",
-        hoursWorked: 0,
-        minutesWorked: 0,
-        description: "",
-      }));
-
-      setEntries(initialEntries);
-      setShowProjectForm(true);
-    }
   };
 
   const handleSubmit = async () => {
@@ -695,8 +782,7 @@ const ProjectList = ({
       if (!entry.project) entryErrors.project = "Project is required";
       if (!entry.hoursWorked && !entry.minutesWorked)
         entryErrors.time = "Hours or minutes required";
-      if (!entry.description)
-        entryErrors.description = "Description is required";
+      if (!entry.description) entryErrors.description = "Description is required";
 
       if (Object.keys(entryErrors).length > 0) {
         newErrors[index] = entryErrors;
@@ -710,7 +796,7 @@ const ProjectList = ({
       return;
     }
 
-    setErrors({}); // Clear previous errors
+    setErrors({});
 
     const checkoutTime = stoppedTime || new Date().toISOString();
 
@@ -727,21 +813,21 @@ const ProjectList = ({
       return sum + hours * 60 + minutes;
     }, 0);
 
-    if (totalEntered > totalAvailableMinutes) {
+    if (totalEntered > totalRequiredMinutes) {
       ErrorToast(
         `Total entered time (${Math.floor(totalEntered / 60)}h ${
           totalEntered % 60
-        }m) cannot exceed available time (${Math.floor(
-          totalAvailableMinutes / 60
-        )}h ${totalAvailableMinutes % 60}m).`
+        }m) cannot exceed required allocation (${Math.floor(
+          totalRequiredMinutes / 60
+        )}h ${totalRequiredMinutes % 60}m).`
       );
       setIsSubmitting(false);
       return;
     }
 
-    if (totalEntered !== totalAvailableMinutes) {
+    if (totalEntered !== totalRequiredMinutes) {
       ErrorToast(
-        `Please use all available time before confirming checkout. Time remaining: ${Math.floor(
+        `Please complete required allocation before confirming checkout. Time remaining: ${Math.floor(
           remainingMinutes / 60
         )}h ${remainingMinutes % 60}m.`
       );
@@ -749,8 +835,25 @@ const ProjectList = ({
       return;
     }
 
+    if (minimumExtraMinutes > 0) {
+      const nonFlexibleMinutes = entries.reduce((sum, entry, index) => {
+        const entryMinutes =
+          (parseInt(entry.hoursWorked) || 0) * 60 + (parseInt(entry.minutesWorked) || 0);
+        return isFlexibleProjectEntry(entry, index) ? sum : sum + entryMinutes;
+      }, 0);
+
+      if (nonFlexibleMinutes > totalAvailableMinutes) {
+        ErrorToast(
+          `When worked time is below 8 hours, the extra ${Math.floor(
+            minimumExtraMinutes / 60
+          )}h ${minimumExtraMinutes % 60}m must be allocated only to Free Project or Break.`
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const payload = {
-      checkoutTime,
       projects: validProjects.map((entry) => ({
         project: entry.project,
         minutesWorked:
@@ -760,361 +863,389 @@ const ProjectList = ({
       })),
     };
 
-    await postData("/attendance/check-out", false, null, payload, (res) => {
-      SuccessToast("Checked out successfully!");
-      setTodayAttendance({
-        ...todayAttendance,
-        checkOutTime: checkoutTime,
-      });
+    try {
+      const response = await postData("/attendance/check-out", false, null, payload);
+
+      if (response?.success) {
+        SuccessToast("Checked out successfully!");
+        setTodayAttendance({
+          ...todayAttendance,
+          checkOutTime: checkoutTime,
+        });
+        onClose();
+      } else if (response?.message) {
+        ErrorToast(response.message);
+      }
+    } catch (error) {
+      ErrorToast(error?.response?.data?.message || "Failed to checkout");
+    } finally {
       setIsSubmitting(false);
-      onClose();
-    });
-  };
-
-  const getDuration = () => {
-    const mins = totalAvailableMinutes;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-
-    if (isTimeStoppedForCheckout) {
-      return `${h} hour(s) ${m} minute(s)`;
     }
-
-    const s =
-      Math.floor((new Date() - new Date(todayAttendance?.checkInTime)) / 1000) %
-      60;
-    return `${h} hour(s) ${m} minute(s) ${s} second(s)`;
   };
 
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
-      {projectCount === null ? (
-        <div className="space-y-4">
-          <p className="text-gray-700 font-medium">
-            How many projects did you work on today?
+      <div className="text-sm text-gray-700 space-y-1">
+        <p>
+          <strong>Total Time Duration:</strong>{" "}
+          <span className="text-primary font-medium">
+            {Math.floor(rawMinutes / 60)} hour(s) {rawMinutes % 60} minute(s)
+          </span>
+        </p>
+        <p>
+          <strong>Required Allocation:</strong>{" "}
+          <span className="text-primary font-medium">
+            {Math.floor(totalRequiredMinutes / 60)}h {totalRequiredMinutes % 60}m
+          </span>
+        </p>
+        {minimumExtraMinutes > 0 && (
+          <p className="text-xs text-amber-700">
+            Extra {Math.floor(minimumExtraMinutes / 60)}h {minimumExtraMinutes % 60}m
+            {" "}must be filled in Free Project or Break.
           </p>
-          <input
-            type="text"
-            min="1"
-            max="10"
-            placeholder="Enter number of projects"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            onChange={(e) => {
-              const count = parseInt(e.target.value);
-              if (isNaN(count) || count < 1 || count > 10) {
-                setProjectCount(null);
-                return;
-              }
-              setProjectCount(count);
-            }}
-          />
-          {projectCount && (
-            <button
-              onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
-            >
-              Okay
-            </button>
-          )}
-        </div>
-      ) : !showProjectForm ? (
-        <div className="space-y-4">
-          <p className="text-gray-700 font-medium">
-            You selected {projectCount} project(s). Click "Okay" to proceed.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setProjectCount(null);
-                setEntries([]);
-              }}
-              className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
-            >
-              Okay
-            </button>
-          </div>
-        </div>
+        )}
+        <p>
+          <strong>Time Remaining:</strong>{" "}
+          <span className="text-primary font-medium">
+            {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
+          </span>
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-gray-500">Loading projects...</p>
       ) : (
-        <>
-          <div className="text-sm text-gray-700 space-y-1">
-            <p>
-              <strong>Total Time Duration:</strong>{" "}
-              <span className="text-primary font-medium">
-                {Math.floor(rawMinutes / 60)} hour(s) {rawMinutes % 60}{" "}
-                minute(s)
-              </span>
-            </p>
-            <p>
-              <strong>Break Time:</strong>{" "}
-              <span className="text-yellow-600 font-medium">
-                {Math.floor(BREAK_MINUTES / 60)} hour
-              </span>
-            </p>
-            <p>
-              <strong>Time Remaining:</strong>{" "}
-              <span className="text-primary font-medium">
-                {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
-              </span>
-            </p>
-          </div>
+        entries.map((entry, index) => {
+          const searchTermForEntry = searchTerms[index] || "";
+          const filteredProjects = projectsList.filter((proj) =>
+            proj.name.toLowerCase().includes(searchTermForEntry.toLowerCase())
+          );
 
-          {loading ? (
-            <p className="text-gray-500">Loading projects...</p>
-          ) : (
-            entries.map((entry, index) => {
-              // Get the search term for this entry
-              const searchTermForEntry = searchTerms[index] || "";
+          const otherMinutes = entries.reduce((sum, ent, i) => {
+            if (i !== index) {
+              const hours = parseInt(ent.hoursWorked) || 0;
+              const minutes = parseInt(ent.minutesWorked) || 0;
+              return sum + hours * 60 + minutes;
+            }
+            return sum;
+          }, 0);
 
-              // Filter projects based on the current search term for this entry
-              const filteredProjects = projects.filter((proj) =>
-                proj.name
-                  .toLowerCase()
-                  .includes(searchTermForEntry.toLowerCase())
-              );
+          const maxForThis = totalRequiredMinutes - otherMinutes;
+          const maxHours = Math.floor(maxForThis / 60);
 
-              const selectedProject = selectedProjects[index];
-              const otherMinutes = entries.reduce((sum, ent, i) => {
-                if (i !== index) {
-                  const hours = parseInt(ent.hoursWorked) || 0;
-                  const minutes = parseInt(ent.minutesWorked) || 0;
-                  return sum + hours * 60 + minutes;
-                }
-                return sum;
-              }, 0);
-
-              const maxForThis = totalAvailableMinutes - otherMinutes;
-              const maxHours = Math.floor(maxForThis / 60);
-              const maxMinutes = maxForThis % 60;
-
-              return (
-                <div
-                  key={index}
-                  className="rounded-lg border border-primary/20 bg-primary/10 p-4 space-y-3 shadow-sm"
-                >
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Search project..."
-                      value={searchTerms[index] || ""} // Bind to the individual search term
-                      onChange={(e) => handleSearchChange(e, index)} // Update specific index's search term
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
-                    />
-
-                    {openDropdownIndex === index && (
-                      <div className="w-[28em] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <ul className="max-h-60 overflow-y-auto">
-                          {filteredProjects.length > 0 ? (
-                            filteredProjects.map((proj) => (
-                              <li
-                                key={proj._id}
-                                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
-                                onClick={() => handleSelect(proj, index)}
-                              >
-                                {proj.name}
-                              </li>
-                            ))
-                          ) : (
-                            <li className="px-3 py-2 text-gray-500">
-                              No projects found
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* {selectedProject && (
-                      <div className="mt-2">
-                        <p className="uppercase text-sm font-bold text-black">
-                          Selected Project:{" "}
-                          <span className="uppercase text-sm font-bold text-red-600">
-                            {selectedProject.name}
-                          </span>
-                        </p>
-                      </div>
-                    )} */}
-
-                    {errors[index]?.project && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors[index].project}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor={`hoursWorked-${index}`}>Hours</label>
-                      <input
-                        type="text"
-                        placeholder={`Hours (max: ${maxHours})`}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        value={entry.hoursWorked}
-                        min="0"
-                        max={maxHours}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          if (val < 0) return;
-
-                          const currentMinutes =
-                            parseInt(entry.minutesWorked) || 0;
-                          const totalMinutesForEntry =
-                            val * 60 + currentMinutes;
-
-                          if (totalMinutesForEntry <= maxForThis) {
-                            handleChange(index, "hoursWorked", val);
-                          } else {
-                            ErrorToast(
-                              `Total time for this entry cannot exceed ${Math.floor(
-                                maxForThis / 60
-                              )}h ${maxForThis % 60}m.`
-                            );
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
-                      <input
-                        type="text"
-                        placeholder={`Minutes (0-59)`}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        value={entry.minutesWorked}
-                        min="0"
-                        max="59"
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          if (val < 0 || val > 59) return;
-
-                          const currentHours = parseInt(entry.hoursWorked) || 0;
-                          const totalMinutesForEntry = currentHours * 60 + val;
-
-                          if (totalMinutesForEntry <= maxForThis) {
-                            handleChange(index, "minutesWorked", val);
-                          } else {
-                            ErrorToast(
-                              `Total time for this entry cannot exceed ${Math.floor(
-                                maxForThis / 60
-                              )}h ${maxForThis % 60}m.`
-                            );
-                          }
-                        }}
-                      />
-                    </div>
-
-                    {errors[index]?.time && (
-                      <p className="text-xs text-red-600 mt-1 col-span-2">
-                        {errors[index].time}
-                      </p>
-                    )}
-                  </div>
-
-                  <textarea
-                    placeholder="Description"
-                    className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    rows={2}
-                    value={entry.description}
-                    onChange={(e) =>
-                      handleChange(index, "description", e.target.value)
-                    }
-                  />
-                  {errors[index]?.description && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {errors[index].description}
-                    </p>
-                  )}
-                </div>
-              );
-            })
-          )}
-
-          <div className="flex justify-between items-center pt-2">
-            <button
-              onClick={() => {
-                setProjectCount(null);
-                setEntries([]);
-                setShowProjectForm(false);
-                setIsTimeStoppedForCheckout(false);
-                setStoppedTime(null);
-              }}
-              className="text-sm font-medium text-primary hover:underline"
+          return (
+            <div
+              key={index}
+              className="rounded-lg border border-primary/20 bg-primary/10 p-4 space-y-3 shadow-sm"
             >
-              ← Back
-            </button>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
+                  Project #{index + 1}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveProject(index)}
+                  disabled={loading || entries.length <= 1}
+                  className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-sm transition ${
-                  isSubmitting
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Cancel
-              </button>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Search project..."
+                  value={searchTerms[index] || ""}
+                  onChange={(e) => handleSearchChange(e, index)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  onClick={() => toggleDropdown(index)}
+                />
 
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-white text-sm transition ${
-                  isSubmitting
-                    ? "bg-red-400 cursor-not-allowed"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
-              >
-                {isSubmitting ? (
-                  <ImSpinner3 className="animate-spin" />
-                ) : isTimeStoppedForCheckout ? (
-                  "Confirm Checkout"
-                ) : (
-                  "Checkout"
+                {openDropdownIndex === index && (
+                  <div className="w-[28em] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <ul className="max-h-60 overflow-y-auto">
+                      {filteredProjects.length > 0 ? (
+                        filteredProjects.map((proj) => (
+                          <li
+                            key={proj._id}
+                            className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+                            onClick={() => handleSelect(proj, index)}
+                          >
+                            {proj.name}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-3 py-2 text-gray-500">
+                          No projects found
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 )}
-              </button>
+
+                {errors[index]?.project && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {errors[index].project}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor={`hoursWorked-${index}`}>Hours</label>
+                  <input
+                    type="text"
+                    placeholder={`Hours (max: ${maxHours})`}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={entry.hoursWorked}
+                    min="0"
+                    max={maxHours}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val < 0) return;
+
+                      const currentMinutes = parseInt(entry.minutesWorked) || 0;
+                      const totalMinutesForEntry = val * 60 + currentMinutes;
+
+                      if (totalMinutesForEntry <= maxForThis) {
+                        handleChange(index, "hoursWorked", val);
+                      } else {
+                        ErrorToast(
+                          `Total time for this entry cannot exceed ${Math.floor(
+                            maxForThis / 60
+                          )}h ${maxForThis % 60}m.`
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
+                  <input
+                    type="text"
+                    placeholder="Minutes (0-59)"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={entry.minutesWorked}
+                    min="0"
+                    max="59"
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val < 0 || val > 59) return;
+
+                      const currentHours = parseInt(entry.hoursWorked) || 0;
+                      const totalMinutesForEntry = currentHours * 60 + val;
+
+                      if (totalMinutesForEntry <= maxForThis) {
+                        handleChange(index, "minutesWorked", val);
+                      } else {
+                        ErrorToast(
+                          `Total time for this entry cannot exceed ${Math.floor(
+                            maxForThis / 60
+                          )}h ${maxForThis % 60}m.`
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                {errors[index]?.time && (
+                  <p className="text-xs text-red-600 mt-1 col-span-2">
+                    {errors[index].time}
+                  </p>
+                )}
+              </div>
+
+              <textarea
+                placeholder="Description"
+                className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                rows={2}
+                value={entry.description}
+                onChange={(e) => handleChange(index, "description", e.target.value)}
+              />
+              {errors[index]?.description && (
+                <p className="text-xs text-red-600 mt-1">
+                  {errors[index].description}
+                </p>
+              )}
             </div>
-          </div>
-        </>
+          );
+        })
       )}
+
+      <div className="flex justify-start">
+        <button
+          onClick={handleAddProject}
+          disabled={loading}
+          className="group inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-gradient-to-r from-primary/10 to-fuchsia-100 px-3 py-2 text-xs font-semibold text-primary shadow-sm transition hover:from-primary/20 hover:to-fuchsia-200 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-sm leading-none shadow-sm">
+              +
+            </span>
+            Add Another Project
+          </span>
+        </button>
+      </div>
+
+      <div className="flex justify-end items-center pt-2">
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded-md text-sm transition ${
+              isSubmitting
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || loading}
+            className={`px-4 py-2 rounded-md text-white text-sm transition ${
+              isSubmitting || loading
+                ? "bg-red-400 cursor-not-allowed"
+                : "bg-primary hover:bg-primary/90"
+            }`}
+          >
+            {isSubmitting ? (
+              <ImSpinner3 className="animate-spin" />
+            ) : loading ? (
+              "Loading projects..."
+            ) : isTimeStoppedForCheckout ? (
+              "Confirm Checkout"
+            ) : (
+              "Checkout"
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
 
 const ForgotProjectList = ({
   onClose,
-  checkInTime,
-  todayAttendance,
   isTimeStoppedForCheckout,
-  stoppedTime,
-  setIsTimeStoppedForCheckout,
-  setStoppedTime,
   checkOutTimeForgot,
   getTimeDifference,
   checkInTimeForgot,
   shiftDate,
   selectedReasons,
-  selectmissingType,
   setForgotisModalOpen,
   setIsUpdate,
 }) => {
-  const BREAK_MINUTES = 60;
-
   const { loading, data: projects } = useUsers("/projects", 1, 1000);
-  const [projectCount, setProjectCount] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [showProjectForm, setShowProjectForm] = useState(false);
-
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [searchTerms, setSearchTerms] = useState([]); // Array to store search terms for each entry
-  const [selectedProjects, setSelectedProjects] = useState([]); // To store selected project for each entry
-  const [openDropdownIndex, setOpenDropdownIndex] = useState(null); // Track which dropdown is open
+  const [searchTerms, setSearchTerms] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
+  const projectsList = Array.isArray(projects) ? projects : [];
+
+  const createEmptyEntry = (projectId = "") => ({
+    project: projectId,
+    hoursWorked: 0,
+    minutesWorked: 0,
+    description: "",
+  });
+
+  const normalizeProjectName = (value = "") =>
+    value.toLowerCase().trim().replace(/\s+/g, " ");
+
+  const findDefaultProject = (list, projectName) => {
+    const normalizedTarget = normalizeProjectName(projectName).replace(/\s/g, "");
+    return list.find((project) => {
+      const normalizedName = normalizeProjectName(project?.name || "").replace(
+        /\s/g,
+        ""
+      );
+      return (
+        normalizedName === normalizedTarget ||
+        normalizedName.includes(normalizedTarget) ||
+        normalizedTarget.includes(normalizedName)
+      );
+    });
+  };
+
+  useEffect(() => {
+    if (isInitialized || loading || projectsList.length === 0)
+      return;
+
+    const defaultProjectNames = ["Free Project", "Break"];
+    const matchedProjects = defaultProjectNames.map((projectName) =>
+      findDefaultProject(projectsList, projectName) || null
+    );
+    const initializedEntries = matchedProjects.map((project) =>
+      createEmptyEntry(project?._id || "")
+    );
+
+    const workedMinutes = (() => {
+      if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
+      const createDateTime = (timeStr) => {
+        const [hours, minutes] = timeStr.trim().split(":").map(Number);
+        const date = new Date(shiftDate);
+        date.setUTCHours(hours, minutes, 0, 0);
+        return date;
+      };
+      const checkInDate = createDateTime(checkInTimeForgot);
+      const checkOutDate = createDateTime(checkOutTimeForgot);
+      if (checkOutDate <= checkInDate) checkOutDate.setDate(checkOutDate.getDate() + 1);
+      return Math.max(Math.floor((checkOutDate - checkInDate) / 60000), 0);
+    })();
+
+    if (workedMinutes < 8 * 60) {
+      const extraMinutes = 8 * 60 - workedMinutes;
+      const breakIndex = matchedProjects.findIndex(
+        (project) =>
+          normalizeProjectName(project?.name || "").replace(/\s/g, "") === "break"
+      );
+      if (breakIndex >= 0) {
+        initializedEntries[breakIndex] = {
+          ...initializedEntries[breakIndex],
+          hoursWorked: Math.floor(extraMinutes / 60),
+          minutesWorked: extraMinutes % 60,
+        };
+      }
+    }
+
+    setEntries(initializedEntries);
+    setSearchTerms(matchedProjects.map((project) => project?.name || ""));
+    setSelectedProjects(matchedProjects);
+    setIsInitialized(true);
+  }, [isInitialized, loading, projects, checkInTimeForgot, checkOutTimeForgot, shiftDate]);
+
+  const handleAddProject = () => {
+    setEntries((prev) => [...prev, createEmptyEntry()]);
+    setSearchTerms((prev) => [...prev, ""]);
+    setSelectedProjects((prev) => [...prev, null]);
+  };
+
+  const handleRemoveProject = (index) => {
+    setEntries((prev) => prev.filter((_, i) => i !== index));
+    setSearchTerms((prev) => prev.filter((_, i) => i !== index));
+    setSelectedProjects((prev) => prev.filter((_, i) => i !== index));
+    setErrors((prev) => {
+      const next = {};
+      Object.keys(prev).forEach((key) => {
+        const currentIndex = Number(key);
+        if (currentIndex < index) next[currentIndex] = prev[currentIndex];
+        if (currentIndex > index) next[currentIndex - 1] = prev[currentIndex];
+      });
+      return next;
+    });
+    setOpenDropdownIndex((prev) => {
+      if (prev === null) return null;
+      if (prev === index) return null;
+      return prev > index ? prev - 1 : prev;
+    });
+  };
 
   const availableMinutes = () => {
     if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
@@ -1122,7 +1253,7 @@ const ForgotProjectList = ({
     const createDateTime = (timeStr) => {
       const [hours, minutes] = timeStr.trim().split(":").map(Number);
       const date = new Date(shiftDate);
-      date.setUTCHours(hours, minutes, 0, 0); // Use UTC to prevent timezone bugs
+      date.setUTCHours(hours, minutes, 0, 0);
       return date;
     };
 
@@ -1130,15 +1261,17 @@ const ForgotProjectList = ({
     const checkOutDate = createDateTime(checkOutTimeForgot);
 
     if (checkOutDate <= checkInDate) {
-      checkOutDate.setDate(checkOutDate.getDate() + 1); // Fix for night shifts
+      checkOutDate.setDate(checkOutDate.getDate() + 1);
     }
 
     const diffInMinutes = Math.floor((checkOutDate - checkInDate) / 60000);
-
-    return Math.max(diffInMinutes - BREAK_MINUTES, 0);
+    return Math.max(diffInMinutes, 0);
   };
 
+  const MIN_REQUIRED_MINUTES = 8 * 60;
   const totalAvailableMinutes = availableMinutes();
+  const totalRequiredMinutes = Math.max(totalAvailableMinutes, MIN_REQUIRED_MINUTES);
+  const minimumExtraMinutes = Math.max(MIN_REQUIRED_MINUTES - totalAvailableMinutes, 0);
 
   const totalEnteredMinutes = entries.reduce((sum, entry) => {
     const hours = parseInt(entry.hoursWorked) || 0;
@@ -1146,11 +1279,27 @@ const ForgotProjectList = ({
     return sum + hours * 60 + minutes;
   }, 0);
 
-  const remainingMinutes = totalAvailableMinutes - totalEnteredMinutes;
+  const remainingMinutes = totalRequiredMinutes - totalEnteredMinutes;
+
+  const getEntryProjectName = (entry, index) => {
+    const selected = selectedProjects[index];
+    if (selected?.name) return selected.name;
+    const projectFromList = projectsList.find((project) => project?._id === entry?.project);
+    if (projectFromList?.name) return projectFromList.name;
+    return searchTerms[index] || "";
+  };
+
+  const isFlexibleProjectEntry = (entry, index) => {
+    const normalizedName = normalizeProjectName(getEntryProjectName(entry, index)).replace(
+      /\s/g,
+      ""
+    );
+    return normalizedName === "break" || normalizedName === "freeproject";
+  };
 
   const handleSearchChange = (e, index) => {
     const updatedSearchTerms = [...searchTerms];
-    updatedSearchTerms[index] = e.target.value || ""; // Ensure it's a string, even if empty
+    updatedSearchTerms[index] = e.target.value || "";
     setSearchTerms(updatedSearchTerms);
   };
 
@@ -1162,77 +1311,34 @@ const ForgotProjectList = ({
 
   const handleSelect = (project, index) => {
     const updatedSelectedProjects = [...selectedProjects];
-    updatedSelectedProjects[index] = project; // Update selected project for this index
+    updatedSelectedProjects[index] = project;
 
     setSelectedProjects(updatedSelectedProjects);
     setSearchTerms((prevSearchTerms) => {
       const updatedSearchTerms = [...prevSearchTerms];
-      updatedSearchTerms[index] = project.name; // Set the search term to selected project's name
+      updatedSearchTerms[index] = project.name;
       return updatedSearchTerms;
     });
-    setOpenDropdownIndex(null); // Close dropdown after selection
+    setOpenDropdownIndex(null);
 
     const updatedEntries = [...entries];
     updatedEntries[index] = {
       ...updatedEntries[index],
-      project: project._id, // Set selected project for this entry
+      project: project._id,
     };
     setEntries(updatedEntries);
   };
 
   const toggleDropdown = (index) => {
-    setOpenDropdownIndex((prev) => (prev === index ? null : index)); // Open/close dropdown
+    setOpenDropdownIndex((prev) => (prev === index ? null : index));
   };
-
-  const handleProjectCountSubmit = () => {
-    if (projectCount && projectCount > 0 && projectCount <= 10) {
-      const totalMinutes = availableMinutes();
-      const evenMinutes = Math.floor(totalMinutes / projectCount);
-      const remaining = totalMinutes % projectCount;
-
-      const initialEntries = Array.from({ length: projectCount }, (_, i) => ({
-        project: "",
-        hoursWorked: 0,
-        minutesWorked: 0,
-        description: "",
-      }));
-
-      setEntries(initialEntries);
-      setShowProjectForm(true);
-    }
-  };
-
-  const validProjects = entries.filter(
-    (entry) =>
-      entry.project &&
-      (entry.hoursWorked || entry.minutesWorked) &&
-      entry.description
-  );
 
   const toUTCHoursOnly = (localTimeStr) => {
     if (!localTimeStr) return "";
     const localDate = new Date(`1970-01-01T${localTimeStr}:00+05:00`);
-    return localDate.toISOString().substring(11, 16); // HH:mm only
+    return localDate.toISOString().substring(11, 16);
   };
 
-  const payload = {
-    shiftDate: shiftDate,
-    reason:  selectedReasons,
-    note: entries
-      ?.map((entry) => entry?.description)
-      .filter(Boolean)
-      .join(", "),
-
-    checkInTime: toUTCHoursOnly(checkInTimeForgot),
-    checkOutTime: toUTCHoursOnly(checkOutTimeForgot),
-    projects: validProjects?.map((entry) => ({
-      project: entry?.project,
-      minutesWorked:
-        (parseInt(entry.hoursWorked) || 0) * 60 +
-        (parseInt(entry.minutesWorked) || 0),
-      description: entry.description,
-    })),
-  };
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
@@ -1243,8 +1349,7 @@ const ForgotProjectList = ({
       if (!entry.project) entryErrors.project = "Project is required";
       if (!entry.hoursWorked && !entry.minutesWorked)
         entryErrors.time = "Hours or minutes required";
-      if (!entry.description)
-        entryErrors.description = "Description is required";
+      if (!entry.description) entryErrors.description = "Description is required";
 
       if (Object.keys(entryErrors).length > 0) {
         newErrors[index] = entryErrors;
@@ -1258,9 +1363,7 @@ const ForgotProjectList = ({
       return;
     }
 
-    setErrors({}); // Clear previous errors
-
-    const checkoutTime = stoppedTime || new Date().toISOString();
+    setErrors({});
 
     const validProjects = entries.filter(
       (entry) =>
@@ -1275,33 +1378,66 @@ const ForgotProjectList = ({
       return sum + hours * 60 + minutes;
     }, 0);
 
-    if (totalEntered > totalAvailableMinutes) {
+    if (totalEntered > totalRequiredMinutes) {
       ErrorToast(
         `Total entered time (${Math.floor(totalEntered / 60)}h ${
           totalEntered % 60
-        }m) cannot exceed available time (${Math.floor(
-          totalAvailableMinutes / 60
-        )}h ${totalAvailableMinutes % 60}m).`
+        }m) cannot exceed required allocation (${Math.floor(
+          totalRequiredMinutes / 60
+        )}h ${totalRequiredMinutes % 60}m).`
       );
       setIsSubmitting(false);
       return;
     }
 
-    if (totalEntered !== totalAvailableMinutes) {
+    if (totalEntered !== totalRequiredMinutes) {
       ErrorToast(
-        `Please use all available time before confirming checkout. Time remaining: ${Math.floor(
+        `Please complete required allocation before confirming checkout. Time remaining: ${Math.floor(
           remainingMinutes / 60
         )}h ${remainingMinutes % 60}m.`
       );
       setIsSubmitting(false);
       return;
     }
-   
 
-    // return console.log(payload)
+    if (minimumExtraMinutes > 0) {
+      const nonFlexibleMinutes = entries.reduce((sum, entry, index) => {
+        const entryMinutes =
+          (parseInt(entry.hoursWorked) || 0) * 60 + (parseInt(entry.minutesWorked) || 0);
+        return isFlexibleProjectEntry(entry, index) ? sum : sum + entryMinutes;
+      }, 0);
+
+      if (nonFlexibleMinutes > totalAvailableMinutes) {
+        ErrorToast(
+          `When worked time is below 8 hours, the extra ${Math.floor(
+            minimumExtraMinutes / 60
+          )}h ${minimumExtraMinutes % 60}m must be allocated only to Free Project or Break.`
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    const payload = {
+      shiftDate: shiftDate,
+      reason: selectedReasons,
+      note: entries
+        ?.map((entry) => entry?.description)
+        .filter(Boolean)
+        .join(", "),
+      checkInTime: toUTCHoursOnly(checkInTimeForgot),
+      checkOutTime: toUTCHoursOnly(checkOutTimeForgot),
+      projects: validProjects?.map((entry) => ({
+        project: entry?.project,
+        minutesWorked:
+          (parseInt(entry.hoursWorked) || 0) * 60 +
+          (parseInt(entry.minutesWorked) || 0),
+        description: entry.description,
+      })),
+    };
+
     try {
-      const res = await axios.post("/attendance/missing", payload);
-
+      await axios.post("/attendance/missing", payload);
       SuccessToast("Submitted successfully");
       setIsUpdate((prev) => !prev);
       setForgotisModalOpen(false);
@@ -1315,288 +1451,245 @@ const ForgotProjectList = ({
 
   return (
     <div className="space-y-6 max-h-[500px] overflow-y-auto p-4 bg-white rounded-lg shadow-lg">
-      {projectCount === null ? (
-        <div className="space-y-4">
-          <p className="text-gray-700 font-medium">
-            How many projects did you work on today?
+      <div className="text-sm text-gray-700 space-y-1">
+        <p>
+          <strong>Total Time Duration:</strong>{" "}
+          <span className="text-primary font-medium">
+            {getTimeDifference(checkInTimeForgot, checkOutTimeForgot)}
+          </span>
+        </p>
+        <p>
+          <strong>Required Allocation:</strong>{" "}
+          <span className="text-primary font-medium">
+            {Math.floor(totalRequiredMinutes / 60)}h {totalRequiredMinutes % 60}m
+          </span>
+        </p>
+        {minimumExtraMinutes > 0 && (
+          <p className="text-xs text-amber-700">
+            Extra {Math.floor(minimumExtraMinutes / 60)}h {minimumExtraMinutes % 60}m
+            {" "}must be filled in Free Project or Break.
           </p>
-          <input
-            type="text"
-            min="1"
-            max="10"
-            placeholder="Enter number of projects"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            onChange={(e) => {
-              const count = parseInt(e.target.value);
-              if (isNaN(count) || count < 1 || count > 10) {
-                setProjectCount(null);
-                return;
-              }
-              setProjectCount(count);
-            }}
-          />
-          {projectCount && (
-            <button
-              onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
-            >
-              Okay
-            </button>
-          )}
-        </div>
-      ) : !showProjectForm ? (
-        <div className="space-y-4">
-          <p className="text-gray-700 font-medium">
-            You selected {projectCount} project(s). Click "Okay" to proceed.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setProjectCount(null);
-                setEntries([]);
-              }}
-              className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleProjectCountSubmit}
-              className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90"
-            >
-              Okay
-            </button>
-          </div>
-        </div>
+        )}
+        <p>
+          <strong>Time Remaining:</strong>{" "}
+          <span className="text-primary font-medium">
+            {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
+          </span>
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-gray-500">Loading projects...</p>
       ) : (
-        <>
-          <div className="text-sm text-gray-700 space-y-1">
-            <p>
-              <strong>Total Time Duration:</strong>{" "}
-              <span className="text-primary font-medium">
-                {getTimeDifference(checkInTimeForgot, checkOutTimeForgot)}
-              </span>
-            </p>
-            <p>
-              <strong>Break Time:</strong>{" "}
-              <span className="text-yellow-600 font-medium">
-                {Math.floor(BREAK_MINUTES / 60)} hour
-              </span>
-            </p>
-            <p>
-              <p>
-                <strong>Time Remaining:</strong>{" "}
-                <span className="text-primary font-medium">
-                  {Math.floor(remainingMinutes / 60)}h {remainingMinutes % 60}m
-                </span>
-              </p>
-            </p>
-          </div>
+        entries.map((entry, index) => {
+          const searchTermForEntry = searchTerms[index] || "";
+          const filteredProjects = projectsList.filter((proj) =>
+            proj.name.toLowerCase().includes(searchTermForEntry.toLowerCase())
+          );
 
-          {loading ? (
-            <p className="text-gray-500">Loading projects...</p>
-          ) : (
-            entries.map((entry, index) => {
-              const searchTermForEntry = searchTerms[index] || "";
+          const otherMinutes = entries.reduce((sum, ent, i) => {
+            if (i !== index) {
+              const hours = parseInt(ent.hoursWorked) || 0;
+              const minutes = parseInt(ent.minutesWorked) || 0;
+              return sum + hours * 60 + minutes;
+            }
+            return sum;
+          }, 0);
 
-              const filteredProjects = projects.filter((proj) =>
-                proj.name
-                  .toLowerCase()
-                  .includes(searchTermForEntry.toLowerCase())
-              );
+          const maxForThis = totalRequiredMinutes - otherMinutes;
+          const maxHours = Math.floor(maxForThis / 60);
 
-              const selectedProject = selectedProjects[index];
-              const otherMinutes = entries.reduce((sum, ent, i) => {
-                if (i !== index) {
-                  const hours = parseInt(ent.hoursWorked) || 0;
-                  const minutes = parseInt(ent.minutesWorked) || 0;
-                  return sum + hours * 60 + minutes;
-                }
-                return sum;
-              }, 0);
-
-              const maxForThis = totalAvailableMinutes - otherMinutes;
-              const maxHours = Math.floor(maxForThis / 60);
-              const maxMinutes = maxForThis % 60;
-
-              return (
-                <div
-                  key={index}
-                  className="rounded-lg border border-primary/20 bg-primary/10 p-4 space-y-3 shadow-sm"
-                >
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Search project..."
-                      value={searchTerms[index] || ""} // Bind to the individual search term
-                      onChange={(e) => handleSearchChange(e, index)} // Update specific index's search term
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      onClick={() => toggleDropdown(index)} // Toggle dropdown visibility
-                    />
-
-                    {openDropdownIndex === index && (
-                      <div className="w-[28em] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <ul className="max-h-60 overflow-y-auto">
-                          {filteredProjects.length > 0 ? (
-                            filteredProjects.map((proj) => (
-                              <li
-                                key={proj._id}
-                                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
-                                onClick={() => handleSelect(proj, index)}
-                              >
-                                {proj.name}
-                              </li>
-                            ))
-                          ) : (
-                            <li className="px-3 py-2 text-gray-500">
-                              No projects found
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-
-                    {errors[index]?.project && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors[index].project}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor={`hoursWorked-${index}`}>Hours</label>
-                      <input
-                        type="text"
-                        placeholder={`Hours (max: ${maxHours})`}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        value={entry.hoursWorked}
-                        min="0"
-                        max={maxHours}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          if (val < 0) return;
-
-                          const currentMinutes =
-                            parseInt(entry.minutesWorked) || 0;
-                          const totalMinutesForEntry =
-                            val * 60 + currentMinutes;
-
-                          if (totalMinutesForEntry <= maxForThis) {
-                            handleChange(index, "hoursWorked", val);
-                          } else {
-                            ErrorToast(
-                              `Total time for this entry cannot exceed ${Math.floor(
-                                maxForThis / 60
-                              )}h ${maxForThis % 60}m.`
-                            );
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
-                      <input
-                        type="text"
-                        placeholder={`Minutes (0-59)`}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        value={entry.minutesWorked}
-                        min="0"
-                        max="59"
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          if (val < 0 || val > 59) return;
-
-                          const currentHours = parseInt(entry.hoursWorked) || 0;
-                          const totalMinutesForEntry = currentHours * 60 + val;
-
-                          if (totalMinutesForEntry <= maxForThis) {
-                            handleChange(index, "minutesWorked", val);
-                          } else {
-                            ErrorToast(
-                              `Total time for this entry cannot exceed ${Math.floor(
-                                maxForThis / 60
-                              )}h ${maxForThis % 60}m.`
-                            );
-                          }
-                        }}
-                      />
-                    </div>
-
-                    {errors[index]?.time && (
-                      <p className="text-xs text-red-600 mt-1 col-span-2">
-                        {errors[index].time}
-                      </p>
-                    )}
-                  </div>
-
-                  <textarea
-                    placeholder="Description"
-                    className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    rows={2}
-                    value={entry.description}
-                    onChange={(e) =>
-                      handleChange(index, "description", e.target.value)
-                    }
-                  />
-                  {errors[index]?.description && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {errors[index].description}
-                    </p>
-                  )}
-                </div>
-              );
-            })
-          )}
-
-          <div className="flex justify-between items-center pt-2">
-            <button
-              onClick={() => {
-                setProjectCount(null);
-                setEntries([]);
-                setShowProjectForm(false);
-                setIsTimeStoppedForCheckout(false);
-                setStoppedTime(null);
-              }}
-              className="text-sm font-medium text-primary hover:underline"
+          return (
+            <div
+              key={index}
+              className="rounded-lg border border-primary/20 bg-primary/10 p-4 space-y-3 shadow-sm"
             >
-              ← Back
-            </button>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
+                  Project #{index + 1}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveProject(index)}
+                  disabled={loading || entries.length <= 1}
+                  className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-sm transition ${
-                  isSubmitting
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Cancel
-              </button>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Search project..."
+                  value={searchTerms[index] || ""}
+                  onChange={(e) => handleSearchChange(e, index)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  onClick={() => toggleDropdown(index)}
+                />
 
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-md text-white text-sm transition ${
-                  isSubmitting
-                    ? "bg-red-400 cursor-not-allowed"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
-              >
-                {isSubmitting ? (
-                  <ImSpinner3 className="animate-spin" />
-                ) : isTimeStoppedForCheckout ? (
-                  "Confirm Checkout"
-                ) : (
-                  "Checkout"
+                {openDropdownIndex === index && (
+                  <div className="w-[28em] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <ul className="max-h-60 overflow-y-auto">
+                      {filteredProjects.length > 0 ? (
+                        filteredProjects.map((proj) => (
+                          <li
+                            key={proj._id}
+                            className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+                            onClick={() => handleSelect(proj, index)}
+                          >
+                            {proj.name}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-3 py-2 text-gray-500">
+                          No projects found
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 )}
-              </button>
+
+                {errors[index]?.project && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {errors[index].project}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor={`hoursWorked-${index}`}>Hours</label>
+                  <input
+                    type="text"
+                    placeholder={`Hours (max: ${maxHours})`}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={entry.hoursWorked}
+                    min="0"
+                    max={maxHours}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val < 0) return;
+
+                      const currentMinutes = parseInt(entry.minutesWorked) || 0;
+                      const totalMinutesForEntry = val * 60 + currentMinutes;
+
+                      if (totalMinutesForEntry <= maxForThis) {
+                        handleChange(index, "hoursWorked", val);
+                      } else {
+                        ErrorToast(
+                          `Total time for this entry cannot exceed ${Math.floor(
+                            maxForThis / 60
+                          )}h ${maxForThis % 60}m.`
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor={`minutesWorked-${index}`}>Minutes</label>
+                  <input
+                    type="text"
+                    placeholder="Minutes (0-59)"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={entry.minutesWorked}
+                    min="0"
+                    max="59"
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val < 0 || val > 59) return;
+
+                      const currentHours = parseInt(entry.hoursWorked) || 0;
+                      const totalMinutesForEntry = currentHours * 60 + val;
+
+                      if (totalMinutesForEntry <= maxForThis) {
+                        handleChange(index, "minutesWorked", val);
+                      } else {
+                        ErrorToast(
+                          `Total time for this entry cannot exceed ${Math.floor(
+                            maxForThis / 60
+                          )}h ${maxForThis % 60}m.`
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                {errors[index]?.time && (
+                  <p className="text-xs text-red-600 mt-1 col-span-2">
+                    {errors[index].time}
+                  </p>
+                )}
+              </div>
+
+              <textarea
+                placeholder="Description"
+                className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                rows={2}
+                value={entry.description}
+                onChange={(e) => handleChange(index, "description", e.target.value)}
+              />
+              {errors[index]?.description && (
+                <p className="text-xs text-red-600 mt-1">
+                  {errors[index].description}
+                </p>
+              )}
             </div>
-          </div>
-        </>
+          );
+        })
       )}
+
+      <div className="flex justify-start">
+        <button
+          onClick={handleAddProject}
+          disabled={loading}
+          className="group inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-gradient-to-r from-primary/10 to-fuchsia-100 px-3 py-2 text-xs font-semibold text-primary shadow-sm transition hover:from-primary/20 hover:to-fuchsia-200 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-sm leading-none shadow-sm">
+              +
+            </span>
+            Add Another Project
+          </span>
+        </button>
+      </div>
+
+      <div className="flex justify-end items-center pt-2">
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded-md text-sm transition ${
+              isSubmitting
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || loading}
+            className={`px-4 py-2 rounded-md text-white text-sm transition ${
+              isSubmitting || loading
+                ? "bg-red-400 cursor-not-allowed"
+                : "bg-primary hover:bg-primary/90"
+            }`}
+          >
+            {isSubmitting ? (
+              <ImSpinner3 className="animate-spin" />
+            ) : loading ? (
+              "Loading projects..."
+            ) : isTimeStoppedForCheckout ? (
+              "Confirm Checkout"
+            ) : (
+              "Checkout"
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
