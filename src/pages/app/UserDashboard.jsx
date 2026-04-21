@@ -24,6 +24,8 @@ const UserDashboard = () => {
   const dropdownRef = useRef(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
+  const [checkoutResetToken, setCheckoutResetToken] = useState(0);
+  const [forgotCheckoutResetToken, setForgotCheckoutResetToken] = useState(0);
 
   const [missingAttendance, setMissingAttendance] = useState(null);
 
@@ -181,6 +183,16 @@ const UserDashboard = () => {
     setStoppedTime(new Date().toISOString());
     setIsTimeStoppedForCheckout(true);
     setIsModalOpen(true);
+  };
+
+  const handleCloseCheckoutModal = () => {
+    setIsModalOpen(false);
+    setCheckoutResetToken((prev) => prev + 1);
+  };
+
+  const handleCloseForgotCheckoutModal = () => {
+    setForgotisModalOpen(false);
+    setForgotCheckoutResetToken((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -491,7 +503,7 @@ const UserDashboard = () => {
           className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
             ForgotisModalOpen ? "opacity-100" : "opacity-0"
           }`}
-          onClick={() => setForgotisModalOpen(false)}
+          onClick={handleCloseForgotCheckoutModal}
         />
         <div
           className={`relative w-full max-w-xl rounded-xl bg-white p-6 shadow-lg transition-all duration-200 ${
@@ -506,22 +518,22 @@ const UserDashboard = () => {
             </h2>
             <ImCross
               className="cursor-pointer text-slate-500 hover:text-slate-700"
-              onClick={() => setForgotisModalOpen(false)}
+              onClick={handleCloseForgotCheckoutModal}
             />
           </div>
 
           <ForgotProjectList
+            resetToken={forgotCheckoutResetToken}
             getTimeDifference={getTimeDifference}
             missingAttendance={missingAttendance}
             checkOutTimeForgot={checkOutTimeForgot}
             checkInTimeForgot={checkInTimeForgot}
-            onClose={() => setForgotisModalOpen(false)}
+            onClose={handleCloseForgotCheckoutModal}
             postData={postData}
             checkInTime={todayAttendance?.checkInTime}
             setTodayAttendance={setTodayAttendance}
             setModalOpen={setModalOpen}
             setIsModalOpen={setIsModalOpen}
-            setForgotisModalOpen={setForgotisModalOpen}
             todayAttendance={todayAttendance}
             isTimeStoppedForCheckout={isTimeStoppedForCheckout}
             stoppedTime={stoppedTime}
@@ -546,7 +558,7 @@ const UserDashboard = () => {
           className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
             isModalOpen ? "opacity-100" : "opacity-0"
           }`}
-          onClick={() => setIsModalOpen(false)}
+          onClick={handleCloseCheckoutModal}
         />
         <div
           className={`relative w-full max-w-xl rounded-xl bg-white p-6 shadow-lg transition-all duration-200 ${
@@ -559,15 +571,14 @@ const UserDashboard = () => {
             </h2>
             <ImCross
               className="cursor-pointer text-slate-500 hover:text-slate-700"
-              onClick={() => setIsModalOpen(false)}
+              onClick={handleCloseCheckoutModal}
             />
           </div>
 
           <ProjectList
+            resetToken={checkoutResetToken}
             getTimeDifference={getTimeDifference}
-            checkOutTimeForgot={checkOutTimeForgot}
-            checkInTimeForgot={checkInTimeForgot}
-            onClose={() => setIsModalOpen(false)}
+            onClose={handleCloseCheckoutModal}
             postData={postData}
             checkInTime={todayAttendance?.checkInTime}
             setTodayAttendance={setTodayAttendance}
@@ -586,6 +597,7 @@ const UserDashboard = () => {
 export default UserDashboard;
 
 const ProjectList = ({
+  resetToken,
   onClose,
   postData,
   checkInTime,
@@ -594,7 +606,7 @@ const ProjectList = ({
   isTimeStoppedForCheckout,
   stoppedTime,
 }) => {
-  const { loading, data: projects } = useUsers("/projects", 1, 1000);
+  const { loading, data: projects } = useUsers("/projects", 1, 300);
   const [entries, setEntries] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -633,7 +645,21 @@ const ProjectList = ({
   };
 
   useEffect(() => {
-    if (isInitialized || loading || projectsList.length === 0)
+    setEntries([]);
+    setSearchTerms([]);
+    setSelectedProjects([]);
+    setErrors({});
+    setOpenDropdownIndex(null);
+    setIsSubmitting(false);
+    setIsInitialized(false);
+  }, [resetToken]);
+
+  useEffect(() => {
+    if (
+      isInitialized ||
+      loading ||
+      projectsList.length === 0
+    )
       return;
 
     const defaultProjectNames = ["Free Project", "Break"];
@@ -1129,6 +1155,7 @@ const ProjectList = ({
 };
 
 const ForgotProjectList = ({
+  resetToken,
   onClose,
   isTimeStoppedForCheckout,
   checkOutTimeForgot,
@@ -1136,10 +1163,9 @@ const ForgotProjectList = ({
   checkInTimeForgot,
   shiftDate,
   selectedReasons,
-  setForgotisModalOpen,
   setIsUpdate,
 }) => {
-  const { loading, data: projects } = useUsers("/projects", 1, 1000);
+  const { loading, data: projects } = useUsers("/projects", 1, 300);
   const [entries, setEntries] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1175,7 +1201,34 @@ const ForgotProjectList = ({
   };
 
   useEffect(() => {
-    if (isInitialized || loading || projectsList.length === 0)
+    setEntries([]);
+    setSearchTerms([]);
+    setSelectedProjects([]);
+    setErrors({});
+    setOpenDropdownIndex(null);
+    setIsSubmitting(false);
+    setIsInitialized(false);
+  }, [resetToken]);
+
+  useEffect(() => {
+    setEntries([]);
+    setSearchTerms([]);
+    setSelectedProjects([]);
+    setErrors({});
+    setOpenDropdownIndex(null);
+    setIsSubmitting(false);
+    setIsInitialized(false);
+  }, [checkInTimeForgot, checkOutTimeForgot, shiftDate]);
+
+  useEffect(() => {
+    if (
+      isInitialized ||
+      loading ||
+      projectsList.length === 0 ||
+      !checkInTimeForgot ||
+      !checkOutTimeForgot ||
+      !shiftDate
+    )
       return;
 
     const defaultProjectNames = ["Free Project", "Break"];
@@ -1187,18 +1240,21 @@ const ForgotProjectList = ({
     );
 
     const workedMinutes = (() => {
-      if (!checkInTimeForgot || !checkOutTimeForgot || !shiftDate) return 0;
       const createDateTime = (timeStr) => {
         const [hours, minutes] = timeStr.trim().split(":").map(Number);
+        if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
         const date = new Date(shiftDate);
         date.setUTCHours(hours, minutes, 0, 0);
         return date;
       };
       const checkInDate = createDateTime(checkInTimeForgot);
       const checkOutDate = createDateTime(checkOutTimeForgot);
+      if (!checkInDate || !checkOutDate) return null;
       if (checkOutDate <= checkInDate) checkOutDate.setDate(checkOutDate.getDate() + 1);
       return Math.max(Math.floor((checkOutDate - checkInDate) / 60000), 0);
     })();
+
+    if (!Number.isFinite(workedMinutes)) return;
 
     if (workedMinutes < 8 * 60) {
       const extraMinutes = 8 * 60 - workedMinutes;
@@ -1440,7 +1496,7 @@ const ForgotProjectList = ({
       await axios.post("/attendance/missing", payload);
       SuccessToast("Submitted successfully");
       setIsUpdate((prev) => !prev);
-      setForgotisModalOpen(false);
+      onClose();
     } catch (err) {
       console.error("Submission failed:", err);
       ErrorToast("Failed to submit");
