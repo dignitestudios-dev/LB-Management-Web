@@ -11,6 +11,21 @@ import {
 } from "react-icons/hi2";
 
 const FALLBACK_DEPT_KEYS = ["Design", "Dev", "PM", "SQA"];
+const MIN_YEAR = 2024;
+const MONTH_OPTIONS = [
+  { value: 1, label: "Jan" },
+  { value: 2, label: "Feb" },
+  { value: 3, label: "Mar" },
+  { value: 4, label: "Apr" },
+  { value: 5, label: "May" },
+  { value: 6, label: "Jun" },
+  { value: 7, label: "Jul" },
+  { value: 8, label: "Aug" },
+  { value: 9, label: "Sep" },
+  { value: 10, label: "Oct" },
+  { value: 11, label: "Nov" },
+  { value: 12, label: "Dec" },
+];
 
 const getDeptLabel = (key) => {
   if (key === "Project Management") return "PM";
@@ -33,33 +48,32 @@ const formatMetric = (value) =>
     ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
     : "0";
 
-const formatDateLocal = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const getMonthLabel = (monthValue) =>
+  MONTH_OPTIONS.find((m) => m.value === Number(monthValue))?.label || "-";
 
 const ProductionHours = () => {
   const now = new Date();
-  const currentMonthDefaults = {
-    startDate: formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1)),
-    endDate: formatDateLocal(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const defaultFilters = {
+    month: currentMonth,
+    year: currentYear,
   };
 
   const [rows, setRows] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filters, setFilters] = useState(currentMonthDefaults);
-  const [draftFilters, setDraftFilters] = useState(currentMonthDefaults);
+  const [filters, setFilters] = useState(defaultFilters);
+  const [draftFilters, setDraftFilters] = useState(defaultFilters);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (filters.startDate) params.startDate = filters.startDate;
-      if (filters.endDate) params.endDate = filters.endDate;
+      const params = {
+        month: filters.month,
+        year: filters.year,
+      };
 
       const res = await axios.get("/global/project-hours-breakdown-with-rates", {
         params,
@@ -78,44 +92,64 @@ const ProductionHours = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.startDate, filters.endDate]);
+  }, [filters.month, filters.year]);
 
   const handleDraftChange = (e) => {
     const { name, value } = e.target;
-    setDraftFilters((prev) => ({ ...prev, [name]: value }));
+    const parsedValue =
+      name === "month" ? Number(value) : value.replace(/\D/g, "").slice(0, 4);
+    setDraftFilters((prev) => ({ ...prev, [name]: parsedValue }));
   };
 
   const applyFilters = () => {
-    if (
-      draftFilters.startDate &&
-      draftFilters.endDate &&
-      draftFilters.startDate > draftFilters.endDate
-    ) {
-      ErrorToast("Start date cannot be after end date");
+    const selectedYear = Number(draftFilters.year);
+    const selectedMonth = Number(draftFilters.month);
+
+    if (!Number.isInteger(selectedYear)) {
+      ErrorToast("Please enter a valid year");
       return;
     }
-    setFilters(draftFilters);
+
+    if (selectedYear < MIN_YEAR || selectedYear > currentYear) {
+      ErrorToast(`Year must be between ${MIN_YEAR} and ${currentYear}`);
+      return;
+    }
+
+    const maxMonthForYear = selectedYear === currentYear ? currentMonth : 12;
+    if (
+      !Number.isInteger(selectedMonth) ||
+      selectedMonth < 1 ||
+      selectedMonth > maxMonthForYear
+    ) {
+      ErrorToast(
+        selectedYear === currentYear
+          ? `For ${currentYear}, month cannot be greater than ${currentMonth}`
+          : "Please select a valid month",
+      );
+      return;
+    }
+
+    setFilters({ month: selectedMonth, year: selectedYear });
     setFilterOpen(false);
   };
 
   const clearAllFilters = () => {
-    const cleared = currentMonthDefaults;
+    const cleared = defaultFilters;
     setFilters(cleared);
     setDraftFilters(cleared);
   };
 
   const removeFilter = (key) => {
-    setFilters((prev) => ({ ...prev, [key]: "" }));
-    setDraftFilters((prev) => ({ ...prev, [key]: "" }));
+    const defaults = defaultFilters;
+    setFilters((prev) => ({ ...prev, [key]: defaults[key] }));
+    setDraftFilters((prev) => ({ ...prev, [key]: defaults[key] }));
   };
 
-  const activeFilterCount =
-    (filters.startDate ? 1 : 0) + (filters.endDate ? 1 : 0);
+  const activeFilterCount = (filters.month ? 1 : 0) + (filters.year ? 1 : 0);
 
-  const statsLabel =
-    filters.startDate || filters.endDate
-      ? `${filters.startDate || "Start"} - ${filters.endDate || "End"}`
-      : "All dates";
+  const statsLabel = `${getMonthLabel(filters.month)} ${filters.year}`;
+  const maxMonthForDraftYear =
+    Number(draftFilters.year) === currentYear ? currentMonth : 12;
 
   const statsCards = [
     { title: "Total Hours", value: formatMetric(metrics?.totalHours), icon: HiOutlineClock },
@@ -180,30 +214,44 @@ const ProductionHours = () => {
 
             {filterOpen && (
               <div className="absolute right-0 top-12 z-20 w-[310px] rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
-                <h3 className="text-sm font-semibold text-slate-800">Start &amp; End Date</h3>
+                <h3 className="text-sm font-semibold text-slate-800">Month &amp; Year</h3>
                 <div className="mt-3 space-y-3">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-600">
-                      Start Date
+                      Select Month
                     </label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={draftFilters.startDate}
+                    <select
+                      name="month"
+                      value={draftFilters.month}
                       onChange={handleDraftChange}
                       className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                    />
+                    >
+                      {MONTH_OPTIONS.filter((m) => m.value <= maxMonthForDraftYear).map(
+                        (month) => (
+                          <option key={month.value} value={month.value}>
+                            {month.label}
+                          </option>
+                        ),
+                      )}
+                    </select>
                   </div>
 
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-600">
-                      End Date
+                      Enter Year
                     </label>
                     <input
-                      type="date"
-                      name="endDate"
-                      value={draftFilters.endDate}
+                      type="number"
+                      name="year"
+                      min={MIN_YEAR}
+                      max={currentYear}
+                      value={draftFilters.year}
                       onChange={handleDraftChange}
+                      onBlur={() => {
+                        if (!draftFilters.year) {
+                          setDraftFilters((prev) => ({ ...prev, year: currentYear }));
+                        }
+                      }}
                       className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </div>
@@ -230,34 +278,28 @@ const ProductionHours = () => {
           </div>
         </div>
 
-        {activeFilterCount > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-slate-500">Active filters:</span>
-            {filters.startDate && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                Start: {filters.startDate}
-                <button type="button" onClick={() => removeFilter("startDate")}>
-                  <FiX size={11} />
-                </button>
-              </span>
-            )}
-            {filters.endDate && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                End: {filters.endDate}
-                <button type="button" onClick={() => removeFilter("endDate")}>
-                  <FiX size={11} />
-                </button>
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="text-xs font-medium text-slate-500"
-            >
-              Clear all
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-slate-500">Active filters:</span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            Month: {getMonthLabel(filters.month)}
+            <button type="button" onClick={() => removeFilter("month")}>
+              <FiX size={11} />
             </button>
-          </div>
-        )}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            Year: {filters.year}
+            <button type="button" onClick={() => removeFilter("year")}>
+              <FiX size={11} />
+            </button>
+          </span>
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs font-medium text-slate-500"
+          >
+            Clear all
+          </button>
+        </div>
       </div>
 
       {loading ? (
