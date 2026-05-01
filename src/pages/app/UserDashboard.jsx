@@ -678,12 +678,20 @@ const ProjectList = ({
       return Math.max(Math.floor((currentEndTime - new Date(checkInTime)) / 60000), 0);
     })();
 
-    if (workedMinutes < 8 * 60) {
-      const extraMinutes = 8 * 60 - workedMinutes;
-      const breakIndex = matchedProjects.findIndex(
-        (project) =>
-          normalizeProjectName(project?.name || "").replace(/\s/g, "") === "break"
-      );
+    const breakIndex = matchedProjects.findIndex(
+      (project) =>
+        normalizeProjectName(project?.name || "").replace(/\s/g, "") === "break"
+    );
+
+    if (breakIndex >= 0) {
+      initializedEntries[breakIndex] = {
+        ...initializedEntries[breakIndex],
+        description: "break",
+      };
+    }
+
+    if (workedMinutes < 9 * 60) {
+      const extraMinutes = 9 * 60 - workedMinutes;
       if (breakIndex >= 0) {
         initializedEntries[breakIndex] = {
           ...initializedEntries[breakIndex],
@@ -763,7 +771,7 @@ const ProjectList = ({
     return Math.max(Math.floor((currentEndTime - new Date(checkInTime)) / 60000), 0);
   };
 
-  const MIN_REQUIRED_MINUTES = 8 * 60;
+  const MIN_REQUIRED_MINUTES = 9 * 60;
   const totalAvailableMinutes = availableMinutes();
   const totalRequiredMinutes = Math.max(totalAvailableMinutes, MIN_REQUIRED_MINUTES);
   const minimumExtraMinutes = Math.max(MIN_REQUIRED_MINUTES - totalAvailableMinutes, 0);
@@ -870,7 +878,7 @@ const ProjectList = ({
 
       if (nonFlexibleMinutes > totalAvailableMinutes) {
         ErrorToast(
-          `When worked time is below 8 hours, the extra ${Math.floor(
+          `When worked time is below 9 hours, the extra ${Math.floor(
             minimumExtraMinutes / 60
           )}h ${minimumExtraMinutes % 60}m must be allocated only to Free Project or Break.`
         );
@@ -1256,12 +1264,20 @@ const ForgotProjectList = ({
 
     if (!Number.isFinite(workedMinutes)) return;
 
-    if (workedMinutes < 8 * 60) {
-      const extraMinutes = 8 * 60 - workedMinutes;
-      const breakIndex = matchedProjects.findIndex(
-        (project) =>
-          normalizeProjectName(project?.name || "").replace(/\s/g, "") === "break"
-      );
+    const breakIndex = matchedProjects.findIndex(
+      (project) =>
+        normalizeProjectName(project?.name || "").replace(/\s/g, "") === "break"
+    );
+
+    if (breakIndex >= 0) {
+      initializedEntries[breakIndex] = {
+        ...initializedEntries[breakIndex],
+        description: "break",
+      };
+    }
+
+    if (workedMinutes < 9 * 60) {
+      const extraMinutes = 9 * 60 - workedMinutes;
       if (breakIndex >= 0) {
         initializedEntries[breakIndex] = {
           ...initializedEntries[breakIndex],
@@ -1324,7 +1340,7 @@ const ForgotProjectList = ({
     return Math.max(diffInMinutes, 0);
   };
 
-  const MIN_REQUIRED_MINUTES = 8 * 60;
+  const MIN_REQUIRED_MINUTES = 9 * 60;
   const totalAvailableMinutes = availableMinutes();
   const totalRequiredMinutes = Math.max(totalAvailableMinutes, MIN_REQUIRED_MINUTES);
   const minimumExtraMinutes = Math.max(MIN_REQUIRED_MINUTES - totalAvailableMinutes, 0);
@@ -1465,7 +1481,7 @@ const ForgotProjectList = ({
 
       if (nonFlexibleMinutes > totalAvailableMinutes) {
         ErrorToast(
-          `When worked time is below 8 hours, the extra ${Math.floor(
+          `When worked time is below 9 hours, the extra ${Math.floor(
             minimumExtraMinutes / 60
           )}h ${minimumExtraMinutes % 60}m must be allocated only to Free Project or Break.`
         );
