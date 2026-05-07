@@ -8,6 +8,7 @@ import ForgetPassword from "./pages/authentication/ForgetPassword";
 import VerifyOtp from "./pages/authentication/VerifyOtp";
 import ResetPassword from "./pages/authentication/PasswordUpdate";
 import { baseUrl } from "./axios";
+import PWAInstallBanner from "./components/global/PWAInstallBanner";
 function App() {
   // Protected route wrapper
 
@@ -48,31 +49,34 @@ function App() {
   //   };
   // }, []);
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <Navigate
-            to={Cookies.get("token") ? "app/dashboard" : "/auth/login"}
-          />
-        }
-      />
+    <>
+      <PWAInstallBanner />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={Cookies.get("token") ? "app/dashboard" : "/auth/login"}
+            />
+          }
+        />
 
-      {/* Protected App Routes */}
-      <Route path="app" element={<ProtectedRoute />}>
-        {AppRoutes?.map((Link, i) => (
-          <Route path={Link.url} key={i} element={Link.page} />
-        ))}
-      </Route>
+        {/* Protected App Routes */}
+        <Route path="app" element={<ProtectedRoute />}>
+          {AppRoutes?.map((Link, i) => (
+            <Route path={Link.url} key={i} element={Link.page} />
+          ))}
+        </Route>
 
-      {/* Public Auth Routes */}
-      <Route path="auth">
-        <Route path="login" element={<LoginPage />} />
-        <Route path="forget-password" element={<ForgetPassword />} />
-        <Route path="verify-otp" element={<VerifyOtp />} />
-        <Route path="reset-password" element={<ResetPassword />} />
-      </Route>
-    </Routes>
+        {/* Public Auth Routes */}
+        <Route path="auth">
+          <Route path="login" element={<LoginPage />} />
+          <Route path="forget-password" element={<ForgetPassword />} />
+          <Route path="verify-otp" element={<VerifyOtp />} />
+          <Route path="reset-password" element={<ResetPassword />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 
